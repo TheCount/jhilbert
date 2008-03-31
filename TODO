@@ -1,0 +1,5 @@
+* specification and proof of soundness
+* defs in interface files
+* unit tests
+* integration tests
+* client/server structure
