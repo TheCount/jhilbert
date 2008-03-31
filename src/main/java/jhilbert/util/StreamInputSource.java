@@ -31,17 +31,15 @@ public abstract class StreamInputSource implements InputSource {
 	/**
 	 * Creates a new stream input source from an {@link InputStream}.
 	 *
-	 * @param inputStream input stream.
+	 * @param inputStream input stream (must not be <code>null</code>).
 	 * @param context context String to inform the user of the source of the <code>inputStream</code>, such as a file
 	 * 	name or a network host.
 	 *
-	 * @throws NullPointerException if <code>inputStream</code> is <code>null</code>.
 	 * @throws InputException if the <code>UTF-8</code> character set is not supported.
 	 */
 	protected StreamInputSource(final InputStream in, final String context) throws InputException {
 		this.context = context;
-		if (in == null)
-			throw new NullPointerException("Supplied InputStream is null.");
+		assert (in != null): "Supplied InputStream is null.";
 		try {
 			isr = new InputStreamReader(in, CHARSET_NAME);
 		} catch (UnsupportedEncodingException e) {

@@ -38,13 +38,12 @@ public class Definition extends AbstractComplexTerm {
 	 * @param varList List of Variables of this definition (must not be <code>null</code>).
 	 * @param definiens The definiens (must not be <code>null</code>).
 	 *
-	 * @throws NullPointerException if one of the parameters is <code>null</code>.
 	 * @throws IllegalArgumentException if varList contains duplicate entries.
 	 */
 	public Definition(final String name, final List<Variable> varList, final TermExpression definiens) {
+		// FIXME: We want varList to be an insetion-ordered set instead
 		super(name, definiens.getKind());
-		if (varList == null)
-			throw new NullPointerException("Supplied variable list is null.");
+		assert (varList != null): "Supplied variable list is null.";
 		if ((new HashSet(varList)).size() != varList.size())
 			throw new IllegalArgumentException("Variable list contains duplicate entries: " + varList.toString());
 		this.varList = varList;

@@ -21,15 +21,13 @@ public class Pair<E1, E2> {
 
 	/**
 	 * Creates a new Pair.
+	 * The parameters must not be <code>null</code>.
 	 *
 	 * @param first first value.
 	 * @param second second value.
-	 *
-	 * @throws NullPointerException if one of the parameters is <code>null</code>.
 	 */
 	public Pair(final E1 first, final E2 second) {
-		if ((first == null) || (second == null))
-			throw new NullPointerException("Null values are not allowed in Pairs.");
+		assert ((first != null) && (second != null)): "Null values are not allowed in Pairs.";
 		this.first = first;
 		this.second = second;
 	}

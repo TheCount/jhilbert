@@ -13,7 +13,7 @@ public final class ScannerException extends GeneralException {
 	 * and the specified cause.
 	 *
 	 * @param message detail message String.
-	 * @param scanner Scanner which raised this exception.
+	 * @param scanner Scanner which raised this exception (must not be <code>null</code>).
 	 * @param cause the Throwable which caused this exception.
 	 *
 	 * @throws NullPointerException if scanner is <code>null</code>.

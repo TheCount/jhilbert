@@ -30,14 +30,12 @@ public class ImportData extends InterfaceData {
 	/**
 	 * Defines a new kind.
 	 *
-	 * @param kind kind to be defined.
+	 * @param kind kind to be defined (must not be <code>null</code>).
 	 *
-	 * @throws NullPointerException if kind is <code>null</code>.
 	 * @throws DataException if this kind is already defined.
 	 */
 	public void defineKind(final String kind) throws DataException {
-		if (kind == null)
-			throw new NullPointerException("Supplied kind is null.");
+		assert (kind != null): "Supplied kind is null.";
 		final String fqKind = prefix + kind;
 		if (kindMap.containsKey(fqKind))
 			throw new DataException("Kind already defined", fqKind);
@@ -56,12 +54,9 @@ public class ImportData extends InterfaceData {
 	}
 
 	public @Override void defineTerm(final String name, final String kind, final List<String> inputKindList) throws DataException {
-		if (name == null)
-			throw new NullPointerException("Specified name is null.");
-		if (kind == null)
-			throw new NullPointerException("Specified kind is null.");
-		if (inputKindList == null)
-			throw new NullPointerException("Specified input kind list is null.");
+		assert (name != null): "Specified name is null.";
+		assert (kind != null): "Specified kind is null.";
+		assert (inputKindList != null): "Specified input kind list is null.";
 		if (!localKindMap.containsKey(kind))
 			throw new DataException("Kind not defined", kind);
 		final String fqKind = localKindMap.get(kind);
@@ -80,6 +75,7 @@ public class ImportData extends InterfaceData {
 	}
 
 	public @Override void defineStatement(final Statement statement) throws DataException {
+		// prefix voodoo already done by TermExpression and AbstractStatementCommand
 		defineSymbol(statement);
 	}
 

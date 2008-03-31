@@ -4,7 +4,7 @@ import jhilbert.data.TermExpression;
 import jhilbert.exceptions.GeneralException;
 
 /**
- * Exception throws when an expression unification fails.
+ * Exception thrown when an expression unification fails.
  *
  * @see jhilbert.data.TermExpression#unify()
  */

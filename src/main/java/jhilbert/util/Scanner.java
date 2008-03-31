@@ -38,19 +38,16 @@ public abstract class Scanner<E> {
 	 * will return an empty string.
 	 */
 	public void resetContext() {
-		context.delete(0, context.length());
+		context = new StringBuilder();
 	}
 
 	/**
 	 * Sets the context of this scanner.
 	 *
-	 * @param context StringBuilder context.
-	 *
-	 * @throws NullPointerException if context is <code>null</code>.
+	 * @param context StringBuilder context (must not be <code>null</code>).
 	 */
 	protected void setContext(final StringBuilder context) {
-		if (context == null)
-			throw new NullPointerException("Null context supplied.");
+		assert (context != null): "Supplied context is null.";
 		this.context = context;
 	}
 

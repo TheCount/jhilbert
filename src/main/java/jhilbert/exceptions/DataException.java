@@ -3,7 +3,7 @@ package jhilbert.exceptions;
 import jhilbert.exceptions.GeneralException;
 
 /**
- * Exception throws when something goes wrong with the data.
+ * Exception thrown when something goes wrong with the data.
  *
  * @see jhilbert.data.ModuleData
  *

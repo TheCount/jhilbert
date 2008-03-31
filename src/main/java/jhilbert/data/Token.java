@@ -41,14 +41,11 @@ public class Token implements Cloneable {
 	/**
 	 * Creates a new token with the specified String representation and token class.
 	 *
-	 * @param repr String representation of this token.
+	 * @param repr String representation of this token (must not be <code>null</code>.
 	 * @param tokenClass token class of this token.
-	 *
-	 * @throws NullPointerException if repr is <code>null</code>.
 	 */
 	public Token(final String repr, final TokenClass tokenClass) {
-		if (repr == null)
-			throw new NullPointerException("Specified representation is null.");
+		assert (repr != null): "Specified representation is null.";
 		this.repr = repr;
 		this.tokenClass = tokenClass;
 	}

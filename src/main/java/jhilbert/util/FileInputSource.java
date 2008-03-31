@@ -13,16 +13,14 @@ public class FileInputSource extends StreamInputSource {
 	/**
 	 * Creates a new {@link FileInputStream} from a filename.
 	 *
-	 * @param filename the file name.
+	 * @param filename the file name (must not be <code>null</code>).
 	 *
 	 * @return the new <code>FileInputStream</code>.
 	 *
-	 * @throws NullPointerException if filename is <code>null</code>.
 	 * @throws InputException if the file cannot be found.
 	 */
 	private static FileInputStream createFileInputStream(final String filename) throws InputException {
-		if (filename == null)
-			throw new NullPointerException("Supplied filename is null.");
+		assert (filename != null): "Supplied filename is null.";
 		try {
 			return new FileInputStream(filename);
 		} catch (FileNotFoundException e) {

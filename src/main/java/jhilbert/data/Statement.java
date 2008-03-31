@@ -43,22 +43,18 @@ public class Statement extends AbstractName implements Symbol {
 
 	/**
 	 * Create a new statement.
+	 * The parameters must not be <code>null</code>.
 	 *
 	 * @param name name of the statement.
 	 * @param rawDV raw distinct variable constraints.
 	 * @param hypotheses list of hypotheses.
 	 * @param consequent the consequent.
-	 *
-	 * @throws NullPointerException if one of the parameters is <code>null</code>.
 	 */
 	public Statement(final String name, final List<SortedSet<Variable>> rawDV, final List<TermExpression> hypotheses, final TermExpression consequent) {
 		super(name);
-		if (rawDV == null)
-			throw new NullPointerException("Supplied distinct variable constraints are null.");
-		if (hypotheses == null)
-			throw new NullPointerException("Supplied list of hypotheses is null.");
-		if (consequent == null)
-			throw new NullPointerException("Supplied conclusion is null.");
+		assert (rawDV != null): "Supplied distinct variable constraints are null.";
+		assert (hypotheses != null): "Supplied list of hypotheses is null.";
+		assert (consequent != null): "Supplied conclusion is null.";
 		dvConstraints = new DVConstraints();
 		for (SortedSet<Variable> varSet: rawDV)
 			dvConstraints.add(varSet);

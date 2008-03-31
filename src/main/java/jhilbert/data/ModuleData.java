@@ -49,13 +49,10 @@ public class ModuleData implements Cloneable {
 	 * Copy constructor.
 	 * Creates a shallow copy.
 	 *
-	 * @param moduleData module data to be copied.
-	 *
-	 * @throws NullPointerException if the specified module data is <code>null</code>.
+	 * @param moduleData module data to be copied (must not be <code>null</code>).
 	 */
 	protected ModuleData(final ModuleData moduleData) {
-		if (moduleData == null)
-			throw new NullPointerException("Supplied module data is null.");
+		assert (moduleData != null): "Supplied module data is null.";
 		kindMap = moduleData.kindMap;
 		terms = moduleData.terms;
 		symbols = moduleData.symbols;
@@ -78,15 +75,12 @@ public class ModuleData implements Cloneable {
 	/**
 	 * Checks whether the specified kind is defined.
 	 *
-	 * @param kind kind to check for.
+	 * @param kind kind to check for (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if the kind is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if the specified kind is <code>null</code>.
 	 */
 	public boolean containsKind(final String kind) {
-		if (kind == null)
-			throw new NullPointerException("Supplied kind is null.");
+		assert (kind != null): "Supplied kind is null.";
 		final Logger logger = Logger.getLogger(getClass());
 		if (logger.isTraceEnabled())
 			logger.trace("Current kind map: " + kindMap);
@@ -112,11 +106,11 @@ public class ModuleData implements Cloneable {
 
 	/**
 	 * Defines a new kind by binding it to an old one.
+	 * The parameters must not be <code>null</code>.
 	 *
 	 * @param oldKind an already defined kind.
 	 * @param newKind kind to be bound to oldKind.
 	 *
-	 * @throws NullPointerException if oldKind is <code>null</code> or newKind is <code>null</code>, unless a DataException gets thrown first.
 	 * @throws DataException if oldKind does not exist, or newKind already exists.
 	 */
 	public void bindKind(final String oldKind, final String newKind) throws DataException {
@@ -132,11 +126,9 @@ public class ModuleData implements Cloneable {
 	 * This method is identical to {@link #containsKind()}.
 	 * However, subclasses may override this method.
 	 *
-	 * @param kind kind to check for.
+	 * @param kind kind to check for (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if the kind is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if the specified kind is <code>null</code>.
 	 */
 	public boolean containsLocalKind(final String kind) {
 		return containsKind(kind);
@@ -158,15 +150,12 @@ public class ModuleData implements Cloneable {
 	/**
 	 * Checks whether a {@link AbstractComplexTerm} with the specified name is defined.
 	 *
-	 * @param name term name.
+	 * @param name term name (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if a complex term with this name is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if the specified name is <code>null</code>.
 	 */
 	public boolean containsTerm(final String name) {
-		if (name == null)
-			throw new NullPointerException("Supplied term name is null.");
+		assert (name != null): "Supplied term name is null.";
 		return terms.containsKey(name);
 	}
 
@@ -175,11 +164,9 @@ public class ModuleData implements Cloneable {
 	 * For proof modules, this method is identical to {@link #containsTerm()}.
 	 * In {@link InterfaceData}, a local translation is tried before falling back to containsTerm().
 	 *
-	 * @param name local term name.
+	 * @param name local term name (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if a complex term with this local name is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if the specified local name is <code>null</code>.
 	 */
 	public boolean containsLocalTerm(final String name) {
 		return containsTerm(name);
@@ -188,9 +175,8 @@ public class ModuleData implements Cloneable {
 	/**
 	 * Defines a new complex term.
 	 *
-	 * @param term AbstractComplexTerm to be defined.
+	 * @param term AbstractComplexTerm to be defined (must not be <code>null</code>).
 	 *
-	 * @throws NullPointerException if the specified term is <code>null</code>.
 	 * @throws DataException if the specified complex term already exists.
 	 */
 	public void defineTerm(final Definition term) throws DataException {
@@ -227,24 +213,20 @@ public class ModuleData implements Cloneable {
 	/**
 	 * Checks whether a {@link Symbol} with the specified name is defined.
 	 *
-	 * @param name symbol name.
+	 * @param name symbol name (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if a symbol with this name is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if the specified name is <code>null</code>.
 	 */
 	public boolean containsSymbol(final String name) {
-		if (name == null)
-			throw new NullPointerException("Supplied symbol name is null.");
+		assert (name != null): "Supplied symbol name is null.";
 		return symbols.containsKey(name);
 	}
 
 	/**
 	 * Defines a new symbol.
 	 *
-	 * @param symbol Symbol to be defined.
+	 * @param symbol Symbol to be defined (must not be <code>null</code>).
 	 *
-	 * @throws NullPointerException if the specified symbol is <code>null</code>.
 	 * @throws DataException if the specified symbol already exists.
 	 */
 	public void defineSymbol(final Symbol symbol) throws DataException {
@@ -258,9 +240,8 @@ public class ModuleData implements Cloneable {
 	 * Defines a new variable.
 	 * Variables are special in that they are defined only locally.
 	 *
-	 * @param variable Variable to be defined.
+	 * @param variable Variable to be defined (must not be <code>null</code>).
 	 *
-	 * @throws NullPointerException if the specified variable is <code>null</code>.
 	 * @throws DataException if a symbol with the name of the specified variable already exists.
 	 */
 	public void defineVariable(final Variable variable) throws DataException {
@@ -283,11 +264,9 @@ public class ModuleData implements Cloneable {
 	 * This method is identical to {@link #containsSymbol()}. Subclasses may override this method to provide access to
 	 * local symbols.
 	 *
-	 * @param name symbol name.
+	 * @param name symbol name (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if a local symbol with this name is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if the specified name is <code>null</code>.
 	 */
 	public boolean containsLocalSymbol(final String name) {
 		return containsSymbol(name);
@@ -311,15 +290,12 @@ public class ModuleData implements Cloneable {
 	 * This is a convenience method which checks if the local symbol is defined
 	 * and then checks whether it is a variable.
 	 *
-	 * @param name variable name.
+	 * @param name variable name (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if a variable with the specified name is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if name is <code>null</code>.
 	 */
 	public boolean containsVariable(final String name) {
-		if (name == null)
-			throw new NullPointerException("Supplied name is null.");
+		assert (name != null): "Supplied name is null.";
 		Symbol s = getLocalSymbol(name);
 		return (s instanceof Variable);
 	}
@@ -327,29 +303,24 @@ public class ModuleData implements Cloneable {
 	/**
 	 * Checks whether an {@link Interface} with the specified name is defined.
 	 *
-	 * @param name name of interface.
+	 * @param name name of interface (must not be <code>null</code>).
 	 *
 	 * @return <code>true</code> if an Interface with the specified name is defined, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if name is <code>null</code>.
 	 */
 	public boolean containsInterface(final String name) {
-		if (name == null)
-			throw new NullPointerException("Supplied name is null.");
+		assert (name != null): "Supplied name is null.";
 		return interfaces.containsKey(name);
 	}
 
 	/**
 	 * Defines a new Interface.
 	 *
-	 * @param iface Interface to define.
+	 * @param iface Interface to define (must not be <code>null</code>).
 	 *
-	 * @throws NullPointerException if iface is <code>null</code>.
 	 * @throws DataException if the interface is already defined.
 	 */
 	public void defineInterface(final Interface iface) throws DataException {
-		if (iface == null)
-			throw new NullPointerException("Supplied interface is null.");
+		assert (iface != null): "Supplied interface is null.";
 		final String name = iface.getName();
 		if (containsInterface(name))
 			throw new DataException("Interface already defined", name);
@@ -369,7 +340,7 @@ public class ModuleData implements Cloneable {
 
 	/**
 	 * Returns the namespace prefix.
-	 * For proof modules, this is always the empty strings.
+	 * For proof modules, this is always the empty string.
 	 * However, subclasses of {@link ModuleData} may override this method.
 	 *
 	 * @return empty string.
