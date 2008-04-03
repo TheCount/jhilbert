@@ -163,12 +163,12 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 
 	private void variables(final LinkedHashSet<Variable> result) {
 		Term value = getValue();
-		if (value instanceof Variable)
+		if (value.isVariable())
 			result.add((Variable) value);
 		else {
 			final int childCount = childCount();
-			for (int i = 0; i != childCount; ++i)
-				getChild(i).variables(result);
+			for (TermExpression child: getChildren())
+				child.variables(result);
 		}
 	}
 
@@ -185,7 +185,7 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 	public TermExpression subst(final Map<Variable, TermExpression> varAssignments) {
 		assert (varAssignments != null): "Supplied variable assignments are null.";
 		final Term value = getValue();
-		if (value instanceof Variable) {
+		if (value.isVariable()) {
 			final Variable variable = (Variable) value;
 			if (varAssignments.containsKey(variable))
 				return varAssignments.get(variable);
@@ -193,9 +193,8 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 				return this;
 		}
 		final TermExpression result = new TermExpression((AbstractComplexTerm) value);
-		final int childCount = childCount();
-		for (int i = 0; i != childCount; ++i)
-			result.addChild(getChild(i).subst(varAssignments));
+		for (TermExpression child: getChildren())
+			result.addChild(child.subst(varAssignments));
 		return result;
 	}
 
@@ -214,12 +213,12 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 		assert (target != null): "Supplied target is null.";
 		final Term sValue = getValue();
 		final Term tValue = target.getValue();
-		if (sValue instanceof Variable) {
-			if (!(tValue instanceof Variable))
+		if (sValue.isVariable()) {
+			if (!(tValue.isVariable()))
 				return false;
 			return sValue.equals(tValue);
 		}
-		if (!(tValue instanceof AbstractComplexTerm))
+		if (tValue.isVariable())
 			return false;
 		if (sValue.equals(tValue)) {
 			final int childCount = childCount();
@@ -267,8 +266,8 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 			logger.trace("Dummy match: matching " + this + " against " + target);
 		final Term sValue = getValue();
 		final Term tValue = target.getValue();
-		if (sValue instanceof Variable) {
-			if (!(tValue instanceof Variable)) {
+		if (sValue.isVariable()) {
+			if (!(tValue.isVariable())) {
 				logger.error("Error matching " + sValue + " against " + tValue);
 				return false;
 			}
@@ -286,7 +285,7 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 			}
 			return sValue.equals(tValue);
 		}
-		if (!(tValue instanceof AbstractComplexTerm)) {
+		if (tValue.isVariable()) {
 			logger.error("Error matching " + sValue + " against " + tValue);
 			return false;
 		}
@@ -334,7 +333,7 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 		assert (target != null): "Supplied target is null.";
 		assert (varMap != null): "Supplied variable map is null.";
 		final Term sValue = getValue();
-		if (sValue instanceof Variable) {
+		if (sValue.isVariable()) {
 			final Variable sVar = (Variable) sValue;
 			if (varMap.containsKey(sVar))
 				if (!varMap.get(sVar).matches(target))
@@ -349,7 +348,7 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 			logger.trace("Unification: sValue: " + sValue);
 			logger.trace("Unification: tValue: " + tValue);
 		}
-		if (tValue instanceof Variable)
+		if (tValue.isVariable())
 			throw new UnifyException("Trying to unify complex term against variable", this, target);
 		try {
 			if (sValue.equals(tValue)) {
@@ -400,8 +399,8 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 		assert (translationMap != null) : "Supplied variable translation map is null.";
 		final Term sValue = getValue();
 		final Term tValue = target.getValue();
-		if (sValue instanceof Variable) {
-			if (!(tValue instanceof Variable))
+		if (sValue.isVariable()) {
+			if (!(tValue.isVariable()))
 				throw new DataException("Expression rhs should be a variable", sValue.toString() + "/" + target);
 			final Variable sVar = (Variable) sValue;
 			if (translationMap.containsKey(sVar)) {
@@ -414,7 +413,7 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 			translationMap.put(sVar, (Variable) tValue);
 			return;
 		}
-		if ((tValue instanceof Variable) || (!sValue.equals(tValue)))
+		if ((tValue.isVariable()) || (!sValue.equals(tValue)))
 			throw new DataException("Expressions are not equal", sValue.toString() + "/" + tValue);
 		final int childCount = childCount();
 		for (int i = 0; i != childCount; ++i)
@@ -428,12 +427,12 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 	 */
 	public @Override String toString() {
 		final Term value = getValue();
-		if (value instanceof Variable)
+		if (value.isVariable())
 			return value.getName();
 		final StringBuilder result = new StringBuilder();
 		result.append('(').append(value.getName());
-		for (int i = 0; i != childCount(); ++i)
-			result.append(' ').append(getChild(i).toString());
+		for (TermExpression child: getChildren())
+			result.append(' ').append(child.toString());
 		result.append(')');
 		return result.toString();
 	}

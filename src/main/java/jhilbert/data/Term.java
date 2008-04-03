@@ -35,4 +35,11 @@ public interface Term extends Name {
 	 */
 	public String getKind();
 
+	/**
+	 * Checks whether this term is a variable.
+	 *
+	 * @return <code>true</code> if this object is an instance of {@link Variable}, <code>false</code> otherwise.
+	 */
+	public boolean isVariable();
+
 }

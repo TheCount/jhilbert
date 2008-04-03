@@ -25,8 +25,16 @@ package jhilbert.data;
 import jhilbert.data.Name;
 
 /**
- * Marker interface for names from the Symbol namespace.
+ * Interface for names from the Symbol namespace.
  * FIXME: enhance description.
  */
 public interface Symbol extends Name {
+
+	/**
+	 * Checks whether this symbol is a variable.
+	 *
+	 * @return <code>true</code> if this symbol is a {@link Variable}, <code>false</code> otherwise.
+	 */
+	public boolean isVariable();
+
 }

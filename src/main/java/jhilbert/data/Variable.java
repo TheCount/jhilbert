@@ -57,4 +57,8 @@ public class Variable extends AbstractName implements Term, Symbol {
 		return kind;
 	}
 
+	public final boolean isVariable() {
+		return true;
+	}
+
 }

@@ -133,4 +133,8 @@ public class Statement extends AbstractName implements Symbol {
 		return mandatoryVariables;
 	}
 
+	public final boolean isVariable() {
+		return false;
+	}
+
 }

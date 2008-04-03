@@ -84,4 +84,8 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 */
 	public abstract String getInputKind(final int i); 
 
+	public final boolean isVariable() {
+		return false;
+	}
+
 }
