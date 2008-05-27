@@ -1,3 +1,4 @@
+* Create a class for kinds, so prefixing is not such a PITA
 * specification and proof of soundness
 * defs in interface files
 * unit tests

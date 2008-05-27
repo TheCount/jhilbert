@@ -34,8 +34,8 @@ import jhilbert.commands.StatementCommand;
 import jhilbert.commands.TermCommand;
 import jhilbert.commands.TheoremCommand;
 import jhilbert.commands.VariableCommand;
+import jhilbert.data.Data;
 import jhilbert.data.InterfaceData;
-import jhilbert.data.ModuleData;
 import jhilbert.data.Token;
 import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
@@ -56,7 +56,7 @@ public final class CommandScanner extends Scanner<Command> {
 	/**
 	 * Data.
 	 */
-	private final ModuleData data;
+	private final Data data;
 
 	/**
 	 * admissible commands
@@ -72,7 +72,7 @@ public final class CommandScanner extends Scanner<Command> {
 	 * @param data module data, used for parsing.
 	 * @param admissibleCommands Set of admissible commands.
 	 */
-	public CommandScanner(final InputSource inputSource, final ModuleData data, final Set<Command.CommandClass> admissibleCommands) {
+	public CommandScanner(final InputSource inputSource, final Data data, final Set<Command.CommandClass> admissibleCommands) {
 		assert (data != null): "Supplied data are null.";
 		assert (admissibleCommands != null): "Supplied set of admissible commands is null.";
 		this.tokenScanner = new TokenScanner(inputSource);

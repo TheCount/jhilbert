@@ -26,12 +26,16 @@ import java.util.Iterator;
 import java.util.List;
 import jhilbert.commands.InterfaceCommand;
 import jhilbert.commands.ParamCommand;
-import jhilbert.data.ExportData;
-import jhilbert.data.Interface;
+import jhilbert.data.Data;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.ModuleData;
+import jhilbert.exceptions.DataException;
+import jhilbert.exceptions.InputException;
 import jhilbert.exceptions.SyntaxException;
+import jhilbert.exceptions.VerifyException;
+import jhilbert.util.InterfaceLoader;
 import jhilbert.util.TokenScanner;
+import org.apache.log4j.Logger;
 
 /**
  * Command exporting a new {@link jhilbert.data.Interface}
@@ -39,6 +43,11 @@ import jhilbert.util.TokenScanner;
  * @see InterfaceCommand
  */
 public final class ExportCommand extends InterfaceCommand {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(ExportCommand.class);
 
 	/**
 	 * Scans a new ExportCommand from a TokenScanner.
@@ -51,7 +60,7 @@ public final class ExportCommand extends InterfaceCommand {
 	 *
 	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, ModuleData)
 	 */
-	public ExportCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
+	public ExportCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		super("export", tokenScanner, data);
 	}
 
@@ -60,14 +69,27 @@ public final class ExportCommand extends InterfaceCommand {
 	 * This is used to create a phony export command for parameter checking.
 	 * Package access only, used by ParamCommand.
 	 *
+	 * FIXME: scrap this ctor?
+	 *
 	 * @param paramCommand ParamCommand to be copied.
 	 */
 	ExportCommand(final ParamCommand paramCommand) {
 		super(paramCommand);
 	}
 
-	protected @Override InterfaceData createInterfaceData(final List<Interface> parameters) {
-		return new ExportData(prefix, parameters.iterator(), data);
+	public @Override void execute() throws VerifyException {
+		super.execute();
+		try {
+			final ModuleData moduleData = (ModuleData) data;
+			final InterfaceData interfaceData = InterfaceLoader.loadInterface(parameter.getLocator());
+			interfaceData.exportFrom(moduleData, parameter);
+		} catch (InputException e) {
+			logger.error("Error loading interface " + parameter.getLocator(), e);
+			throw new VerifyException("Error loading interface", parameter.getLocator(), e);
+		} catch (DataException e) {
+			logger.error("Error exporting interface " + name, e);
+			throw new VerifyException("Error exporting interface", name, e);
+		}
 	}
 
 }

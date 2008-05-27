@@ -20,23 +20,24 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.exceptions;
 
-import jhilbert.data.Name;
+import jhilbert.exceptions.GeneralException;
 
 /**
- * Interface for names from the Symbol namespace.
- * FIXME: enhance description.
+ * Exception thrown when interface bytecode with an unknown format
+ * identifier is encountered.
  */
-public interface Symbol extends Name, Cloneable {
+public class UnknownFormatException extends GeneralException {
 
 	/**
-	 * Checks whether this symbol is a variable.
+	 * Creates a new UnknownFormatException with the specified detail message and context.
 	 *
-	 * @return <code>true</code> if this symbol is a {@link Variable}, <code>false</code> otherwise.
+	 * @param message detail message.
+	 * @param context context String.
 	 */
-	public boolean isVariable();
-
-	public Symbol clone();
+	public UnknownFormatException(final String message, final String context) {
+		super(message, context);
+	}
 
 }

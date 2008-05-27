@@ -22,6 +22,7 @@
 
 package jhilbert.data;
 
+import jhilbert.data.Kind;
 import jhilbert.data.Variable;
 
 /**
@@ -33,26 +34,33 @@ public class DummyVariable extends Variable {
 	/**
 	 * Internal id of this dummy.
 	 */
-	private static int id;
-
-	/**
-	 * Initialize id with zero.
-	 */
-	static {
-		id = 0;
-	}
+	private static int id = 0;
 
 	/**
 	 * Creates a new dummy variable with the specified kind.
 	 * This dummy variable will be unequal to all other currently existing variables.
 	 *
 	 * @param kind kind of dummy variable.
-	 *
-	 * @throws NullPointerException if kind is <code>null</code>.
 	 */
-	public DummyVariable(final String kind) {
+	public DummyVariable(final Kind kind) {
 		super("(dummy" + id + ")", kind);
 		++id;
+	}
+
+	/**
+	 * Upgrades the specified variable to a dummy variable.
+	 * Use with caution.
+	 *
+	 * @param var variable to be upgraded.
+	 *
+	 * @throws NullPointerException if var is <code>null</code>.
+	 */
+	private DummyVariable(final Variable var) {
+		super(var.getName(), var.getKind());
+	}
+
+	public @Override DummyVariable clone() {
+		return new DummyVariable(super.clone());
 	}
 
 }

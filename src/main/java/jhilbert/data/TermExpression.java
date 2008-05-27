@@ -22,14 +22,17 @@
 
 package jhilbert.data;
 
+import java.io.EOFException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import jhilbert.data.AbstractComplexTerm;
-import jhilbert.data.ModuleData;
+import jhilbert.data.Data;
 import jhilbert.data.Term;
 import jhilbert.data.Token;
 import jhilbert.data.TreeNode;
@@ -37,6 +40,8 @@ import jhilbert.data.Variable;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.UnifyException;
+import jhilbert.util.DataInputStream;
+import jhilbert.util.DataOutputStream;
 import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
@@ -52,7 +57,7 @@ import org.apache.log4j.Logger;
  * </ul>
  * </ul>
  */
-public class TermExpression extends TreeNode<Term, TermExpression> {
+public final class TermExpression extends TreeNode<Term, TermExpression> {
 
 	/**
 	 * Logger for this class.
@@ -60,16 +65,93 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 	private static final Logger logger = Logger.getLogger(TermExpression.class);
 
 	/**
+	 * Creates a new TermExpression from the specified data input stream.
+	 *
+	 * @param in data input stream.
+	 * @param data context data.
+	 * @param nameList name list for IDs.
+	 * @param varList variable list.
+	 * @param termsLower lower bound for terms.
+	 * @param termsUpper upper bound for terms.
+	 *
+	 * @throws EOFException upon unexpected end of stream.
+	 * @throws IOException if an I/O error occurs.
+	 * @throws DataException if the input stream is inconsistent.
+	 */
+	static TermExpression create(final DataInputStream in, final Data data, final List<String> nameList,
+		final List<Variable> varList, final int termsLower, final int termsUpper)
+	throws EOFException, IOException, DataException {
+		// load expression stack
+		final Stack<Integer> exprStack = new Stack();
+		for (int id = in.readInt(); id != 0; id = in.readInt())
+			exprStack.push(id);
+		// create term expression
+		final TermExpression result = createPrivate(exprStack, data, nameList, varList, termsLower, termsUpper);
+		if (!exprStack.empty()) {
+			logger.error("Stack not empty after loading term " + result.getValue());
+			logger.debug("Stack: " + exprStack);
+			logger.debug("Variable list: " + varList);
+			logger.trace("Name list: " + nameList);
+			throw new DataException("Stack not empty after parsing term", result.getValue().toString());
+		}
+		return result;
+	}
+
+	private static TermExpression createPrivate(final Stack<Integer> exprStack, final Data data, final List<String> nameList,
+		final List<Variable> varList, final int termsLower, final int termsUpper)
+	throws DataException {
+		if (exprStack.empty()) {
+			logger.error("Stack underflow while loading term expression.");
+			logger.debug("Variable list: " + varList);
+			throw new DataException("Stack underflow while loading term expression.", "none");
+		}
+		final int leadingID = exprStack.pop();
+		assert (leadingID != 0): "Zero id in expression stack: this cannot happen.";
+		if (leadingID < 0) {
+			if (~leadingID >= varList.size()) {
+				logger.error("Invalid variable ID: " + leadingID);
+				logger.debug("Valid IDs: -1 >= ID > " + ~varList.size());
+				throw new DataException("Invalid variable ID", Integer.toString(leadingID));
+			}
+			return new TermExpression(varList.get(~leadingID));
+		} else {
+			if ((leadingID < termsLower) || (leadingID >= termsUpper)) {
+				logger.error("Invalid term ID: " + leadingID);
+				logger.debug("Valid IDs: " + termsLower + " <= ID < " + termsUpper);
+				throw new DataException("Invalid term ID", Integer.toString(leadingID));
+			}
+			final AbstractComplexTerm term = data.getTerm(nameList.get(leadingID));
+			if (term == null) {
+				logger.error("Term not found: " + nameList.get(leadingID));
+				throw new DataException("Term not found", nameList.get(leadingID));
+			}
+			final TermExpression result = new TermExpression(term);
+			final int placeCount = term.placeCount();
+			assert (placeCount >= 0): "Unknown term place count while loading term (this cannot happen)";
+			for (int i = 0; i != placeCount; ++i) {
+				final TermExpression child = createPrivate(exprStack, data, nameList, varList, termsLower, termsUpper);
+				// mutual kind assurance
+				final Term value = child.getValue();
+				term.ensureInputKind(i, value.getKind());
+				if (!value.isVariable())
+					((AbstractComplexTerm) value).ensureKind(term.getInputKind(i));
+				result.addChild(child);
+			}
+			return result;
+		}
+	}
+
+	/**
 	 * Scans a new TermExpression.
 	 * The TermExpression is scanned with the specified TokenScanner,
 	 * the names being retrieved from the specified ModuleData.
 	 *
 	 * @param scanner the TokenScanner to scan the LISP expression.
-	 * @param data the data to obtain {@link Variable}s and {@link ComplexTerm}s.
+	 * @param data the data to obtain {@link Variable}s and {@link AbstractComplexTerm}s.
 	 *
 	 * @throws DataException if a problem with the scanner occurs, or if the scanned expression is invalid.
 	 */
-	public TermExpression(final TokenScanner scanner, final ModuleData data) throws DataException {
+	public TermExpression(final TokenScanner scanner, final Data data) throws DataException {
 		String atom = null;
 		StringBuilder context = null;
 		try {
@@ -77,44 +159,61 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 			switch (token.tokenClass) {
 				case ATOM:
 					atom = token.toString();
-					if (!data.containsLocalSymbol(atom)) {
+					final Variable variable = data.getVariable(atom);
+					if (variable == null) {
+						logger.error("Variable " + atom + " not found.");
 						logger.debug(data);
-						throw new DataException("Symbol not found", atom);
+						throw new DataException("Variable not found", atom);
 					}
-					setValue((Variable) data.getLocalSymbol(atom));
+					setValue(variable);
 					return;
 				case BEGIN_EXP:
 					context = new StringBuilder('(');
 					atom = scanner.getAtom();
 					context.append(atom);
-					if (!data.containsLocalTerm(atom))
-						throw new DataException("ComplexTerm not found", atom);
-					AbstractComplexTerm complexTerm = data.getLocalTerm(atom);
-					setValue(complexTerm);
-					final int placeCount = complexTerm.placeCount();
-					if (logger.isTraceEnabled())
-						logger.trace("Complex term " + complexTerm + " has " + placeCount + " places");
-					for (int i = 0; i != placeCount; ++i) {
+					AbstractComplexTerm term = data.getTerm(atom);
+					if (term == null) {
+						logger.error("Term " + atom + " not found.");
+						throw new DataException("Term not found", atom);
+					}
+					setValue(term);
+					int placeCount = 0;
+					for (Token nextToken = scanner.getToken();
+							nextToken.tokenClass != Token.TokenClass.END_EXP;
+							nextToken = scanner.getToken()) {
+						scanner.putToken(nextToken);
 						context.append(' ');
 						final TermExpression termExpression = new TermExpression(scanner, data);
 						context.append(termExpression.toString());
-						final String wantKind = data.getKind(complexTerm.getInputKind(i));
-						final String haveKind = data.getKind(termExpression.getKind());
-						if (!wantKind.equals(haveKind))
-							throw new DataException("Kind mismatch", wantKind + "/" + haveKind);
+						// mutual kind assurance
+						final Term paramTerm = termExpression.getValue();
+						term.ensureInputKind(placeCount, paramTerm.getKind());
+						if (!paramTerm.isVariable())
+							((AbstractComplexTerm) paramTerm)
+								.ensureKind(term.getInputKind(placeCount));
 						addChild(termExpression);
+						++placeCount;
 					}
-					scanner.endExp();
 					context.append(')');
+					term.ensurePlaceCount(placeCount);
+					if (logger.isTraceEnabled())
+						logger.trace("Complex term " + term + " has " + placeCount + " places");
 					return;
 				default:
+					logger.error("Expected ATOM or BEGIN_EXP while scanning term expression.");
+					logger.error("Expression scanned thus far: " + context);
+					logger.error("Next token: " + token.tokenClass);
 					throw new DataException("Token error: expected ATOM or BEGIN_EXP", token.tokenClass.toString());
 			}
-		} catch (ClassCastException e) {
-			throw new DataException("Symbol is not a variable", atom, e);
+		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input.", e);
+			throw new DataException("Unexpected end of input", context.toString(), e);
 		} catch (ScannerException e) {
+			logger.error("Error scanning term expression.", e);
 			throw new DataException("Error scanning term expression", context.toString(), e);
 		} catch (DataException e) {
+			logger.error("Error caused by previous error.", e);
+			logger.error("Expression scanned thus far: " + context);
 			throw new DataException("Token error or term not found", context.toString(), e);
 		}
 	}
@@ -418,6 +517,34 @@ public class TermExpression extends TreeNode<Term, TermExpression> {
 		final int childCount = childCount();
 		for (int i = 0; i != childCount; ++i)
 			getChild(i).equalityMap(target.getChild(i), translationMap);
+	}
+
+	/**
+	 * Stores this TermExpression to the specified output stream.
+	 *
+	 * @param out data output stream.
+	 * @param termNameTable name to ID table for storing terms.
+	 * @param varNameTable name to ID table for storing variables.
+	 *
+	 * @throws IOException if an I/O error occurs.
+	 */
+	void store(final DataOutputStream out, final Map<String, Integer> termNameTable,
+			final Map<String, Integer> varNameTable) throws IOException {
+		// store zero terminated term
+		storePrivate(out, termNameTable, varNameTable);
+		out.writeInt(0);
+	}
+
+	void storePrivate(final DataOutputStream out, final Map<String, Integer> termNameTable,
+			final Map<String, Integer> varNameTable) throws IOException {
+		// store TermExpression in RPN format
+		for (int i = childCount() - 1; i >= 0; --i)
+			getChild(i).storePrivate(out, termNameTable, varNameTable);
+		final Term value = getValue();
+		if (value.isVariable())
+			out.writeInt(varNameTable.get(value.getName()));
+		else
+			out.writeInt(termNameTable.get(value.getName()));
 	}
 
 	/**

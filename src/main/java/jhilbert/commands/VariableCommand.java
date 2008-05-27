@@ -25,7 +25,7 @@ package jhilbert.commands;
 import java.util.ArrayList;
 import java.util.List;
 import jhilbert.commands.Command;
-import jhilbert.data.ModuleData;
+import jhilbert.data.Data;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
 import jhilbert.exceptions.DataException;
@@ -68,7 +68,7 @@ public final class VariableCommand extends Command {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
-	public VariableCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
+	public VariableCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
 		StringBuilder context = new StringBuilder("var (");
@@ -85,14 +85,18 @@ public final class VariableCommand extends Command {
 			}
 			final int length = context.length();
 			context.delete(length - 1, length);
-			if (token.tokenClass != Token.TokenClass.END_EXP)
+			if (token.tokenClass != Token.TokenClass.END_EXP) {
+				logger.error("Syntax error: expected \")\" in " + context);
 				throw new SyntaxException("Expected \")\"", context.toString());
+			}
 			name = context.substring(5);
 			context.append(')');
 			tokenScanner.putToken(token);
 		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input");
 			throw new SyntaxException("Unexpected end of input", context.toString(), e);
 		} catch (ScannerException e) {
+			logger.error("Scanner error in context " + context);
 			throw new SyntaxException("Scanner error", context.toString(), e);
 		}
 	}
@@ -100,16 +104,18 @@ public final class VariableCommand extends Command {
 	public @Override void execute() throws VerifyException {
 		String context = kind;
 		try {
-			if (!data.containsLocalKind(kind)) {
+			final String definedKind = data.getKind(kind);
+			if (definedKind == null) {
+				logger.error("Kind " + kind + " not defined");
 				logger.debug("Current data: " + data);
 				throw new VerifyException("Kind not defined", kind);
 			}
-			final String definedKind = data.getLocalKind(kind);
 			for (String varName: varList) {
 				context = varName;
-				data.defineVariable(new Variable(varName, definedKind));
+				data.defineSymbol(new Variable(varName, definedKind));
 			}
 		} catch (DataException e) {
+			logger.error("Error defining variable(s)");
 			throw new VerifyException("var error", context, e);
 		}
 	}

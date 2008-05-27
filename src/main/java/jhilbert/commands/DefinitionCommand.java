@@ -23,10 +23,11 @@
 package jhilbert.commands;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import jhilbert.commands.Command;
+import jhilbert.data.Data;
 import jhilbert.data.Definition;
-import jhilbert.data.ModuleData;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
@@ -35,6 +36,7 @@ import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
 import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
+import org.apache.log4j.Logger;
 
 /**
  * Command introducing a new {@link jhilbert.data.Definition}.
@@ -44,6 +46,11 @@ import jhilbert.util.TokenScanner;
  * (name var1 &hellip; varN) {@link jhilbert.data.TermExpression}
  */
 public final class DefinitionCommand extends Command {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(DefinitionCommand.class);
 
 	/**
 	 * List of variables serving as parameters.
@@ -60,11 +67,11 @@ public final class DefinitionCommand extends Command {
 	 * The parameters must not be <code>null</code>.
 	 *
 	 * @param tokenScanner TokenScanner to scan from.
-	 * @param data ModuleData.
+	 * @param data Data.
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
-	public DefinitionCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
+	public DefinitionCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
 		final StringBuilder context = new StringBuilder("def ");
@@ -84,32 +91,44 @@ public final class DefinitionCommand extends Command {
 			final int length = context.length();
 			context.delete(length - 2, length);
 			context.append("): ");
-			if (token.tokenClass != Token.TokenClass.END_EXP)
+			if (token.tokenClass != Token.TokenClass.END_EXP) {
+				logger.error("Syntax error: expected \")\" in context " + context);
 				throw new SyntaxException("Expected \")\"", context.toString());
+			}
 			definiens = new TermExpression(tokenScanner, data);
 		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input while scanning definition " + name, e);
 			throw new SyntaxException("Unexpected end of input", context.toString(), e);
 		} catch (DataException e) {
+			logger.error("Error scanning definiens in context " + context, e);
 			throw new SyntaxException("Error scanning definiens", context.toString(), e);
 		} catch (ScannerException e) {
+			logger.error("Scanner error in context " + context, e);
 			throw new SyntaxException("Scanner error", context.toString(), e);
 		}
 	}
 
 	public @Override void execute() throws VerifyException {
-		final String context = "def " + name;
-		try {
-			if (data.containsTerm(name))
-				throw new VerifyException("Term already defined", context);
-			List<Variable> varList = new ArrayList();
-			for (String varName: varNameList) {
-				if (!data.containsVariable(varName))
-					throw new VerifyException("Variable " + varName + " not defined", context);
-				varList.add((Variable) data.getLocalSymbol(varName));
+		final LinkedHashSet<Variable> varList = new LinkedHashSet();
+		for (final String varName: varNameList) {
+			final Variable var = data.getVariable(varName);
+			if (var == null) {
+				logger.error("Variable " + varName + " does not exist.");
+				logger.error("Location: def " + name);
+				throw new VerifyException("Variable does not exist", varName);
 			}
+			if (!varList.add(var)) {
+				logger.error("Duplicate entry in variable list.");
+				logger.error("Offending variable name:" + varName);
+				logger.error("Location: def " + name);
+				throw new VerifyException("Duplicte entry in variable list", name);
+			}
+		}
+		try {
 			data.defineTerm(new Definition(name, varList, definiens));
 		} catch (DataException e) {
-			throw new VerifyException("Data error (this should not happen)", context, e);
+			logger.error("A term with name " + name + " does already exist.", e);
+			throw new VerifyException("Term already exists", name, e);
 		}
 	}
 

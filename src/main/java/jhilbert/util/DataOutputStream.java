@@ -20,23 +20,35 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.util;
 
-import jhilbert.data.Name;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
- * Interface for names from the Symbol namespace.
- * FIXME: enhance description.
+ * Class which slightly enhances the DataOutputStream provided by the JDK.
  */
-public interface Symbol extends Name, Cloneable {
+public class DataOutputStream extends java.io.DataOutputStream {
 
 	/**
-	 * Checks whether this symbol is a variable.
+	 * Creates a new data output stream to write data to the specified underlying output stream.
 	 *
-	 * @return <code>true</code> if this symbol is a {@link Variable}, <code>false</code> otherwise.
+	 * @param out the underlying output stream, to be saved for later use.
 	 */
-	public boolean isVariable();
+	public DataOutputStream(final OutputStream out) {
+		super(out);
+	}
 
-	public Symbol clone();
+	/**
+	 * Writes the specified string as character array, terminated by a zero character.
+	 *
+	 * @param string a string to be written.
+	 *
+	 * @throws IOException if an I/O error occurs.
+	 */
+	public final void writeString(final String string) throws IOException {
+		super.writeChars(string);
+		super.writeChar(0);
+	}
 
 }

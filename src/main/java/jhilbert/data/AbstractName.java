@@ -35,7 +35,7 @@ public abstract class AbstractName implements Name {
 	/**
 	 * Name.
 	 */
-	private final String name;
+	private String name;
 
 	/**
 	 * Create a new AbstractName.
@@ -56,6 +56,10 @@ public abstract class AbstractName implements Name {
 	 */
 	public final String getName() {
 		return name;
+	}
+
+	public final void prefix(final String prefix) {
+		name = prefix + name;
 	}
 
 	/**
@@ -79,5 +83,7 @@ public abstract class AbstractName implements Name {
 	public int compareTo(final Name n) {
 		return name.compareTo(n.getName());
 	}
+
+	public abstract AbstractName clone();
 
 }

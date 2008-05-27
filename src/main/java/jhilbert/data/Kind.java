@@ -22,21 +22,24 @@
 
 package jhilbert.data;
 
-import jhilbert.data.Name;
+import jhilbert.data.AbstractName;
 
 /**
- * Interface for names from the Symbol namespace.
- * FIXME: enhance description.
+ * Class representing a kind.
  */
-public interface Symbol extends Name, Cloneable {
+public final class Kind extends AbstractName {
 
 	/**
-	 * Checks whether this symbol is a variable.
+	 * Creates a new kind with the specified name.
 	 *
-	 * @return <code>true</code> if this symbol is a {@link Variable}, <code>false</code> otherwise.
+	 * @param name name of the new kind.
 	 */
-	public boolean isVariable();
+	public Kind(final String name) {
+		super(name);
+	}
 
-	public Symbol clone();
+	public @Override Kind clone() {
+		return new Kind(getName().clone());
+	}
 
 }

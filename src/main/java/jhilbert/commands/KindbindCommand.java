@@ -23,12 +23,13 @@
 package jhilbert.commands;
 
 import jhilbert.commands.Command;
-import jhilbert.data.ModuleData;
+import jhilbert.data.Data;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
 import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
+import org.apache.log4j.Logger;
 
 /**
  * Command binding one kind to another.
@@ -38,6 +39,11 @@ import jhilbert.util.TokenScanner;
  * oldKindName name
  */
 public final class KindbindCommand extends Command {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(KindbindCommand.class);
 
 	/**
 	 * Old kind.
@@ -53,7 +59,7 @@ public final class KindbindCommand extends Command {
 	 * 
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
-	public KindbindCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
+	public KindbindCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
 		StringBuilder context = new StringBuilder("kindbind ");
@@ -63,6 +69,7 @@ public final class KindbindCommand extends Command {
 			name = tokenScanner.getAtom();
 			context.append(name);
 		} catch (ScannerException e) {
+			logger.error("Scanner error in context " + context, e);
 			throw new SyntaxException("Scanner error", context.toString(), e);
 		}
 	}
@@ -71,6 +78,7 @@ public final class KindbindCommand extends Command {
 		try {
 			data.bindKind(oldKind, name);
 		} catch (DataException e) {
+			logger.error("kindbind error binding " + name + " to " + oldKind, e);
 			throw new VerifyException("kindbind error", oldKind + "/" + name, e);
 		}
 	}

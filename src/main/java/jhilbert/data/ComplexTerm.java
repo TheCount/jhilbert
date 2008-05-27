@@ -22,18 +22,38 @@
 
 package jhilbert.data;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import jhilbert.data.AbstractComplexTerm;
+import jhilbert.exceptions.DataException;
+import jhilbert.util.DataInputStream;
+import jhilbert.util.DataOutputStream;
+import jhilbert.util.Collections;
+// import org.apache.log4j.Logger;
 
 /**
  * A term which combines zero or more input terms to a new term.
  */
-public class ComplexTerm extends AbstractComplexTerm {
+public final class ComplexTerm extends AbstractComplexTerm {
+
+	/**
+	 * Logger for this class.
+	 */
+	// private static final Logger logger = Logger.getLogger(ComplexTerm.class);
+
+	/**
+	 * Place count.
+	 */
+	private int placeCount;
 
 	/**
 	 * Input kinds.
 	 */
-	private final List<String> inputKinds;
+	private final List<Kind> inputKinds;
 
 	/**
 	 * Creates a new complex term with the specified name, kind and input terms.
@@ -42,18 +62,98 @@ public class ComplexTerm extends AbstractComplexTerm {
 	 * @param kind result kind (must not be <code>null</code>).
 	 * @param inputKinds list of input kinds (must not be <code>null</code>).
 	 */
-	public ComplexTerm(final String name, final String kind, final List<String> inputKinds) {
+	public ComplexTerm(final String name, final Kind kind, final List<Kind> inputKinds) {
 		super(name, kind);
 		assert (inputKinds != null): "Supplied list of input kinds is null.";
+		placeCount = inputKinds.size();
 		this.inputKinds = inputKinds;
 	}
 
+	/**
+	 * Creates a new complex term with the specified name, unknown kind and unknown input terms.
+	 *
+	 * @param name term name (must not be <code>null</code>).
+	 */
+	public ComplexTerm(final String name) {
+		super(name);
+		placeCount = -1;
+		inputKinds = new LinkedList();
+	}
+
+	/**
+	 * Loads a new complex term with the specified name, kind and place count from the specified input stream.
+	 *
+	 * @param name name of this term.
+	 * @param kind kind of this term.
+	 * @param placeCount number of places of this term.
+	 * @param in data input stream.
+	 * @param nameList list of names.
+	 * @param kindsLower lower bound for kind names.
+	 * @param kindsUpper upper bound for kind names.
+	 *
+	 * @throws EOFException upon unexpected end of stream.
+	 * @throws IOException if an I/O error occurs.
+	 * @throws DataException if the input stream is inconsistent.
+	 */
+	ComplexTerm(final String name, final String kind, final int placeCount, final DataInputStream in,
+		final List<String> nameList, final int kindsLower, final int kindsUpper)
+	throws EOFException, IOException, DataException {
+		super(name, kind);
+		assert (placeCount >= 0): "Negative place count specified.";
+		this.placeCount = placeCount;
+		inputKinds = new ArrayList(placeCount);
+		for (int i = 0; i != placeCount; ++i)
+			inputKinds.add(nameList.get(in.readIntOr0(kindsLower, kindsUpper)));
+	}
+
 	public @Override int placeCount() {
-		return inputKinds.size();
+		return placeCount;
+	}
+
+	protected @Override void setPlaceCount(final int count) {
+		assert (placeCount == -1): "Attempted to set already determined place count.";
+		placeCount = count;
 	}
 
 	public @Override String getInputKind(final int i) {
-		return inputKinds.get(i);
+		try {
+			return inputKinds.get(i);
+		} catch (IndexOutOfBoundsException e) {
+			assert (i >= 0): "Negative input kind index.";
+			assert (placeCount == -1): "Input kind index out of bounds while checking term with known place "
+				+ "count.";
+			return null;
+		}
+	}
+
+	protected @Override void setInputKind(final int i, final String kind) {
+		assert (i >= 0): "Negative input kind index.";
+		if (i >= inputKinds.size()) {
+			// assume sequential setting of input kinds
+			assert (i == inputKinds.size()): "Internal error: nonsequential initial setting of input kinds.";
+			inputKinds.add(kind);
+		} else {
+			assert (inputKinds.get(i) == null): "Attempted to set already determined input kind.";
+			inputKinds.set(i, kind);
+		}
+	}
+
+	@Override void store(final DataOutputStream out, final Map<String, Integer> kindNameTable,
+			final Map<String, Integer> termNameTable) throws IOException {
+		assert (placeCount != -1): "Attempted to store complex term with unknown place count";
+		super.store(out, kindNameTable, termNameTable);
+		out.writeInt(placeCount);
+		for(String inputKind: inputKinds)
+			if (inputKind == null)
+				out.writeInt(0);
+			else
+				out.writeInt(kindNameTable.get(inputKind));
+	}
+
+	public @Override ComplexTerm clone() {
+		List<String> clonedList = new ArrayList(inputKinds.size());
+		Collections.clone(clonedList, inputKinds);
+		return new ComplexTerm(getName().clone(), kind.clone(), clonedList);
 	}
 
 }

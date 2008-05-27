@@ -22,6 +22,7 @@
 
 package jhilbert.util;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import jhilbert.exceptions.InputException;
@@ -55,11 +56,21 @@ public class FileInputSource extends StreamInputSource {
 	 *
 	 * @param filename the file name.
 	 *
-	 * @throws NullPointerException if filename is <code>null</code>.
 	 * @throws InputException if the file cannot be found or an I/O problem occurs.
 	 */
 	public FileInputSource(final String filename) throws InputException {
 		super(createFileInputStream(filename), filename);
+	}
+
+	/**
+	 * Creates a new <code>FileInputSource</code> using the specified file.
+	 *
+	 * @param file the file.
+	 *
+	 * @throws InputException if the file cannot be found or an I/O problem occurs.
+	 */
+	public FileInputSource(final File file) throws InputException {
+		super(createFileInputStream(file.getName()), file.getName());
 	}
 
 }

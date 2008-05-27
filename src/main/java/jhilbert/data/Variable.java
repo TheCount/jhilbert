@@ -23,6 +23,7 @@
 package jhilbert.data;
 
 import jhilbert.data.AbstractName;
+import jhilbert.data.Kind;
 import jhilbert.data.Symbol;
 
 /**
@@ -34,7 +35,7 @@ public class Variable extends AbstractName implements Term, Symbol {
 	/**
 	 * Kind of this variable.
 	 */
-	private final String kind;
+	private Kind kind;
 
 	/**
 	 * Create a new Variable with the specified name and kind.
@@ -42,7 +43,7 @@ public class Variable extends AbstractName implements Term, Symbol {
 	 * @param name name of this variable.
 	 * @param kind kind of this variable.
 	 */
-	public Variable(final String name, final String kind) {
+	public Variable(final String name, final Kind kind) {
 		super(name);
 		assert (kind != null): "Supplied kind is null.";
 		this.kind = kind;
@@ -53,12 +54,16 @@ public class Variable extends AbstractName implements Term, Symbol {
 	 *
 	 * @return the kind of this variable.
 	 */
-	public String getKind() {
+	public Kind getKind() {
 		return kind;
 	}
 
 	public final boolean isVariable() {
 		return true;
+	}
+
+	public @Override Variable clone() {
+		return new Variable(getName().clone(), kind.clone());
 	}
 
 }

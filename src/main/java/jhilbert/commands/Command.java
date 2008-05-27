@@ -26,7 +26,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import jhilbert.data.ModuleData;
+import jhilbert.data.Data;
 import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
 
@@ -118,14 +118,14 @@ public abstract class Command {
 	/**
 	 * Data.
 	 */
-	protected final ModuleData data;
+	protected final Data data;
 
 	/**
 	 * Creates a new command.
 	 *
-	 * @param data ModuleData (must not be <code>null</code>).
+	 * @param data Data (must not be <code>null</code>).
 	 */
-	protected Command(final ModuleData data) {
+	protected Command(final Data data) {
 		assert (data != null): "Supplied data are null.";
 		this.data = data;
 	}

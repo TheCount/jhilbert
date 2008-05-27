@@ -43,7 +43,7 @@ public abstract class InputSourceFactory {
 	 * @throws InputException if the input source cannot be created.
 	 */
 	public static InputSource createInterfaceInputSource(final String locator) throws InputException {
-		return new FileInputSource(locator + ".ghi");
+		return new FileInputSource(locator + ".jhi");
 	}
 
 }

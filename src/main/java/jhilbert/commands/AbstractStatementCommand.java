@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import jhilbert.commands.Command;
-import jhilbert.data.ModuleData;
-import jhilbert.data.Statement;
+import jhilbert.data.Data;
+import jhilbert.data.TemporaryStatement;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
@@ -37,6 +37,7 @@ import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
 import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
+import org.apache.log4j.Logger;
 
 /**
  * Command introducing a new theorem or statement.
@@ -51,6 +52,11 @@ import jhilbert.util.TokenScanner;
  * @see TheoremCommand
  */
 public abstract class AbstractStatementCommand extends Command {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(AbstractStatementCommand.class);
 
 	/**
 	 * Distinct variable constraints (as a list of a list of strings).
@@ -70,7 +76,7 @@ public abstract class AbstractStatementCommand extends Command {
 	/**
 	 * Cooked statement.
 	 */
-	protected Statement statement;
+	protected TemporaryStatement statement;
 
 	/**
 	 * Scans the hypotheses from a TokenScanner.
@@ -78,13 +84,13 @@ public abstract class AbstractStatementCommand extends Command {
 	 * This method must fill the {@link #hypotheses}.
 	 *
 	 * @param tokenScanner TokenScanner to scan from.
-	 * @param data ModuleData.
+	 * @param data Data.
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 * @throws ScannerException if a problem scanning the hypotheses occurs.
 	 * @throws DataException if the hypotheses fail to be valid {@link TermExpression}s.
 	 */
-	protected abstract void scanHypotheses(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException, ScannerException, DataException;
+	protected abstract void scanHypotheses(final TokenScanner tokenScanner, final Data data) throws SyntaxException, ScannerException, DataException;
 
 	/**
 	 * Scans a new statement from a TokenScanner.
@@ -97,7 +103,7 @@ public abstract class AbstractStatementCommand extends Command {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
-	protected AbstractStatementCommand(final String commandName, final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
+	protected AbstractStatementCommand(final String commandName, final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		super(data);
 		assert (commandName != null): "Supplied command name is null.";
 		assert (tokenScanner != null): "Supplied token scanner is null.";
@@ -123,16 +129,20 @@ public abstract class AbstractStatementCommand extends Command {
 				final int length = context.length();
 				context.delete(length - 1, length);
 				context.append(") ");
-				if (inner.tokenClass != Token.TokenClass.END_EXP)
+				if (inner.tokenClass != Token.TokenClass.END_EXP) {
+					logger.error("Expected \")\" at end of DV constraint in statement " + name);
 					throw new SyntaxException("Expected \")\"", context.toString());
+				}
 				rawDVList.add(dvList);
 				outer = tokenScanner.getToken();
 			}
 			final int length = context.length();
 			context.delete(length - 1, length);
 			context.append(')');
-			if (outer.tokenClass != Token.TokenClass.END_EXP)
+			if (outer.tokenClass != Token.TokenClass.END_EXP) {
+				logger.error("Expected \")\" after list of DV constraints in statement " + name);
 				throw new SyntaxException("Expected \")\"", context.toString());
+			}
 			tokenScanner.beginExp();
 			hypotheses = new ArrayList();
 			scanHypotheses(tokenScanner, data);
@@ -140,10 +150,13 @@ public abstract class AbstractStatementCommand extends Command {
 			context.append(" [hypotheses] ");
 			consequent = new TermExpression(tokenScanner, data);
 		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input in context " + context, e);
 			throw new SyntaxException("Unexpected end of input", context.toString(), e);
 		} catch (DataException e) {
+			logger.error("Error scanning term in context " + context, e);
 			throw new SyntaxException("Error scanning term", context.toString(), e);
 		} catch (ScannerException e) {
+			logger.error("Scanner error in context " + context, e);
 			throw new SyntaxException("Scanner error", context.toString(), e);
 		}
 	}
@@ -157,17 +170,23 @@ public abstract class AbstractStatementCommand extends Command {
 	 */
 	public @Override void execute() throws VerifyException {
 		final List<SortedSet<Variable>> cookedDVList = new ArrayList();
-		for (List<String> rawDV: rawDVList) {
-			SortedSet<Variable> cookedDV = new TreeSet();
-			for (String varName: rawDV) {
-				if (!data.containsVariable(varName))
+		for (final List<String> rawDV: rawDVList) {
+			final SortedSet<Variable> cookedDV = new TreeSet();
+			for (final String varName: rawDV) {
+				final Variable var = data.getVariable(varName);
+				if (var == null) {
+					logger.error("Constraint variable " + varName + " not found in statement " + name);
 					throw new VerifyException("Constraint variable not defined", varName);
-				if (!cookedDV.add((Variable) data.getLocalSymbol(varName)))
+				}
+				if (!cookedDV.add(var)) {
+					logger.error("Constraint variable " + varName + " occurs twice.");
+					logger.debug("Constraint list: " + rawDV);
 					throw new VerifyException("Constraint variable occurring twice", varName);
+				}
 			}
 			cookedDVList.add(cookedDV);
 		}
-		statement = new Statement(data.getPrefix() + name, cookedDVList, hypotheses, consequent);
+		statement = new TemporaryStatement(name, cookedDVList, hypotheses, consequent);
 	}
 
 }

@@ -25,19 +25,29 @@ package jhilbert.commands;
 import java.util.Iterator;
 import java.util.List;
 import jhilbert.commands.InterfaceCommand;
-import jhilbert.data.ImportData;
-import jhilbert.data.Interface;
+import jhilbert.data.Data;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.ModuleData;
+import jhilbert.data.Parameter;
+import jhilbert.exceptions.DataException;
+import jhilbert.exceptions.InputException;
 import jhilbert.exceptions.SyntaxException;
+import jhilbert.exceptions.VerifyException;
+import jhilbert.util.InterfaceLoader;
 import jhilbert.util.TokenScanner;
+import org.apache.log4j.Logger;
 
 /**
- * Command importing a new {@link jhilbert.data.Interface}
+ * Command importing a new Interface.
  *
  * @see InterfaceCommand
  */
 public final class ImportCommand extends InterfaceCommand {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(ImportCommand.class);
 
 	/**
 	 * Scans a new ImportCommand from a TokenScanner.
@@ -50,12 +60,23 @@ public final class ImportCommand extends InterfaceCommand {
 	 *
 	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, ModuleData)
 	 */
-	public ImportCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
+	public ImportCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		super("import", tokenScanner, data);
 	}
 
-	protected @Override InterfaceData createInterfaceData(final List<Interface> parameters) {
-		return new ImportData(prefix, parameters.iterator(), data);
+	public @Override void execute() throws VerifyException {
+		super.execute();
+		try {
+			final ModuleData moduleData = (ModuleData) this.data;
+			final InterfaceData interfaceData = InterfaceLoader.loadInterface(parameter.getLocator());
+			interfaceData.importInto(moduleData, parameter);
+		} catch (InputException e) {
+			logger.error("Error loading interface " + parameter.getLocator(), e);
+			throw new VerifyException("Error loading interface", parameter.getLocator(), e);
+		} catch (DataException e) {
+			logger.error("Error importing interface " + name, e);
+			throw new VerifyException("Error importing interface", name, e);
+		}
 	}
 
 }

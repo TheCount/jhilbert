@@ -22,21 +22,29 @@
 
 package jhilbert.data;
 
-import jhilbert.data.Name;
+import java.util.List;
+import java.util.SortedSet;
+import jhilbert.data.AbstractStatement;
+import jhilbert.data.TermExpression;
 
 /**
- * Interface for names from the Symbol namespace.
- * FIXME: enhance description.
+ * A temporary statement.
+ * Use {@link Statement} for statements with anonymized variables.
  */
-public interface Symbol extends Name, Cloneable {
+public final class TemporaryStatement extends AbstractStatement {
 
 	/**
-	 * Checks whether this symbol is a variable.
+	 * Creates a new temporary statement.
+	 * The parameters must not be <code>null</code>.
 	 *
-	 * @return <code>true</code> if this symbol is a {@link Variable}, <code>false</code> otherwise.
+	 * @param name name of the statement.
+	 * @param rawDV raw distinct variable constraints.
+	 * @param hypotheses list of hypotheses.
+	 * @param consequent the consequent.
 	 */
-	public boolean isVariable();
-
-	public Symbol clone();
+	public TemporaryStatement(final String name, final List<SortedSet<Variable>> rawDV,
+			final List<TermExpression> hypotheses, final TermExpression consequent) {
+		super(name, rawDV, hypotheses, consequent);
+	}
 
 }

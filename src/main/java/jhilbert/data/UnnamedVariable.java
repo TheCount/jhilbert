@@ -23,24 +23,45 @@
 package jhilbert.data;
 
 import jhilbert.data.Kind;
-import jhilbert.data.Name;
+import jhilbert.data.Variable;
 
 /**
- * A Term.
- * A term can either be a {@link Variable} or an {@link AbstractComplexTerm}.
+ * Unnamed variable.
+ * As soon as a {@link Definition} or a {@link Statement} is created,
+ * the names of the variables occurring in their definition become
+ * unimportant, as long as proper substitution is guaranteed.
+ * This class provides objects with which the explicitly named
+ * variables may be replaced with.
  */
-public interface Term extends Name {
+public final class UnnamedVariable extends Variable {
 
 	/**
-	 * Returns the kind of this term.
+	 * Internal ID of this unnamed variable.
 	 */
-	public Kind getKind();
+	private static int id = 0;
 
 	/**
-	 * Checks whether this term is a variable.
+	 * Creates a new unnamed variable with the specified kind.
 	 *
-	 * @return <code>true</code> if this object is an instance of {@link Variable}, <code>false</code> otherwise.
+	 * @param kind kind of unnamed variable.
 	 */
-	public boolean isVariable();
+	public UnnamedVariable(final Kind kind) {
+		super("(?" + id + ")", kind);
+		++id;
+	}
+
+	/**
+	 * Upgrades the given variable to an unnamed one.
+	 * Use with caution.
+	 *
+	 * @param var variable to be upgraded.
+	 */
+	private UnnamedVariable(final Variable var) {
+		super(var.getName(), var.getKind());
+	}
+
+	public @Override UnnamedVariable clone() {
+		return new UnnamedVariable(super.clone());
+	}
 
 }

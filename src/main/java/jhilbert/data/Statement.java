@@ -22,49 +22,35 @@
 
 package jhilbert.data;
 
+import java.io.EOFException;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
-import jhilbert.data.AbstractName;
-import jhilbert.data.DVConstraints;
-import jhilbert.data.Symbol;
+import jhilbert.data.AbstractStatement;
+import jhilbert.data.TemporaryStatement;
 import jhilbert.data.TermExpression;
-import jhilbert.data.Variable;
-import org.apache.log4j.Logger;
+import jhilbert.data.UnnamedVariable;
+import jhilbert.exceptions.DataException;
+import jhilbert.exceptions.InputException;
+import jhilbert.util.DataInputStream;
+import jhilbert.util.DataOutputStream;
 
 /**
  * A statement.
+ * <p>
+ * The difference to {@link TemporaryStatement} is that variables
+ * are replaced by their unnamed counterparts immediately.
  */
-public class Statement extends AbstractName implements Symbol {
+public final class Statement extends AbstractStatement {
 
 	/**
-	 * Logger.
-	 */
-	private static final Logger logger = Logger.getLogger(Statement.class);
-
-	/**
-	 * Distinct variable constraints.
-	 */
-	private final DVConstraints dvConstraints;
-
-	/**
-	 * Hypotheses.
-	 */
-	private final List<TermExpression> hypotheses;
-
-	/**
-	 * Consequent
-	 */
-	private final TermExpression consequent;
-
-	/**
-	 * Mandatory variables (those occurring in the conclusion but not in the hypotheses).
-	 */
-	private final List<Variable> mandatoryVariables;
-
-	/**
-	 * Create a new statement.
+	 * Creates a new Statement.
 	 * The parameters must not be <code>null</code>.
 	 *
 	 * @param name name of the statement.
@@ -72,69 +58,147 @@ public class Statement extends AbstractName implements Symbol {
 	 * @param hypotheses list of hypotheses.
 	 * @param consequent the consequent.
 	 */
-	public Statement(final String name, final List<SortedSet<Variable>> rawDV, final List<TermExpression> hypotheses, final TermExpression consequent) {
-		super(name);
-		assert (rawDV != null): "Supplied distinct variable constraints are null.";
-		assert (hypotheses != null): "Supplied list of hypotheses is null.";
-		assert (consequent != null): "Supplied conclusion is null.";
-		dvConstraints = new DVConstraints();
-		for (SortedSet<Variable> varSet: rawDV)
-			dvConstraints.add(varSet);
-		this.hypotheses = hypotheses;
-		this.consequent = consequent;
-		// compute all variables occurring in hypotheses and consequent for dv restriction
-		final LinkedHashSet<Variable> allHypVars = new LinkedHashSet();
+	public Statement(final String name, final List<SortedSet<Variable>> rawDV, final List<TermExpression> hypotheses,
+			final TermExpression consequent) {
+		super(new TemporaryStatement(name, rawDV, hypotheses, consequent));
+	}
+
+	/**
+	 * Upgrades the specified TemporaryStatement to a statement.
+	 *
+	 * @param statement temporary statement.
+	 */
+	public Statement(final TemporaryStatement statement) {
+		super(statement);
+		// unname all variables
+		final Set<Variable> allVars = consequent.variables();
 		for (TermExpression hypothesis: hypotheses)
-			allHypVars.addAll(hypothesis.variables());
-		final LinkedHashSet<Variable> allVars = consequent.variables();
-		allVars.addAll(allHypVars);
-		final int oldDVSize = dvConstraints.size();
-		dvConstraints.restrict(allVars);
-		if (oldDVSize != dvConstraints.size())
-			logger.warn("Disjoint variable restrictions for variables not appearing in hypotheses or consequent removed from statement " + name);
+			allVars.addAll(hypothesis.variables());
+		final Map<Variable, TermExpression> varMap = new HashMap();
+		for (Variable var: allVars)
+			varMap.put(var, new TermExpression(new UnnamedVariable(var.getKind())));
+		// replace all named variables with unnamed ones
+		final DVConstraints newDV = new DVConstraints();
+		for (VariablePair p: dvConstraints)
+			newDV.add(new VariablePair((Variable) varMap.get(p.getFirst()).getValue(),
+						(Variable) varMap.get(p.getSecond()).getValue()));
+		dvConstraints = newDV;
+		final List<TermExpression> newHyp = new ArrayList(hypotheses.size());
+		for (TermExpression hypothesis: hypotheses)
+			newHyp.add(hypothesis.subst(varMap));
+		consequent = consequent.subst(varMap);
+		final List<Variable> newMand = new ArrayList(mandatoryVariables.size());
+		for (Variable mandVar: mandatoryVariables)
+			newMand.add((Variable) varMap.get(mandVar).getValue());
+		mandatoryVariables = newMand;
+	}
+
+	/**
+	 * Loads a new statement from the specified input stream.
+	 *
+	 * @param name statement name.
+	 * @param in input stream.
+	 * @param data interface data.
+	 * @param nameList list of names.
+	 * @param kindsLower lower bound for kinds.
+	 * @param kindsUpper upper bound for kinds.
+	 * @param termsLower lower bound for terms.
+	 * @param termsUpper upper bound for terms.
+	 *
+	 * @throws EOFException upon unexpected end of input.
+	 * @throws IOException if an I/O-Error occurs.
+	 * @throws DataException if the input stream is inconsistent.
+	 */
+	Statement(final String name, final DataInputStream in, final Data data, final List<String> nameList,
+		final int kindsLower, final int kindsUpper, final int termsLower, final int termsUpper)
+	throws EOFException, IOException, DataException {
+		super(name);
+		assert (in != null): "Supplied data input stream is null.";
+		assert (data != null): "Supplied data are null.";
+		assert (nameList != null): "Supplied name list is null.";
+		assert (kindsLower > 0): "Supplied lower kinds bound is not positive.";
+		assert (kindsUpper >= kindsLower): "Supplied upper kinds bound is smaller than lower bound.";
+		assert (termsLower > 0): "Supplied lower terms bound is not positive.";
+		assert (termsUpper >= termsLower): "Supplied upper terms bound is smaller than lower bound.";
+		// load variables
+		final int numVars = in.readNonNegativeInt();
+		final List<Variable> varList = new ArrayList(numVars);
+		for (int i = 0; i != numVars; ++i)
+			varList.add(new UnnamedVariable(nameList.get(in.readInt(kindsLower, kindsUpper))));
+		// load DV constraints
+		final int numDVC = in.readNonNegativeInt();
+		dvConstraints = new DVConstraints();
+		for (int i = 0; i != numDVC; ++i) {
+			final int first = in.readInt(~numVars, 0);
+			final int second = in.readInt(~numVars, 0);
+			dvConstraints.add(new VariablePair(varList.get(~first), varList.get(~second)));
+		}
+		// load hypotheses
+		final LinkedHashSet<Variable> allHypVars = new LinkedHashSet();
+		final int numHyp = in.readNonNegativeInt();
+		hypotheses = new ArrayList(numHyp);
+		for (int i = 0; i != numHyp; ++i) {
+			hypotheses.add(TermExpression.create(in, data, nameList, varList, termsLower, termsUpper));
+			allHypVars.addAll(hypotheses.get(i).variables());
+		}
+		// load consequent
+		consequent = TermExpression.create(in, data, nameList, varList, termsLower, termsUpper);
 		// mandatory variables
-		allVars.removeAll(allHypVars);
-		mandatoryVariables = new ArrayList(allVars);
+		final LinkedHashSet<Variable> mandVars = consequent.variables();
+		mandVars.removeAll(allHypVars);
+		mandatoryVariables = new ArrayList(mandVars);
 	}
 
 	/**
-	 * Returns the distinct variable constraints of this statement.
+	 * Stores this statement in the specified output stream.
 	 *
-	 * @return the distinct variable constraints of this statement.
+	 * @param out data output stream.
+	 * @param kindNameTable name to ID map for kinds.
+	 * @param termNameTable name to ID map for terms.
+	 *
+	 * @throws IOException if an I/O-Error occurs.
 	 */
-	public DVConstraints getDVConstraints() {
-		return dvConstraints;
+	void store(final DataOutputStream out, final Map<String, Integer> kindNameTable, final Map<String, Integer> termNameTable) throws IOException {
+		// get all variables
+		final Set<Variable> varSet = new HashSet(consequent.variables());
+		for (TermExpression hypothesis: hypotheses)
+			varSet.addAll(hypothesis.variables());
+		// create variable to ID mapping and store kinds
+		out.writeInt(varSet.size());
+		int id = -1;
+		final Map<String, Integer> varNameTable = new HashMap();
+		for (Variable var: varSet) {
+			varNameTable.put(var.getName(), id--);
+			out.writeInt(kindNameTable.get(var.getKind()));
+		}
+		// store DV constraints
+		out.writeInt(dvConstraints.size());
+		for (VariablePair p: dvConstraints) {
+			out.writeInt(varNameTable.get(p.getFirst()));
+			out.writeInt(varNameTable.get(p.getSecond()));
+		}
+		// store hypotheses
+		out.writeInt(hypotheses.size());
+		for (TermExpression hypothesis: hypotheses)
+			hypothesis.store(out, termNameTable, varNameTable);
+		// store consequent
+		consequent.store(out, termNameTable, varNameTable);
 	}
 
 	/**
-	 * Returns the hypotheses of this statement.
+	 * Checks whether this statement and the specified one can be used in the same way.
+	 * To this end, this method checks whether the hypotheses, the consequent, and the
+	 * disjoint variable constraints are compatible.
 	 *
-	 * @return list of hypotheses of this statement.
-	 */
-	public List<TermExpression> getHypotheses() {
-		return hypotheses;
-	}
-
-	/**
-	 * Returns the consequent of this statement.
+	 * @param statement statement this statement should be checked against (must not be <code>null</code>).
 	 *
-	 * @return the consequent of this statement.
-	 */
-	public TermExpression getConsequent() {
-		return consequent;
-	}
-
-	/**
-	 * Returns the mandatory variables of this statement.
+	 * @return <code>true</code> if this statement and the specified one are compatible, <code>false</code> otherwise.
 	 *
-	 * @return list of mandatory variables of this statement.
+	 * FIXME: not ready yet
 	 */
-	public List<Variable> getMandatoryVariables() {
-		return mandatoryVariables;
-	}
-
-	public final boolean isVariable() {
-		return false;
+	public boolean equalsSuperficially(final Statement statement) {
+		assert (statement != null): "Supplied statement is null.";
+		// FIXME
 	}
 
 }

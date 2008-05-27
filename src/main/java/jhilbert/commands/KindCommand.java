@@ -29,6 +29,7 @@ import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
 import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
+import org.apache.log4j.Logger;
 
 /**
  * Command introducing a new kind.
@@ -38,6 +39,11 @@ import jhilbert.util.TokenScanner;
  * name
  */
 public final class KindCommand extends Command {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(KindCommand.class);
 
 	/**
 	 * Scans a new KindCommand from a TokenScanner.
@@ -56,14 +62,17 @@ public final class KindCommand extends Command {
 			name = tokenScanner.getAtom();
 			context.append(name);
 		} catch (ScannerException e) {
+			logger.error("Error scanning kind.", e);
+			logger.error("Context: " + context);
 			throw new SyntaxException("Scanner error", context.toString(), e);
 		}
 	}
 
 	public @Override void execute() throws VerifyException {
 		try {
-			((InterfaceData) data).defineKind(name);
+			data.defineKind(name);
 		} catch (DataException e) {
+			logger.error("Kind command failed to execute.", e);
 			throw new VerifyException("Kind error", name, e);
 		}
 	}

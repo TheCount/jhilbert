@@ -25,8 +25,8 @@ package jhilbert.commands;
 import java.util.ArrayList;
 import java.util.List;
 import jhilbert.commands.AbstractStatementCommand;
+import jhilbert.data.Data;
 import jhilbert.data.InterfaceData;
-import jhilbert.data.ModuleData;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
 import jhilbert.exceptions.DataException;
@@ -34,6 +34,7 @@ import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
 import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
+import org.apache.log4j.Logger;
 
 /**
  * Command introducing a new statement.
@@ -46,7 +47,12 @@ import jhilbert.util.TokenScanner;
  */
 public final class StatementCommand extends AbstractStatementCommand {
 
-	protected @Override void scanHypotheses(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException, ScannerException, DataException {
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(StatementCommand.class);
+
+	protected @Override void scanHypotheses(final TokenScanner tokenScanner, final Data data) throws SyntaxException, ScannerException, DataException {
 		StringBuilder context = new StringBuilder("hypotheses: ");
 		try {
 			Token token = tokenScanner.getToken();
@@ -59,6 +65,7 @@ public final class StatementCommand extends AbstractStatementCommand {
 			}
 			tokenScanner.putToken(token);
 		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input while scanning hypotheses for " + name);
 			throw new SyntaxException("Unexpected end of input", context.toString(), e);
 		}
 	}
@@ -80,9 +87,10 @@ public final class StatementCommand extends AbstractStatementCommand {
 		super.execute();
 		InterfaceData data = (InterfaceData) this.data;
 		try {
-			data.defineStatement(statement);
+			data.defineSymbol(statement);
 		} catch (DataException e) {
-			throw new VerifyException("Data error while defining statement", statement.getName(), e);
+			logger.error("Cannot define statement: a symbol with name " + name + " already exists.", e);
+			throw new VerifyException("Cannot define statement", name, e);
 		}
 	}
 
