@@ -51,21 +51,22 @@ public final class ParamCommand extends InterfaceCommand {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 *
-	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, ModuleData)
+	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, Data)
 	 */
 	public ParamCommand(final TokenScanner tokenScanner, final InterfaceData data) throws SyntaxException {
 		super("param", tokenScanner, data);
 	}
 
-	public @Override void execute() throws VerifyException {
-		super.execute();
-		InterfaceData data = (InterfaceData) this.data;
-		try {
-			data.addParameter(parameter);
-		} catch (DataException e) {
-			logger.error("Error adding parameter " + name + " to interface.");
-			throw new VerifyException("Error adding parameter", name);
-		}
+	// FIXME
+//	public @Override void execute() throws VerifyException {
+//		super.execute();
+//		InterfaceData data = (InterfaceData) this.data;
+//		try {
+//			data.addParameter(parameter);
+//		} catch (DataException e) {
+//			logger.error("Error adding parameter " + name + " to interface.");
+//			throw new VerifyException("Error adding parameter", name);
+//		}
 		// FIXME: the following stuff should go into the InterfaceData class... or scrap it
 //		try {
 //			Interface param = data.getNextParameter();
@@ -90,6 +91,6 @@ public final class ParamCommand extends InterfaceCommand {
 //		} catch (DataException e) {
 //			throw new VerifyException("Data error", name, e);
 //		}
-	}
+//	}
 
 }

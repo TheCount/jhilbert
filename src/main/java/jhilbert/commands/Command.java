@@ -111,35 +111,6 @@ public abstract class Command {
 	}
 
 	/**
-	 * Name of newly defined object.
-	 */
-	protected String name;
-
-	/**
-	 * Data.
-	 */
-	protected final Data data;
-
-	/**
-	 * Creates a new command.
-	 *
-	 * @param data Data (must not be <code>null</code>).
-	 */
-	protected Command(final Data data) {
-		assert (data != null): "Supplied data are null.";
-		this.data = data;
-	}
-
-	/**
-	 * Returns the name of the newly defined object.
-	 *
-	 * @return name of the newly defined object.
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
 	 * Executes this command.
 	 *
 	 * @throws VerifyException if the command cannot be executed.

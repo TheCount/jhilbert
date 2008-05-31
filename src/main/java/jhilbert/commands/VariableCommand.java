@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jhilbert.commands.Command;
 import jhilbert.data.Data;
+import jhilbert.data.Kind;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
 import jhilbert.exceptions.DataException;
@@ -50,14 +51,19 @@ public final class VariableCommand extends Command {
 	private final static Logger logger = Logger.getLogger(VariableCommand.class);;
 
 	/**
-	 * Kind of new variables.
+	 * Data.
 	 */
-	private final String kind;
+	private final Data data;
 
 	/**
-	 * List of new variables.
+	 * Kind of new variables.
 	 */
-	private final List<String> varList;
+	private final String kindName;
+
+	/**
+	 * List of new variable names.
+	 */
+	private final List<String> varNameList;
 
 	/**
 	 * Scans a new VariableCommand from a TokenScanner.
@@ -69,54 +75,45 @@ public final class VariableCommand extends Command {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public VariableCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
-		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
-		StringBuilder context = new StringBuilder("var (");
+		assert (data != null): "Supplied data are null.";
+		this.data = data;
 		try {
-			kind = tokenScanner.getAtom();
-			context.append(kind).append(' ');
-			varList = new ArrayList();
+			kindName = tokenScanner.getAtom();
+			varNameList = new ArrayList();
 			Token token = tokenScanner.getToken();
 			while (token.tokenClass == Token.TokenClass.ATOM) {
-				String varName = token.toString();
-				context.append(varName).append(' ');
-				varList.add(varName);
+				varNameList.add(token.toString());
 				token = tokenScanner.getToken();
 			}
-			final int length = context.length();
-			context.delete(length - 1, length);
 			if (token.tokenClass != Token.TokenClass.END_EXP) {
-				logger.error("Syntax error: expected \")\" in " + context);
-				throw new SyntaxException("Expected \")\"", context.toString());
+				logger.error("Syntax error: expected \")\" in " + tokenScanner.getContextString());
+				throw new SyntaxException("Expected \")\"", tokenScanner.getContextString());
 			}
-			name = context.substring(5);
-			context.append(')');
 			tokenScanner.putToken(token);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input");
-			throw new SyntaxException("Unexpected end of input", context.toString(), e);
+			logger.error("Unexpected end of input while scanning var command");
+			logger.error("Context: " + tokenScanner.getContextString());
+			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error in context " + context);
-			throw new SyntaxException("Scanner error", context.toString(), e);
+			logger.error("Scanner error in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Scanner error", tokenScanner.getContextString(), e);
 		}
 	}
 
 	public @Override void execute() throws VerifyException {
-		String context = kind;
 		try {
-			final String definedKind = data.getKind(kind);
-			if (definedKind == null) {
-				logger.error("Kind " + kind + " not defined");
+			final Kind kind = data.getKind(kindName);
+			if (kind == null) {
+				logger.error("Kind " + kindName + " not defined");
 				logger.debug("Current data: " + data);
-				throw new VerifyException("Kind not defined", kind);
+				throw new VerifyException("Kind not defined", kindName);
 			}
-			for (String varName: varList) {
-				context = varName;
-				data.defineSymbol(new Variable(varName, definedKind));
-			}
+			for (String varName: varNameList)
+				data.defineVariable(varName, kind);
 		} catch (DataException e) {
-			logger.error("Error defining variable(s)");
-			throw new VerifyException("var error", context, e);
+			logger.error("Error defining variable(s):" + varNameList);
+			throw new VerifyException("var error", varNameList.toString(), e);
 		}
 	}
 

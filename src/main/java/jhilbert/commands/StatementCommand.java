@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jhilbert.commands.AbstractStatementCommand;
 import jhilbert.data.Data;
+import jhilbert.data.DataFactory;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
@@ -53,20 +54,18 @@ public final class StatementCommand extends AbstractStatementCommand {
 	private static final Logger logger = Logger.getLogger(StatementCommand.class);
 
 	protected @Override void scanHypotheses(final TokenScanner tokenScanner, final Data data) throws SyntaxException, ScannerException, DataException {
-		StringBuilder context = new StringBuilder("hypotheses: ");
+		final DataFactory df = DataFactory.getInstance();
 		try {
 			Token token = tokenScanner.getToken();
 			while (token.tokenClass != Token.TokenClass.END_EXP) {
 				tokenScanner.putToken(token);
-				TermExpression expr = new TermExpression(tokenScanner, data);
-				context.append(expr.toString()).append(' ');
-				hypotheses.add(expr);
+				hypotheses.add(df.scanTermExpression(tokenScanner, data));
 				token = tokenScanner.getToken();
 			}
 			tokenScanner.putToken(token);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning hypotheses for " + name);
-			throw new SyntaxException("Unexpected end of input", context.toString(), e);
+			logger.error("Unexpected end of input while scanning hypotheses in statement " + getName());
+			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
 		}
 	}
 
@@ -80,18 +79,7 @@ public final class StatementCommand extends AbstractStatementCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public StatementCommand(final TokenScanner tokenScanner, final InterfaceData data) throws SyntaxException {
-		super("statement", tokenScanner, data);
-	}
-
-	public @Override void execute() throws VerifyException {
-		super.execute();
-		InterfaceData data = (InterfaceData) this.data;
-		try {
-			data.defineSymbol(statement);
-		} catch (DataException e) {
-			logger.error("Cannot define statement: a symbol with name " + name + " already exists.", e);
-			throw new VerifyException("Cannot define statement", name, e);
-		}
+		super(tokenScanner, data);
 	}
 
 }

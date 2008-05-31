@@ -50,24 +50,29 @@ public abstract class InterfaceCommand extends Command {
 	private static final Logger logger = Logger.getLogger(InterfaceCommand.class);
 
 	/**
+	 * Data.
+	 */
+	private final Data data;
+
+	/**
+	 * Parameter name.
+	 */
+	private String parameterName;
+
+	/**
 	 * Locator.
 	 */
-	protected final String locator;
+	private final String locator;
 
 	/**
 	 * List of parameter names.
 	 */
-	protected final List<String> paramNameList;
+	private final List<String> paramNameList;
 
 	/**
 	 * Prefix.
 	 */
-	protected final String prefix;
-
-	/**
-	 * Parameter corresponding to this command (initialized by {@link #execute()}.
-	 */
-	protected Parameter parameter;
+	private final String prefix;
 
 	/**
 	 * Scans a new InterfaceCommand from a TokenScanner.
@@ -75,46 +80,39 @@ public abstract class InterfaceCommand extends Command {
 	 *
 	 * @param commandName name of command.
 	 * @param tokenScanner TokenScanner to scan from.
-	 * @param data ModuleData.
+	 * @param data Data.
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	protected InterfaceCommand(final String commandName, final TokenScanner tokenScanner, final Data data) throws SyntaxException {
-		super(data);
+		assert (data != null): "Supplied data are null.";
 		assert (tokenScanner != null): "Supplied token scanner is null.";
 		assert (commandName != null): "Supplied commandName is null.";
-		StringBuilder context = new StringBuilder(commandName);
-		context.append(' ');
+		this.data = data;
+		parameterName = null;
 		try {
-			name = tokenScanner.getAtom();
-			context.append(name);
+			parameterName = tokenScanner.getAtom();
 			locator = tokenScanner.getAtom();
-			context.append(" located at ").append(locator).append(" with parameters (");
 			paramNameList = new ArrayList();
 			tokenScanner.beginExp();
 			Token token = tokenScanner.getToken();
 			while (token.tokenClass == Token.TokenClass.ATOM) {
-				final String atom = token.toString();
-				context.append(atom).append(", ");
-				paramNameList.add(atom);
+				paramNameList.add(token.toString());
 				token = tokenScanner.getToken();
 			}
-			final int length = context.length();
-			context.delete(length - 2, length);
-			context.append(')');
 			if (token.tokenClass != Token.TokenClass.END_EXP) {
-				logger.error("Expected \")\" after parameter list of parameter " + name);
-				throw new SyntaxException("Expected \")\"", context.toString());
+				logger.error("Expected \")\" after parameter list of parameter " + parameterName);
+				throw new SyntaxException("Expected \")\"", tokenScanner.getContextString());
 			}
 			prefix = tokenScanner.getString();
-			context.append(" with prefix ").append(prefix);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning parameter " + name + " in context "
-				+ context, e);
-			throw new SyntaxException("Unexpected end of input", context.toString(), e);
+			logger.error("Unexpected end of input while scanning parameter " + parameterName + " in context "
+				+ tokenScanner.getContextString());
+			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error while scanning parameter " + name + " in context " + context, e);
-			throw new SyntaxException("Scanner error", context.toString(), e);
+			logger.error("Scanner error while scanning parameter " + parameterName + " in context "
+				 + tokenScanner.getContextString());
+			throw new SyntaxException("Scanner error", tokenScanner.getContextString(), e);
 		}
 	}
 
@@ -125,47 +123,50 @@ public abstract class InterfaceCommand extends Command {
 	 *
 	 * @param interfaceCommand InterfaceCommand to be copied. Must not be <code>null</code>.
 	 */
-	protected InterfaceCommand(final InterfaceCommand interfaceCommand) {
-		super(interfaceCommand.data.clone());
-		name = interfaceCommand.name + " (copy)";
-		locator = interfaceCommand.locator;
-		paramNameList = interfaceCommand.paramNameList;
-		prefix = interfaceCommand.prefix;
+	// FIXME
+	//protected InterfaceCommand(final InterfaceCommand interfaceCommand) {
+	//	super(interfaceCommand.data.clone());
+	//	name = interfaceCommand.name + " (copy)";
+	//	locator = interfaceCommand.locator;
+	//	paramNameList = interfaceCommand.paramNameList;
+	//	prefix = interfaceCommand.prefix;
+	//}
+
+	public @Override void execute() throws VerifyException { // subclasses extend this method.
+		List<Parameter> parameters = new ArrayList(paramNameList.size());
+		for (final String paramName: paramNameList) {
+			final Parameter param = data.getParameter(paramName);
+			if (param == null) {
+				logger.error("Parameter " + paramName + " from parameter list of " + parameterName
+					+ " does not exist.");
+				throw new VerifyException("Parameter not found", paramName);
+			}
+			parameters.add(param);
+		}
+		try {
+			data.defineParameter(parameterName, locator, parameters, prefix);
+		} catch (DataException e) {
+			logger.error("Unable to define parameter " + parameterName);
+			throw new VerifyException("Unable to define parameter", parameterName, e);
+		}
 	}
 
 	/**
-	 * Creates the {@link jhilbert.data.InterfaceData} needed during creation of the new interface.
+	 * Returns the data.
 	 *
-	 * FIXME: Scrap this method
-	 *
-	 * @param parameters interface parameters.
+	 * @return the data.
 	 */
-//	protected InterfaceData createInterfaceData(final List<Interface> parameters) {
-//		throw new UnsupportedOperationException("Subclasses must override this method if they intend to use it.");
-//	}
+	public Data getData() {
+		return data;
+	}
 
-	public @Override void execute() throws VerifyException { // subclasses extend this method.
-//		try {
-			// This really belongs in the classes defining the parameter
-//			if (data.getParameter(name) != null) {
-//				logger.error("A parameter with name " + name + " already exists.");
-//				throw new VerifyException("Parameter already defined", name);
-//			}
-			List<Parameter> parameters = new ArrayList(paramNameList.size());
-			for (final String paramName: paramNameList) {
-				final Parameter param = data.getParameter(paramName);
-				if (param == null) {
-					logger.error("Parameter " + paramName + " from parameter list of " + name
-						+ " does not exist.");
-					throw new VerifyException("Parameter not found", paramName);
-				}
-				parameters.add(param);
-			}
-			parameter = new Parameter(name, locator, parameters, prefix);
-//		} catch (DataException e) {
-//			logger.error("Data error while defining parameter " + name, e);
-//			throw new VerifyException("Data error", name, e);
-//		}
+	/**
+	 * Returns the parameter name for this interface.
+	 *
+	 * @return the parameter name for this interface.
+	 */
+	public String getName() {
+		return parameterName;
 	}
 
 }

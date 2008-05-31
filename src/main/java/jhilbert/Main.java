@@ -23,6 +23,7 @@
 package jhilbert;
 
 import jhilbert.commands.Command;
+import jhilbert.data.DataFactory;
 import jhilbert.data.ModuleData;
 import jhilbert.exceptions.GeneralException;
 import jhilbert.util.FileInputSource;
@@ -58,11 +59,11 @@ public class Main
 					inputFileName = arg;
 			}
 			logger.info("Scanning file " + inputFileName);
-			ModuleData md = new ModuleData();
+			ModuleData md = DataFactory.getInstance().createModuleData();
 			CommandScanner cs = new CommandScanner(new FileInputSource(inputFileName), md, Command.MODULE_COMMANDS);
 			for (Command c = cs.getToken(); c != null; c = cs.getToken()) {
 				if (logger.isDebugEnabled())
-					logger.debug(cs.getContextString() + " " + c.getName());
+					logger.debug("Current context: " + cs.getContextString());
 				c.execute();
 				cs.resetContext();
 			}

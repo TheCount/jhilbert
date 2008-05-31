@@ -28,7 +28,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import jhilbert.commands.Command;
 import jhilbert.data.Data;
-import jhilbert.data.TemporaryStatement;
+import jhilbert.data.DataFactory;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
@@ -59,9 +59,19 @@ public abstract class AbstractStatementCommand extends Command {
 	private static final Logger logger = Logger.getLogger(AbstractStatementCommand.class);
 
 	/**
+	 * Data.
+	 */
+	final Data data;
+
+	/**
+	 * Statement name.
+	 */
+	private final String statementName;
+
+	/**
 	 * Distinct variable constraints (as a list of a list of strings).
 	 */
-	protected final List<List<String>> rawDVList;
+	private final List<List<String>> rawDVList;
 
 	/**
 	 * Hypotheses.
@@ -71,12 +81,7 @@ public abstract class AbstractStatementCommand extends Command {
 	/**
 	 * Consequent.
 	 */
-	protected final TermExpression consequent;
-
-	/**
-	 * Cooked statement.
-	 */
-	protected TemporaryStatement statement;
+	private final TermExpression consequent;
 
 	/**
 	 * Scans the hypotheses from a TokenScanner.
@@ -97,74 +102,59 @@ public abstract class AbstractStatementCommand extends Command {
 	 * Does not scan proof if present.
 	 * The parameters must not be <code>null</code>.
 	 *
-	 * @param commandName name of command.
 	 * @param tokenScanner TokenScanner to scan from.
 	 * @param data ModuleData.
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
-	protected AbstractStatementCommand(final String commandName, final TokenScanner tokenScanner, final Data data) throws SyntaxException {
-		super(data);
-		assert (commandName != null): "Supplied command name is null.";
+	protected AbstractStatementCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		assert (tokenScanner != null): "Supplied token scanner is null.";
-		StringBuilder context = new StringBuilder(commandName);
-		context.append(' ');
+		assert (data != null): "Supplied data are null.";
+		this.data = data;
 		try {
-			name = tokenScanner.getAtom();
-			context.append(name).append(' ');
+			statementName = tokenScanner.getAtom();
 			tokenScanner.beginExp();
-			context.append('(');
 			rawDVList = new ArrayList();
 			Token outer = tokenScanner.getToken();
 			while (outer.tokenClass == Token.TokenClass.BEGIN_EXP) {
-				context.append('(');
 				List<String> dvList = new ArrayList();
 				Token inner = tokenScanner.getToken();
 				while (inner.tokenClass == Token.TokenClass.ATOM) {
-					final String atom = inner.toString();
-					context.append(atom).append(' ');
-					dvList.add(atom);
+					dvList.add(inner.toString());
 					inner = tokenScanner.getToken();
 				}
-				final int length = context.length();
-				context.delete(length - 1, length);
-				context.append(") ");
 				if (inner.tokenClass != Token.TokenClass.END_EXP) {
-					logger.error("Expected \")\" at end of DV constraint in statement " + name);
-					throw new SyntaxException("Expected \")\"", context.toString());
+					logger.error("Expected \")\" at end of DV constraint in statement "
+						+ statementName);
+					throw new SyntaxException("Expected \")\"", tokenScanner.getContextString());
 				}
 				rawDVList.add(dvList);
 				outer = tokenScanner.getToken();
 			}
-			final int length = context.length();
-			context.delete(length - 1, length);
-			context.append(')');
 			if (outer.tokenClass != Token.TokenClass.END_EXP) {
-				logger.error("Expected \")\" after list of DV constraints in statement " + name);
-				throw new SyntaxException("Expected \")\"", context.toString());
+				logger.error("Expected \")\" after list of DV constraints in statement " + statementName);
+				throw new SyntaxException("Expected \")\"", tokenScanner.getContextString());
 			}
 			tokenScanner.beginExp();
 			hypotheses = new ArrayList();
 			scanHypotheses(tokenScanner, data);
 			tokenScanner.endExp();
-			context.append(" [hypotheses] ");
-			consequent = new TermExpression(tokenScanner, data);
+			consequent = DataFactory.getInstance().scanTermExpression(tokenScanner, data);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input in context " + context, e);
-			throw new SyntaxException("Unexpected end of input", context.toString(), e);
+			logger.error("Unexpected end of input in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
 		} catch (DataException e) {
-			logger.error("Error scanning term in context " + context, e);
-			throw new SyntaxException("Error scanning term", context.toString(), e);
+			logger.error("Error scanning term in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Error scanning term", tokenScanner.getContextString(), e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error in context " + context, e);
-			throw new SyntaxException("Scanner error", context.toString(), e);
+			logger.error("Scanner error in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Scanner error", tokenScanner.getContextString(), e);
 		}
 	}
 
 	/**
 	 * Partially executes this command.
 	 * Subclasses of AbstractStatementCommand must override this method.
-	 * This method creates the {@link #statement}.
 	 *
 	 * @throws VerifyException if the command cannot be executed.
 	 */
@@ -175,7 +165,8 @@ public abstract class AbstractStatementCommand extends Command {
 			for (final String varName: rawDV) {
 				final Variable var = data.getVariable(varName);
 				if (var == null) {
-					logger.error("Constraint variable " + varName + " not found in statement " + name);
+					logger.error("Constraint variable " + varName + " not found in statement "
+						+ statementName);
 					throw new VerifyException("Constraint variable not defined", varName);
 				}
 				if (!cookedDV.add(var)) {
@@ -186,7 +177,30 @@ public abstract class AbstractStatementCommand extends Command {
 			}
 			cookedDVList.add(cookedDV);
 		}
-		statement = new TemporaryStatement(name, cookedDVList, hypotheses, consequent);
+		try {
+			data.defineStatement(statementName, cookedDVList, hypotheses, consequent);
+		} catch (DataException e) {
+			logger.error("Error defining statement " + statementName);
+			throw new VerifyException("Error defining statement", statementName, e);
+		}
+	}
+
+	/**
+	 * Returns the name of this statement.
+	 *
+	 * @return name of this statement.
+	 */
+	protected String getName() {
+		return statementName;
+	}
+
+	/**
+	 * Returns the data of this statement.
+	 *
+	 * @return data of this statement.
+	 */
+	protected Data getData() {
+		return data;
 	}
 
 }

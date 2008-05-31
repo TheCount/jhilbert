@@ -20,15 +20,17 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
-import jhilbert.data.Pair;
+import jhilbert.data.Variable;
+import jhilbert.data.VariablePair;
+import jhilbert.data.impl.Pair;
 
 /**
  * A Pair of {@link Variable}s.
  * Variable Pairs are Cloneable and Comparable.
  */
-public class VariablePair extends Pair<Variable, Variable> implements Comparable<VariablePair> {
+class VariablePairImpl extends Pair<Variable, Variable> implements VariablePair, Comparable<VariablePair> {
 
 	/**
 	 * Creates a new VariablePair.
@@ -38,7 +40,7 @@ public class VariablePair extends Pair<Variable, Variable> implements Comparable
 	 *
 	 * @throws NullPointerException if one of the parameters is <code>null</code>.
 	 */
-	public VariablePair(final Variable first, final Variable second) {
+	public VariablePairImpl(final Variable first, final Variable second) {
 		super(first, second);
 	}
 
@@ -47,8 +49,8 @@ public class VariablePair extends Pair<Variable, Variable> implements Comparable
 	 *
 	 * @return new VariablePair with reversed values.
 	 */
-	public VariablePair reverse() {
-		return new VariablePair(getSecond(), getFirst());
+	public VariablePairImpl reverse() {
+		return new VariablePairImpl(getSecond(), getFirst());
 	}
 
 	/**

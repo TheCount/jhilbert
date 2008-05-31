@@ -20,16 +20,17 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.VariableImpl;
 
 /**
  * Dummy variable.
  * Dummy variables are never equal to non-dummy variables.
  */
-public class DummyVariable extends Variable {
+class DummyVariable extends VariableImpl {
 
 	/**
 	 * Internal id of this dummy.
@@ -56,11 +57,12 @@ public class DummyVariable extends Variable {
 	 * @throws NullPointerException if var is <code>null</code>.
 	 */
 	private DummyVariable(final Variable var) {
-		super(var.getName(), var.getKind());
+		super(var.toString(), var.getKind());
 	}
 
-	public @Override DummyVariable clone() {
-		return new DummyVariable(super.clone());
-	}
+	// FIXME
+	//public @Override DummyVariable clone() {
+	//	return new DummyVariable(super.clone());
+	//}
 
 }

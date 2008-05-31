@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -28,7 +28,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import jhilbert.data.AbstractComplexTerm;
+import jhilbert.data.Kind;
+import jhilbert.data.impl.ComplexTerm;
 import jhilbert.exceptions.DataException;
 import jhilbert.util.DataInputStream;
 import jhilbert.util.DataOutputStream;
@@ -38,7 +39,7 @@ import jhilbert.util.Collections;
 /**
  * A term which combines zero or more input terms to a new term.
  */
-public final class ComplexTerm extends AbstractComplexTerm {
+final class Functor extends ComplexTerm {
 
 	/**
 	 * Logger for this class.
@@ -62,7 +63,8 @@ public final class ComplexTerm extends AbstractComplexTerm {
 	 * @param kind result kind (must not be <code>null</code>).
 	 * @param inputKinds list of input kinds (must not be <code>null</code>).
 	 */
-	public ComplexTerm(final String name, final Kind kind, final List<Kind> inputKinds) {
+	// FIXME
+	public Functor(final String name, final Kind kind, final List<Kind> inputKinds) {
 		super(name, kind);
 		assert (inputKinds != null): "Supplied list of input kinds is null.";
 		placeCount = inputKinds.size();
@@ -74,7 +76,8 @@ public final class ComplexTerm extends AbstractComplexTerm {
 	 *
 	 * @param name term name (must not be <code>null</code>).
 	 */
-	public ComplexTerm(final String name) {
+	// FIXME
+	public Functor (final String name) {
 		super(name);
 		placeCount = -1;
 		inputKinds = new LinkedList();
@@ -87,6 +90,7 @@ public final class ComplexTerm extends AbstractComplexTerm {
 	 * @param kind kind of this term.
 	 * @param placeCount number of places of this term.
 	 * @param in data input stream.
+	 * @param data data.
 	 * @param nameList list of names.
 	 * @param kindsLower lower bound for kind names.
 	 * @param kindsUpper upper bound for kind names.
@@ -95,7 +99,7 @@ public final class ComplexTerm extends AbstractComplexTerm {
 	 * @throws IOException if an I/O error occurs.
 	 * @throws DataException if the input stream is inconsistent.
 	 */
-	ComplexTerm(final String name, final String kind, final int placeCount, final DataInputStream in,
+	Functor(final String name, final Kind kind, final int placeCount, final DataInputStream in, final DataImpl data,
 		final List<String> nameList, final int kindsLower, final int kindsUpper)
 	throws EOFException, IOException, DataException {
 		super(name, kind);
@@ -103,19 +107,21 @@ public final class ComplexTerm extends AbstractComplexTerm {
 		this.placeCount = placeCount;
 		inputKinds = new ArrayList(placeCount);
 		for (int i = 0; i != placeCount; ++i)
-			inputKinds.add(nameList.get(in.readIntOr0(kindsLower, kindsUpper)));
+			inputKinds.add(data.getKind(nameList.get(in.readIntOr0(kindsLower, kindsUpper))));
 	}
 
+	// FIXME
 	public @Override int placeCount() {
 		return placeCount;
 	}
 
+	// FIXME
 	protected @Override void setPlaceCount(final int count) {
 		assert (placeCount == -1): "Attempted to set already determined place count.";
 		placeCount = count;
 	}
 
-	public @Override String getInputKind(final int i) {
+	public @Override Kind getInputKind(final int i) {
 		try {
 			return inputKinds.get(i);
 		} catch (IndexOutOfBoundsException e) {
@@ -126,7 +132,7 @@ public final class ComplexTerm extends AbstractComplexTerm {
 		}
 	}
 
-	protected @Override void setInputKind(final int i, final String kind) {
+	protected @Override void setInputKind(final int i, final Kind kind) {
 		assert (i >= 0): "Negative input kind index.";
 		if (i >= inputKinds.size()) {
 			// assume sequential setting of input kinds
@@ -138,22 +144,24 @@ public final class ComplexTerm extends AbstractComplexTerm {
 		}
 	}
 
+	// FIXME
 	@Override void store(final DataOutputStream out, final Map<String, Integer> kindNameTable,
 			final Map<String, Integer> termNameTable) throws IOException {
 		assert (placeCount != -1): "Attempted to store complex term with unknown place count";
 		super.store(out, kindNameTable, termNameTable);
 		out.writeInt(placeCount);
-		for(String inputKind: inputKinds)
+		for(final Kind inputKind: inputKinds)
 			if (inputKind == null)
 				out.writeInt(0);
 			else
-				out.writeInt(kindNameTable.get(inputKind));
+				out.writeInt(kindNameTable.get(inputKind.toString()));
 	}
 
-	public @Override ComplexTerm clone() {
-		List<String> clonedList = new ArrayList(inputKinds.size());
-		Collections.clone(clonedList, inputKinds);
-		return new ComplexTerm(getName().clone(), kind.clone(), clonedList);
-	}
+	// FIXME
+	//public @Override ComplexTerm clone() {
+	//	List<String> clonedList = new ArrayList(inputKinds.size());
+	//	Collections.clone(clonedList, inputKinds);
+	//	return new ComplexTerm(getName().clone(), kind.clone(), clonedList);
+	//}
 
 }

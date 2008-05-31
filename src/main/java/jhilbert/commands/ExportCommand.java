@@ -25,15 +25,15 @@ package jhilbert.commands;
 import java.util.Iterator;
 import java.util.List;
 import jhilbert.commands.InterfaceCommand;
-import jhilbert.commands.ParamCommand;
 import jhilbert.data.Data;
+import jhilbert.data.DataFactory;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.ModuleData;
+import jhilbert.data.Parameter;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
 import jhilbert.exceptions.SyntaxException;
 import jhilbert.exceptions.VerifyException;
-import jhilbert.util.InterfaceLoader;
 import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
@@ -73,22 +73,27 @@ public final class ExportCommand extends InterfaceCommand {
 	 *
 	 * @param paramCommand ParamCommand to be copied.
 	 */
-	ExportCommand(final ParamCommand paramCommand) {
-		super(paramCommand);
-	}
+	// FIXME
+	//ExportCommand(final ParamCommand paramCommand) {
+	//	super(paramCommand);
+	//}
 
 	public @Override void execute() throws VerifyException {
+		final DataFactory df = DataFactory.getInstance();
+		Parameter parameter = null;
 		super.execute();
 		try {
-			final ModuleData moduleData = (ModuleData) data;
-			final InterfaceData interfaceData = InterfaceLoader.loadInterface(parameter.getLocator());
-			interfaceData.exportFrom(moduleData, parameter);
-		} catch (InputException e) {
+			final ModuleData moduleData = (ModuleData) getData();
+			parameter = moduleData.getParameter(getName());
+			assert (parameter != null): "Newly defined parameter is null.";
+			final InterfaceData interfaceData = df.loadInterfaceData(parameter.getLocator());
+			df.exportInterface(moduleData, interfaceData, parameter);
+		} catch (InputException e) { // FIXME: Do we need this?
 			logger.error("Error loading interface " + parameter.getLocator(), e);
 			throw new VerifyException("Error loading interface", parameter.getLocator(), e);
 		} catch (DataException e) {
-			logger.error("Error exporting interface " + name, e);
-			throw new VerifyException("Error exporting interface", name, e);
+			logger.error("Error exporting interface " + getName());
+			throw new VerifyException("Error exporting interface", getName(), e);
 		}
 	}
 

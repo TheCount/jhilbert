@@ -20,17 +20,18 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import jhilbert.data.AbstractName;
-import jhilbert.data.ComplexTerm;
 import jhilbert.data.Data;
-import jhilbert.data.Definition;
+import jhilbert.data.Kind;
 import jhilbert.data.Term;
+import jhilbert.data.impl.Definition;
+import jhilbert.data.impl.Functor;
+import jhilbert.data.impl.NameImpl;
 import jhilbert.exceptions.DataException;
 import jhilbert.util.DataInputStream;
 import jhilbert.util.DataOutputStream;
@@ -39,12 +40,12 @@ import org.apache.log4j.Logger;
 /**
  * A term which combines zero or more input terms to a new term.
  */
-public abstract class AbstractComplexTerm extends AbstractName implements Term {
+abstract class ComplexTerm extends NameImpl implements Term {
 
 	/**
 	 * Logger for this class.
 	 */
-	private static final Logger logger = Logger.getLogger(AbstractComplexTerm.class);
+	private static final Logger logger = Logger.getLogger(ComplexTerm.class);
 
 	/**
 	 * Resulting kind of this term.
@@ -67,12 +68,13 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 * @throws IOException if an I/O error occurs.
 	 * @throws DataException if the input stream is inconsistent.
 	 */
-	static AbstractComplexTerm create(final String name, final DataInputStream in, final Data data,
+	// FIXME
+	static ComplexTerm create(final String name, final DataInputStream in, final DataImpl data,
 		final List<String> nameList, final int kindsLower, final int kindsUpper)
 	throws EOFException, IOException, DataException {
 		return create(name, in, data, nameList, kindsLower, kindsUpper, -1, -1);
 	}
-	static AbstractComplexTerm create(final String name, final DataInputStream in, final Data data,
+	static ComplexTerm create(final String name, final DataInputStream in, final DataImpl data,
 		final List<String> nameList, final int kindsLower, final int kindsUpper, final int termsLower,
 		final int termsUpper)
 	throws EOFException, IOException, DataException {
@@ -83,10 +85,10 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 		assert (kindsLower > 0): "Specified lower kinds bound is not positive.";
 		assert (kindsUpper >= kindsLower): "Specified upper kinds bound is smaller than lower bound.";
 		assert (termsUpper >= termsLower): "Specified upper terms bound is smaller than lower bound.";
-		final String kind = nameList.get(in.readIntOr0(kindsLower, kindsUpper));
+		final Kind kind = data.getKind(nameList.get(in.readIntOr0(kindsLower, kindsUpper)));
 		final int placeCount = in.readInt();
 		if (placeCount >= 0)
-			return new ComplexTerm(name, kind, placeCount, in, nameList, kindsLower, kindsUpper);
+			return new Functor(name, kind, placeCount, in, data, nameList, kindsLower, kindsUpper);
 		else if (termsLower != -1)
 			return new Definition(name, kind, ~placeCount, in, data, nameList, kindsLower, kindsUpper,
 					termsLower, termsUpper);
@@ -102,7 +104,8 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 * @param name term name (must not be <code>null</code>).
 	 * @param kind result kind (may be <code>null</code> if unknown).
 	 */
-	protected AbstractComplexTerm(final String name, final Kind kind) {
+	// FIXME
+	protected ComplexTerm(final String name, final Kind kind) {
 		super(name);
 		this.kind = kind;
 	}
@@ -112,7 +115,8 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @param name term name (must not be <code>null</code>).
 	 */
-	protected AbstractComplexTerm(final String name) {
+	// FIXME
+	protected ComplexTerm(final String name) {
 		this(name, null);
 	}
 
@@ -121,7 +125,8 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @return resulting kind of this term, or <code>null</code> if the resulting kind is unknown.
 	 */
-	public String getKind() {
+	// FIXME
+	public Kind getKind() {
 		return kind;
 	}
 
@@ -139,6 +144,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 * @throws DataException if the resulting kind of this term is known and the specified kind is not
 	 * 	<code>null</code>, yet they are not equal.
 	 */
+	// FIXME
 	public final void ensureKind(final Kind kind) throws DataException {
 		if (this.kind == null) {
 			this.kind = kind;
@@ -147,10 +153,10 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 		if (kind == null)
 			return;
 		if (!this.kind.equals(kind)) {
-			logger.error("Result kind mismatch in term " + getName());
+			logger.error("Result kind mismatch in term " + this.toString());
 			logger.error("Required result kind: " + kind);
 			logger.error("Actual result kind: " + this.kind);
-			throw new DataException("Result kind mismatch.", getName());
+			throw new DataException("Result kind mismatch.", this.toString());
 		}
 	}
 
@@ -163,6 +169,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @see Definition#definitionDepth()
 	 */
+	// FIXME
 	public int definitionDepth() {
 		return 0;
 	}
@@ -173,6 +180,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @return number of places of this term, or <code>-1</code> if the number of places is not known yet.
 	 */
+	// FIXME
 	public abstract int placeCount();
 
 	/**
@@ -180,6 +188,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @param count number of places this term should have.
 	 */
+	// FIXME
 	protected abstract void setPlaceCount(int count);
 
 	/**
@@ -198,6 +207,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 * @see #placeCount()
 	 * @see #ensureInputKind()
 	 */
+	// FIXME
 	public final void ensurePlaceCount(final int placeCount) throws DataException {
 		if (placeCount == -1)
 			return;
@@ -209,10 +219,10 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 		}
 		if (thisPlaceCount == placeCount)
 			return;
-		logger.error("Place count mismatch in term " + getName());
+		logger.error("Place count mismatch in term " + this.toString());
 		logger.error("Required place count: " + placeCount);
 		logger.error("Actual place count: " + thisPlaceCount);
-		throw new DataException("Place count mismatch.", getName());
+		throw new DataException("Place count mismatch", this.toString());
 	}
 
 	/**
@@ -222,6 +232,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @return kind of the i-th input term, or <code>null</code> if that kind is not known yet.
 	 */
+	// FIXME
 	public abstract Kind getInputKind(final int i);
 
 	/**
@@ -230,6 +241,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 * @param i input term number (starting from zero).
 	 * @param kind the kind.
 	 */
+	// FIXME
 	protected abstract void setInputKind(int i, Kind kind);
 
 	/**
@@ -243,6 +255,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @see #ensureKind()
 	 */
+	// FIXME
 	public final void ensureInputKind(final int i, final Kind kind) throws DataException {
 		final Kind thisInputKind = getInputKind(i);
 		if (thisInputKind == null) {
@@ -252,14 +265,15 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 		if (kind == null)
 			return;
 		if (!thisInputKind.equals(kind)) {
-			logger.error("Input kind mismatch in term " + getName());
+			logger.error("Input kind mismatch in term " + this.toString());
 			logger.error("Input kind place: " + (i + 1));
 			logger.error("Required input kind: " + kind);
 			logger.error("Actual input kind: " + thisInputKind);
-			throw new DataException("Input kind mismatch", getName());
+			throw new DataException("Input kind mismatch", this.toString());
 		}
 	}
 
+	// FIXME
 	public final boolean isVariable() {
 		return false;
 	}
@@ -273,6 +287,7 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 *
 	 * @throws IOException if an I/O-Error occurs.
 	 */
+	// FIXME
 	void store(final DataOutputStream out, final Map<String, Integer> kindNameTable,
 			final Map<String, Integer> termNameTable)
 	throws IOException {
@@ -296,29 +311,31 @@ public abstract class AbstractComplexTerm extends AbstractName implements Term {
 	 * FIXME: We should, at some point, add a containsKind() method to {@link Data} which does not add undefined kinds.
 	 * FIXME: broken, don't use
 	 */
-	public boolean equalsSuperficially(final AbstractComplexTerm term, final Data data1, final Data data2) {
-		assert (term != null): "Supplied term is null.";
-		assert ((data1 != null) && (data2 != null)): "Supplied data are null.";
-		assert (this.kind != null): "Result kind undefined.";
-		final String kind = data1.getKind(this.kind);
-		assert (kind != null): "No such result kind.";
-		if (!kind.equals(data2.getKind(term.kind)))
-			return false;
-		final int placeCount = getPlaceCount();
-		assert (placeCount >= 0): "Place count undefined.";
-		if (placeCount != term.getPlaceCount())
-			return false;
-		for (int i = 0; i != placeCount; ++i) {
-			String inputKind = getInputKind(i);
-			assert (inputKind != null): "Input kind undefined.";
-			inputKind = data1.getKind(inputKind);
-			assert (inputKind != null): "No such input kind.";
-			if (!inputKind.equals(data2.getKind(term.getInputKind(i))))
-				return false;
-		}
-		return true;
-	}
+	// FIXME
+	//public boolean equalsSuperficially(final ComplexTerm term, final Data data1, final Data data2) {
+	//	assert (term != null): "Supplied term is null.";
+	//	assert ((data1 != null) && (data2 != null)): "Supplied data are null.";
+	//	assert (this.kind != null): "Result kind undefined.";
+	//	final String kind = data1.getKind(this.kind);
+	//	assert (kind != null): "No such result kind.";
+	//	if (!kind.equals(data2.getKind(term.kind)))
+	//		return false;
+	//	final int placeCount = getPlaceCount();
+	//	assert (placeCount >= 0): "Place count undefined.";
+	//	if (placeCount != term.getPlaceCount())
+	//		return false;
+	//	for (int i = 0; i != placeCount; ++i) {
+	//		String inputKind = getInputKind(i);
+	//		assert (inputKind != null): "Input kind undefined.";
+	//		inputKind = data1.getKind(inputKind);
+	//		assert (inputKind != null): "No such input kind.";
+	//		if (!inputKind.equals(data2.getKind(term.getInputKind(i))))
+	//			return false;
+	//	}
+	//	return true;
+	//}
 
-	public abstract @Override AbstractComplexTerm clone();
+	// FIXME
+	//public abstract @Override ComplexTerm clone();
 
 }

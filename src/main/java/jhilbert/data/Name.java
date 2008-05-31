@@ -25,7 +25,7 @@ package jhilbert.data;
 /**
  * Name to be used as unique identifier in a namespace.
  */
-public interface Name extends Comparable<Name>, Cloneable {
+public interface Name extends Comparable<Name> {
 
 	/**
 	 * Returns this name as a String.
@@ -34,20 +34,13 @@ public interface Name extends Comparable<Name>, Cloneable {
 	 *
 	 * @see #toString()
 	 */
-	public String getName();
+	// FIXME
+	// public String getName();
 
 	/**
-	 * Prefixes the name, and only the name, with the specified prefix.
+	 * Returns this Name as a String.
 	 *
-	 * @param prefix String to be prepended to the name.
-	 */
-	public void prefix(String prefix);
-
-	/**
-	 * Returns a String representation of this name.
-	 * This is an alias for {@link #getName()}.
-	 *
-	 * @see #getName()
+	 * @return this Name as a String.
 	 */
 	public String toString();
 
@@ -58,14 +51,14 @@ public interface Name extends Comparable<Name>, Cloneable {
 	 *
 	 * @return <code>true</code> if and only if o is an instance of Name, and <code>getName().equals(o.toString())</code>.
 	 */
-	public boolean equals(final Object o);
+	// FIXME
+	// public boolean equals(final Object o);
 
 	/**
 	 * Returns a hash code for this name.
 	 * Reimplemented so that equal names return equal hash codes.
 	 */
-	public int hashCode();
-
-	public Name clone();
+	// FIXME
+	// public int hashCode();
 
 }

@@ -20,17 +20,14 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
-import java.util.HashMap;
-import java.util.Map;
 import jhilbert.data.Name;
 
 /**
  * Name to be used as unique identifier in a namespace.
- * FIXME: enhance this description.
  */
-public abstract class AbstractName implements Name {
+abstract class NameImpl implements Name {
 
 	/**
 	 * Name.
@@ -38,11 +35,11 @@ public abstract class AbstractName implements Name {
 	private String name;
 
 	/**
-	 * Create a new AbstractName.
+	 * Create a new Name.
 	 *
 	 * @param name the Name.
 	 */
-	protected AbstractName(final String name) {
+	protected NameImpl(final String name) {
 		assert (name != null): "Supplied name is null.";
 		this.name = name;
 	}
@@ -54,13 +51,15 @@ public abstract class AbstractName implements Name {
 	 *
 	 * @see #toString()
 	 */
-	public final String getName() {
-		return name;
-	}
+	// FIXME
+	//public final String getName() {
+	//	return name;
+	//}
 
-	public final void prefix(final String prefix) {
-		name = prefix + name;
-	}
+	// FIXME
+	//public final void prefix(final String prefix) {
+	//	name = prefix + name;
+	//}
 
 	/**
 	 * Returns a String representation of this name.
@@ -77,13 +76,17 @@ public abstract class AbstractName implements Name {
 	}
 
 	public boolean equals(final Name n) {
-		return name.equals(n.getName());
+		assert (n != null): "Supplied name is null.";
+		return name.equals(n.toString());
 	}
+
+	// FIXME
+	//public boolean equals(final String s) {
+	//	return name.equals(s);
+	//}
 
 	public int compareTo(final Name n) {
-		return name.compareTo(n.getName());
+		return name.compareTo(n.toString());
 	}
-
-	public abstract AbstractName clone();
 
 }

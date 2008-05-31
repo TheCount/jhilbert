@@ -20,10 +20,11 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.VariableImpl;
 
 /**
  * Unnamed variable.
@@ -33,7 +34,7 @@ import jhilbert.data.Variable;
  * This class provides objects with which the explicitly named
  * variables may be replaced with.
  */
-public final class UnnamedVariable extends Variable {
+final class UnnamedVariable extends VariableImpl {
 
 	/**
 	 * Internal ID of this unnamed variable.
@@ -56,12 +57,14 @@ public final class UnnamedVariable extends Variable {
 	 *
 	 * @param var variable to be upgraded.
 	 */
-	private UnnamedVariable(final Variable var) {
-		super(var.getName(), var.getKind());
-	}
+	// FIXME
+	//private UnnamedVariable(final Variable var) {
+	//	super(var.getName(), var.getKind());
+	//}
 
-	public @Override UnnamedVariable clone() {
-		return new UnnamedVariable(super.clone());
-	}
+	// FIXME
+	//public @Override UnnamedVariable clone() {
+	//	return new UnnamedVariable(super.clone());
+	//}
 
 }

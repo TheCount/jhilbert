@@ -25,10 +25,10 @@ package jhilbert.data;
 import jhilbert.data.Name;
 
 /**
- * Interface for names from the Symbol namespace.
- * FIXME: enhance description.
+ * A name from the Symbol namespace.
+ * The symbol namespace contains variables and statements.
  */
-public interface Symbol extends Name, Cloneable {
+public interface Symbol extends Name {
 
 	/**
 	 * Checks whether this symbol is a variable.
@@ -36,7 +36,5 @@ public interface Symbol extends Name, Cloneable {
 	 * @return <code>true</code> if this symbol is a {@link Variable}, <code>false</code> otherwise.
 	 */
 	public boolean isVariable();
-
-	public Symbol clone();
 
 }

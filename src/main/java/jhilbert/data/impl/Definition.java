@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -30,11 +30,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import jhilbert.data.AbstractComplexTerm;
-import jhilbert.data.DummyVariable;
+import jhilbert.data.Data;
+import jhilbert.data.DataFactory;
+import jhilbert.data.Kind;
+import jhilbert.data.Term;
 import jhilbert.data.TermExpression;
-import jhilbert.data.UnnamedVariable;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.DummyVariable;
+import jhilbert.data.impl.UnnamedVariable;
 import jhilbert.exceptions.DataException;
 import jhilbert.util.DataInputStream;
 import jhilbert.util.DataOutputStream;
@@ -44,7 +47,7 @@ import org.apache.log4j.Logger;
  * A Definition.
  * That is a {@link Term} defining another Term, in dependence on a list of variables.
  */
-public final class Definition extends AbstractComplexTerm {
+final class Definition extends ComplexTerm {
 
 	/**
 	 * Logger for this class.
@@ -59,10 +62,10 @@ public final class Definition extends AbstractComplexTerm {
 	/**
 	 * The definiens.
 	 */
-	private TermExpression definiens;
+	private TermExpressionImpl definiens;
 
 	/**
-	 * Definiton depth of this definition.
+	 * Definition depth of this definition.
 	 */
 	final int definitionDepth;
 
@@ -76,25 +79,27 @@ public final class Definition extends AbstractComplexTerm {
 	public Definition(final String name, final LinkedHashSet<Variable> varList, final TermExpression definiens) {
 		super(name, definiens.getKind());
 		assert (varList != null): "Supplied variable list is null.";
+		assert (definiens instanceof TermExpressionImpl): "Definiens not of this implementation.";
+		DataFactory df = DataFactory.getInstance();
 		// create consistent dummy/unnamed variable mapping
 		final Map<Variable, TermExpression> varMap = new HashMap();
 		this.varList = new ArrayList(varList.size());
 		for (Variable var: varList) {
 			UnnamedVariable u = new UnnamedVariable(var.getKind());
 			this.varList.add(u);
-			varMap.put(var, new TermExpression(u));
+			varMap.put(var, df.createTermExpression(u));
 		}
 		final Set<Variable> extraVars = definiens.variables();
 		extraVars.removeAll(varList);
 		for (Variable var: extraVars)
-			varMap.put(var, new TermExpression(new DummyVariable(var.getKind())));
-		this.definiens = definiens.subst(varMap);
+			varMap.put(var, df.createTermExpression(new DummyVariable(var.getKind())));
+		this.definiens = (TermExpressionImpl) definiens.subst(varMap);
 		// calculate definition depth, see description of #definitionDepth()
 		final Term value = this.definiens.getValue();
 		if (value.isVariable())
 			definitionDepth = 1;
 		else
-			definitionDepth = ((AbstractComplexTerm) value).definitionDepth() + 1;
+			definitionDepth = ((ComplexTerm) value).definitionDepth() + 1;
 	}
 
 	/**
@@ -115,7 +120,7 @@ public final class Definition extends AbstractComplexTerm {
 	 * @throws IOException if an I/O error occurs.
 	 * @throws DataException if the input stream is inconsistent.
 	 */
-	Definition(final String name, final Kind kind, final int placeCount, final DataInputStream in, final Data data,
+	Definition(final String name, final Kind kind, final int placeCount, final DataInputStream in, final DataImpl data,
 		final List<String> nameList, final int kindsLower, final int kindsUpper, final int termsLower,
 		final int termsUpper)
 	throws EOFException, IOException, DataException {
@@ -136,9 +141,9 @@ public final class Definition extends AbstractComplexTerm {
 			throw new DataException("Kind list size of definition is smaller than the number of its arguments",
 						name);
 		}
-		final ArrayList<String> kindList = new ArrayList(kindListSize);
+		final ArrayList<Kind> kindList = new ArrayList(kindListSize);
 		for (int i = 0; i != kindListSize; ++i)
-			kindList.add(nameList.get(in.readInt(kindsLower, kindsUpper)));
+			kindList.add(data.getKind(nameList.get(in.readInt(kindsLower, kindsUpper))));
 		// create extended variable list for expression parsing
 		final ArrayList extendedVarList = new ArrayList(kindListSize);
 		for (int i = 0; i != placeCount; ++i)
@@ -147,12 +152,12 @@ public final class Definition extends AbstractComplexTerm {
 		for (int i = placeCount; i != kindListSize; ++i)
 			extendedVarList.add(new UnnamedVariable(kindList.get(i)));
 		// load definiens
-		definiens = TermExpression.create(in, data, nameList, extendedVarList, termsLower, termsUpper);
-		final String defKind = definiens.getKind();
+		definiens = TermExpressionImpl.create(in, data, nameList, extendedVarList, termsLower, termsUpper);
+		final Kind defKind = definiens.getKind();
 		final Term value = definiens.getValue();
 		if (defKind == null)
-			((AbstractComplexTerm) value).ensureKind(kind);
-		else if (!kind.equals(defKind)) {
+			((ComplexTerm) value).ensureKind(kind);
+		else if (!kind.toString().equals(defKind.toString())) {
 			logger.error("Definiendum/definiens kind mismatch in definition " + name);
 			logger.error("Definiendum kind: " + kind);
 			logger.error("Definiens kind: " + defKind);
@@ -162,7 +167,7 @@ public final class Definition extends AbstractComplexTerm {
 		if (value.isVariable())
 			definitionDepth = 1;
 		else
-			definitionDepth = ((AbstractComplexTerm) value).definitionDepth() + 1;
+			definitionDepth = ((ComplexTerm) value).definitionDepth() + 1;
 	}
 
 	/**
@@ -171,9 +176,10 @@ public final class Definition extends AbstractComplexTerm {
 	 *
 	 * @param name name of definition (must not be <code>null</code>).
 	 */
-	private Definition(final String name) {
-		super(name);
-	}
+	// FIXME
+	//private Definition(final String name) {
+	//	super(name);
+	//}
 
 	/**
 	 * Returns the definition depth of this term.
@@ -198,12 +204,12 @@ public final class Definition extends AbstractComplexTerm {
 	 *
 	 * @throws IllegalArgumentException if the size of the specified list does not match the number of parameters of this Definition.
 	 */
-	public TermExpression unfold(final List<TermExpression> exprList) {
+	public TermExpressionImpl unfold(final List<TermExpressionImpl> exprList) {
 		assert (exprList != null): "Supplied expression list is null.";
 		final int size = exprList.size();
 		if (varList.size() != size)
 			throw new IllegalArgumentException("Wrong number of parameters supplied: " + exprList.toString());
-		final Map<Variable, TermExpression> varAssignments = new HashMap();
+		final Map<Variable, TermExpressionImpl> varAssignments = new HashMap();
 		for (int i = 0; i != size; ++i)
 			varAssignments.put(varList.get(i), exprList.get(i));
 		return definiens.subst(varAssignments);
@@ -235,11 +241,11 @@ public final class Definition extends AbstractComplexTerm {
 		final Map<String, Integer> varNameTable = new HashMap();
 		int id = -1;
 		for (Variable var: varList)
-			varNameTable.put(var.getName(), id--);
+			varNameTable.put(var.toString(), id--);
 		final Set<Variable> remainingVars = definiens.variables();
 		remainingVars.removeAll(varList);
 		for (Variable var: remainingVars)
-			varNameTable.put(var.getName(), id--);
+			varNameTable.put(var.toString(), id--);
 		// variable list
 		out.writeInt(varNameTable.size());
 		for (Variable var: varList)
@@ -250,9 +256,10 @@ public final class Definition extends AbstractComplexTerm {
 		definiens.store(out, termNameTable, varNameTable);
 	}
 
-	public @Override Definition clone() {
-		final Definiton result = new Definition(getName().clone());
-		result.ensureKind(getKind().clone());
-	}
+	// FIXME
+	//public @Override Definition clone() {
+	//	final Definition result = new Definition(getName().clone());
+	//	result.ensureKind(getKind().clone());
+	//}
 
 }

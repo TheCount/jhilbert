@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.util;
+package jhilbert.data.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import jhilbert.commands.Command;
 import jhilbert.data.InterfaceData;
+import jhilbert.data.impl.DataFactoryImpl;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
 import jhilbert.exceptions.ScannerException;
@@ -38,14 +39,14 @@ import jhilbert.util.FileInputSource;
 import org.apache.log4j.Logger;
 
 /**
- * Class with static methods to load an interface.
+ * A data factory which loads interfaces from files.
  */
-public class InterfaceLoader {
+final class FileBasedDataFactory extends DataFactoryImpl {
 
 	/**
 	 * Logger for this class.
 	 */
-	private static final Logger logger = Logger.getLogger(InterfaceLoader.class);
+	private static final Logger logger = Logger.getLogger(FileBasedDataFactory.class);
 
 	/**
 	 * File suffixes.
@@ -53,23 +54,16 @@ public class InterfaceLoader {
 	private static final String INTERFACE_SUFFIX = ".jhi";
 	private static final String LIBRARY_SUFFIX   = ".jhl";
 
-	/**
-	 * Loads an interface. An interface library is created if it doesn't exist.
-	 *
-	 * @param locator interface locator (must not be <code>null</code>).
-	 *
-	 * @throws InputException if the interface cannot be loaded.
-	 */
-	public static InterfaceData loadInterface(final String locator) throws InputException {
+	public final @Override InterfaceData loadInterfaceData(final String locator) throws InputException {
 		assert (locator != null): "Specified interface locator is null";
 		final File interfaceFile = new File(locator + INTERFACE_SUFFIX);
 		final File libraryFile = new File(locator + LIBRARY_SUFFIX);
 		// load from library if interface wasn't modified
 		if (libraryFile.lastModified() > interfaceFile.lastModified()) {
 			try {
-				return new InterfaceData(new FileInputStream(libraryFile));
+				return new InterfaceDataImpl(new FileInputStream(libraryFile));
 			} catch (FileNotFoundException e) { // This should not happen
-				logger.info("Compiling library for interface " + locator, e);
+				logger.info("Compiling library for interface " + locator);
 			} catch (UnknownFormatException e) {
 				logger.warn("Obsolete library format. Recreating library.", e);
 			} catch (DataException e) {
@@ -78,25 +72,31 @@ public class InterfaceLoader {
 		} else
 			logger.info("No recent library for " + locator + " detected, creating...");
 		// create library
-		final InterfaceData result = new InterfaceData();
+		final InterfaceDataImpl result = new InterfaceDataImpl();
 		try {
-			final CommandScanner cs = new CommandScanner(new FileInputSource(interfaceFile), result, Command.INTERFACE_COMMANDS);
-			for (Command c = cs.getToken(); c != null; c = cs.getToken())
+			final CommandScanner cs = new CommandScanner(new FileInputSource(interfaceFile), result,
+				Command.INTERFACE_COMMANDS);
+			for (Command c = cs.getToken(); c != null; c = cs.getToken()) {
+				if (logger.isDebugEnabled())
+					logger.debug("Current context: " + cs.getContextString());
 				c.execute();
+				cs.resetContext();
+			}
 			libraryFile.delete();
 			result.store(new FileOutputStream(libraryFile));
 			logger.info("Library for interface " + locator + " created.");
 		} catch (InputException e) {
-			logger.error("Unable to open interface file for reading while loading interface " + locator, e);
+			logger.error("Unable to open interface file for reading while loading interface " + locator);
 			throw new InputException("Unable to read interface file", locator, e);
 		} catch (ScannerException e) {
-			logger.error("Error scanning interface file while loading interface " + locator, e);
-			throw new InputException("Error scanning interface file", locator, e);
+			logger.error("Scanner error while scanning interface " + locator);
+			throw new InputException("Scanner error in interface file ", locator, e);
 		} catch (VerifyException e) {
-			logger.error("Interface file failed to verify while loading interface " + locator, e);
+			logger.error("Interface file failed to verify while loading interface " + locator);
 			throw new InputException("Verification error in interface file", locator, e);
 		} catch (FileNotFoundException e) {
-			logger.warn("Unable to open library file for writing while creating library for interface " + locator, e);
+			logger.warn("Unable to open library file for writing while creating library for interface "
+				+ locator, e);
 		} catch (DataException e) {
 			logger.warn("Unable to store library for interface " + locator, e);
 		}

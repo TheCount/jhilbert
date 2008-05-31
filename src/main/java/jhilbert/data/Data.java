@@ -22,7 +22,9 @@
 
 package jhilbert.data;
 
-import jhilbert.data.AbstractComplexTerm;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.SortedSet;
 import jhilbert.data.Kind;
 import jhilbert.data.Parameter;
 import jhilbert.data.Statement;
@@ -38,12 +40,7 @@ import jhilbert.exceptions.DataException;
  * <li>{@link ModuleData} for modules.
  * </ul>
  */
-public interface Data extends Cloneable {
-
-	/**
-	 * Data file format version.
-	 */
-	public static final int FORMAT_VERSION = 1;
+public interface Data {
 
 	/**
 	 * Obtains a kind.
@@ -55,23 +52,15 @@ public interface Data extends Cloneable {
 	public Kind getKind(String name);
 
 	/**
-	 * Defines a new kind.
-	 *
-	 * @param kind kind to be defined.
-	 *
-	 * @throws DataException if the kind already exists.
-	 */
-	public void defineKind(Kind kind) throws DataException;
-
-	/**
 	 * Binds a previously defined kind to a new kind.
+	 * This method merely creates an alias; no new kind will actually be created.
 	 *
 	 * @param oldKind previously defined kind.
-	 * @param newKind new kind to be bound to the old one.
+	 * @param newKindName name of new kind to be bound to the old one.
 	 *
 	 * @throws DataException if the new kind already exists.
 	 */
-	public void bindKind(Kind oldKind, Kind newKind) throws DataException;
+	public void bindKind(Kind oldKind, String newKindName) throws DataException;
 
 	/**
 	 * Obtains a term.
@@ -80,17 +69,27 @@ public interface Data extends Cloneable {
 	 *
 	 * @return {@link AbstractComplexTerm} with the specified name, or <code>null</code> if no such term exists.
 	 */
-	public AbstractComplexTerm getTerm(String name);
+	// FIXME
+	//public AbstractComplexTerm getTerm(String name);
 
 	/**
-	 * Defines a new term.
+	 * Defines a new term with the specified name.
+	 * The specified variable list serves as the list of parameters for the term.
+	 * In a {@link TermExpression}, the term so defined can be replaces by the specified definiens,
+	 * with proper substitution of variables.
+	 * The variables must have been previously defined by {@link #defineVariable()} and obtained by
+	 * {@link #getVariable()}.
+	 * The definiens must have been obtained by {@link DataFactory#scanTermExpression()} with this
+	 * object as the data parameter.
 	 *
-	 * @param term term to be defined.
+	 * @param name name of the term.
+	 * @param varList list of variables.
+	 * @param definiens the definiens of this term.
 	 *
-	 * @throws DataException if a term with the same name as the specified term already exists, or if the
-	 * 	specified term is incomplete.
+	 * @throws DataException if a term with the same name as the specified term already exists.
 	 */
-	public void defineTerm(AbstractComplexTerm term) throws DataException;
+	public void defineTerm(String name, LinkedHashSet<Variable> varList, TermExpression definiens)
+	throws DataException;
 
 	/**
 	 * Obtains a symbol.
@@ -109,6 +108,16 @@ public interface Data extends Cloneable {
 	 * @return {@link Variable} with the specified name, or <code>null</code> if no such variable exists.
 	 */
 	public Variable getVariable(String name);
+	
+	/**
+	 * Defines a new local variable.
+	 *
+	 * @param name name of the new variable (must not be <code>null</code>).
+	 * @param kind Kind of the new variable (must not be <code>null</code>).
+	 *
+	 * @throws DataException if a symbol with the specified name already exists.
+	 */
+	public void defineVariable(String name, Kind kind) throws DataException;
 
 	/**
 	 * Obtains a statement.
@@ -118,6 +127,20 @@ public interface Data extends Cloneable {
 	 * @return {@link Statement} with the specified name, or <code>null</code> if no such statement exists.
 	 */
 	public Statement getStatement(String name);
+	
+	/**
+	 * Defines a new Statement.
+	 *
+	 * @param name name of the statement.
+	 * @param rawDV raw disjoint variable constraints.
+	 * @param hypotheses List of hypotheses.
+	 * @param consequent the consequent.
+	 *
+	 * @throws DataException if a symbol with the specified name already exists.
+	 */
+	public void defineStatement(String name, List<SortedSet<Variable>> rawDV, List<TermExpression> hypotheses,
+		TermExpression consequent)
+	throws DataException;
 
 	/**
 	 * Defines a new symbol.
@@ -126,11 +149,11 @@ public interface Data extends Cloneable {
 	 *
 	 * @throws DataException if a symbol with the same name as the specified symbol already exists.
 	 */
-	public void defineSymbol(Symbol symbol) throws DataException;
+	// FIXME
+	//public void defineSymbol(Symbol symbol) throws DataException;
 
 	/**
 	 * Obtains a parameter.
-	 * FIXME: This method might not belong here, but in subclasses instead.
 	 *
 	 * @param name name of the parameter.
 	 *
@@ -138,6 +161,17 @@ public interface Data extends Cloneable {
 	 */
 	public Parameter getParameter(String name);
 
-	public Data clone();
+	/**
+	 * Defines a new parameter.
+	 *
+	 * @param name name of the parameter (must not be <code>null</code>).
+	 * @param locator locator for the parameter (must not be <code>null</code>).
+	 * @param paramList parameter list for the parameter (must not be <code>null</code>).
+	 * @param prefix namespace prefix for the parameter (must not be <code>null</code>).
+	 *
+	 * @throws DataException if a parameter with the specified name already exists.
+	 */
+	public void defineParameter(String name, String locator, List<Parameter> paramList, String prefix)
+	throws DataException;
 
 }

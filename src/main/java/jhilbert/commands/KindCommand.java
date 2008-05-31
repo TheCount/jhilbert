@@ -46,6 +46,16 @@ public final class KindCommand extends Command {
 	private static final Logger logger = Logger.getLogger(KindCommand.class);
 
 	/**
+	 * Data.
+	 */
+	private final InterfaceData data;
+
+	/**
+	 * Kind name.
+	 */
+	private final String kindName;
+
+	/**
 	 * Scans a new KindCommand from a TokenScanner.
 	 * The parameters must not be <code>null</code>.
 	 *
@@ -55,25 +65,24 @@ public final class KindCommand extends Command {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public KindCommand(final TokenScanner tokenScanner, final InterfaceData data) throws SyntaxException {
-		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
-		StringBuilder context = new StringBuilder("kind ");
+		assert (data != null): "Supplied data are null.";
+		this.data = data;
 		try {
-			name = tokenScanner.getAtom();
-			context.append(name);
+			kindName = tokenScanner.getAtom();
 		} catch (ScannerException e) {
-			logger.error("Error scanning kind.", e);
-			logger.error("Context: " + context);
-			throw new SyntaxException("Scanner error", context.toString(), e);
+			logger.error("Error scanning kind.");
+			logger.error("Context: " + tokenScanner.getContextString());
+			throw new SyntaxException("Scanner error", tokenScanner.getContextString(), e);
 		}
 	}
 
 	public @Override void execute() throws VerifyException {
 		try {
-			data.defineKind(name);
+			data.defineKind(kindName);
 		} catch (DataException e) {
-			logger.error("Kind command failed to execute.", e);
-			throw new VerifyException("Kind error", name, e);
+			logger.error("Unable to define kind " + kindName);
+			throw new VerifyException("Kind error", kindName, e);
 		}
 	}
 

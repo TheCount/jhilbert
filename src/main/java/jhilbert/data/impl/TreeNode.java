@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +37,7 @@ import java.util.List;
  * @param E value type.
  * @param T child type.
  */
-public class TreeNode<E, T extends TreeNode<E,T>> {
+class TreeNode<E, T extends TreeNode<E,T>> {
 
 	/**
 	 * Value of this node.

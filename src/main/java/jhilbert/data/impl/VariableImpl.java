@@ -20,20 +20,50 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
-import jhilbert.data.Name;
+import jhilbert.data.impl.NameImpl;
+import jhilbert.data.Kind;
+import jhilbert.data.Variable;
 
 /**
- * A Parameter.
+ * Default implementation of the {@link Variable} interface.
  */
-public interface Parameter extends Name {
+class VariableImpl extends NameImpl implements Variable {
 
 	/**
-	 * Obtains the interface locator of this parameter.
-	 *
-	 * @return interface locator of this parameter.
+	 * Kind of this variable.
 	 */
-	public String getLocator();
+	private Kind kind;
+
+	/**
+	 * Create a new Variable with the specified name and kind.
+	 *
+	 * @param name name of this variable (must not be <code>null</code>).
+	 * @param kind kind of this variable (must not be <code>null</code>).
+	 */
+	VariableImpl(final String name, final Kind kind) {
+		super(name);
+		assert (kind != null): "Supplied kind is null.";
+		this.kind = kind;
+	}
+
+	/**
+	 * Returns the kind of this variable.
+	 *
+	 * @return the kind of this variable.
+	 */
+	public Kind getKind() {
+		return kind;
+	}
+
+	public final boolean isVariable() {
+		return true;
+	}
+
+	// FIXME
+	//@Override Variable clone() {
+	//	return new Variable(getName().clone(), kind.clone());
+	//}
 
 }

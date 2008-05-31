@@ -22,48 +22,11 @@
 
 package jhilbert.data;
 
-import jhilbert.data.AbstractName;
-import jhilbert.data.Kind;
 import jhilbert.data.Symbol;
+import jhilbert.data.Term;
 
 /**
- * A variable.
- * FIXME: enhance description.
+ * Marker interface for variables.
  */
-public class Variable extends AbstractName implements Term, Symbol {
-
-	/**
-	 * Kind of this variable.
-	 */
-	private Kind kind;
-
-	/**
-	 * Create a new Variable with the specified name and kind.
-	 *
-	 * @param name name of this variable.
-	 * @param kind kind of this variable.
-	 */
-	public Variable(final String name, final Kind kind) {
-		super(name);
-		assert (kind != null): "Supplied kind is null.";
-		this.kind = kind;
-	}
-
-	/**
-	 * Returns the kind of this variable.
-	 *
-	 * @return the kind of this variable.
-	 */
-	public Kind getKind() {
-		return kind;
-	}
-
-	public final boolean isVariable() {
-		return true;
-	}
-
-	public @Override Variable clone() {
-		return new Variable(getName().clone(), kind.clone());
-	}
-
+public interface Variable extends Symbol, Term {
 }

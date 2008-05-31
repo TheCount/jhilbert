@@ -34,7 +34,10 @@ import java.util.Stack;
 import java.util.TreeSet;
 import jhilbert.commands.AbstractStatementCommand;
 import jhilbert.data.Data;
+import jhilbert.data.DataFactory;
 import jhilbert.data.DVConstraints;
+import jhilbert.data.Kind;
+import jhilbert.data.ModuleData;
 import jhilbert.data.Statement;
 import jhilbert.data.Symbol;
 import jhilbert.data.TermExpression;
@@ -71,9 +74,24 @@ public final class TheoremCommand extends AbstractStatementCommand {
 	private static final Logger logger = Logger.getLogger(TheoremCommand.class);
 
 	/**
+	 * Data factory.
+	 */
+	private DataFactory df;
+
+	/**
+	 * Data.
+	 */
+	private final ModuleData data;
+
+	/**
 	 * Map mapping labels to hypotheses
 	 */
 	private Map<String, TermExpression> hypothesisMap;
+
+	/**
+	 * The statement that is to be proven.
+	 */
+	private final Statement statement;
 
 	/**
 	 * Proof.
@@ -96,16 +114,13 @@ public final class TheoremCommand extends AbstractStatementCommand {
 	private final DVConstraints requiredDVConstraints;
 
 	protected @Override void scanHypotheses(final TokenScanner tokenScanner, final Data data) throws SyntaxException, ScannerException, DataException {
-		StringBuilder context = new StringBuilder("hypotheses: ");
 		hypothesisMap = new HashMap();
+		df = DataFactory.getInstance();
 		try {
 			Token token = tokenScanner.getToken();
 			while (token.tokenClass == Token.TokenClass.BEGIN_EXP) {
-				context.append('(');
 				final String label = tokenScanner.getAtom();
-				context.append(label).append(' ');
-				TermExpression expr = new TermExpression(tokenScanner, data);
-				context.append(expr.toString()).append(')');
+				TermExpression expr = df.scanTermExpression(tokenScanner, data);
 				tokenScanner.endExp();
 				hypotheses.add(expr);
 				hypothesisMap.put(label, expr);
@@ -113,8 +128,8 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			}
 			tokenScanner.putToken(token);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning hypotheses for " + name);
-			throw new SyntaxException("Unexpected end of input", context.toString(), e);
+			logger.error("Unexpected end of input while scanning hypotheses in theorem " + getName());
+			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
 		}
 	}
 
@@ -127,10 +142,10 @@ public final class TheoremCommand extends AbstractStatementCommand {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
-	public TheoremCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
-		super("theorem", tokenScanner, data);
+	public TheoremCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
+		super(tokenScanner, data);
+		final String name = getName();
 		// scan proof
-		StringBuilder context = new StringBuilder("proof: ");
 		try {
 			proof = new ArrayList();
 			tokenScanner.beginExp();
@@ -138,16 +153,12 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			while (token.tokenClass != Token.TokenClass.END_EXP) {
 				switch (token.tokenClass) {
 					case ATOM:
-					final String atom = token.toString();
-					context.append(atom).append(' ');
-					proof.add(atom);
+					proof.add(token.toString());
 					break;
 
 					case BEGIN_EXP:
 					tokenScanner.putToken(token);
-					final TermExpression expr = new TermExpression(tokenScanner, data);
-					context.append(expr.toString()).append(' ');
-					proof.add(expr);
+					proof.add(df.scanTermExpression(tokenScanner, data));
 					break;
 
 					default:
@@ -157,33 +168,30 @@ public final class TheoremCommand extends AbstractStatementCommand {
 				token = tokenScanner.getToken();
 			}
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning proof of " + name, e);
-			throw new SyntaxException("Unexpected end of input", context.toString(), e);
+			logger.error("Unexpected end of input while scanning proof of theorem " + name);
+			throw new SyntaxException("Unexpected end of input", tokenScanner.toString(), e);
 		} catch (DataException e) {
-			logger.error("Error scanning term in proof of " + name + " in context " + context, e);
-			throw new SyntaxException("Error scanning term", context.toString(), e);
+			logger.error("Error scanning term in proof of theorem " + name + " in context "
+				+ tokenScanner.toString());
+			throw new SyntaxException("Error scanning term", tokenScanner.toString(), e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error in context " + context, e);
-			throw new SyntaxException("Scanner error", context.toString(), e);
+			logger.error("Scanner error in context " + tokenScanner.toString());
+			throw new SyntaxException("Scanner error", tokenScanner.toString(), e);
 		}
+		statement = data.getStatement(getName());
+		this.data = data;
 		proofStack = new Stack();
 		mandatoryStack = new Stack();
-		requiredDVConstraints = new DVConstraints();
+		requiredDVConstraints = df.createDVConstraints();
 	}
 
 	public @Override void execute() throws VerifyException {
 		super.execute();
 		checkProof();
-		try {
-			data.defineSymbol(statement);
-		} catch (DataException e) {
-			logger.error("Unable to define theorem: a symbol with name " + name + " already exists.", e);
-			throw new VerifyException("Unable to define theorem", name, e);
-		}
 	}
 
 	private void checkProof() throws VerifyException {
-		logger.info("Verifying proof of " + name);
+		logger.info("Verifying proof of " + getName());
 		for (final Object proofStep: proof) {
 			checkProofStep(proofStep);
 			if (logger.isTraceEnabled()) {
@@ -192,16 +200,16 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			}
 		}
 		if (proofStack.empty()) {
-			logger.error("Proof stack of theorem " + name + " empty at end of proof; "
+			logger.error("Proof stack of theorem " + getName() + " empty at end of proof; "
 				+ "should contain exactly one element.");
-			throw new VerifyException("Proof stack empty at end of proof", name);
+			throw new VerifyException("Proof stack empty at end of proof", getName());
 		}
 		final TermExpression proofResult = proofStack.pop();
 		if (!(mandatoryStack.empty() && proofStack.empty())) {
-			logger.error("Proof stack of theorem " + name + " not empty after popping final result.");
+			logger.error("Proof stack of theorem " + getName() + " not empty after popping final result.");
 			logger.debug("Mandatory stack: " + mandatoryStack);
 			logger.debug("Proof stack: " + proofStack);
-			throw new VerifyException("Proof stack not empty after popping final proof result", name);
+			throw new VerifyException("Proof stack not empty after popping final proof result", getName());
 		}
 		// try matching consequent against the proofResult
 		final TermExpression consequent = statement.getConsequent();
@@ -211,10 +219,10 @@ public final class TheoremCommand extends AbstractStatementCommand {
 		final Set<Variable> blacklist = new HashSet(hypBlacklist);
 		blacklist.addAll(consequent.variables());
 		if (!consequent.dummyMatches(proofResult, blacklist)) {
-			logger.error("Consequent of theorem " + name + " does not match proof result.");
+			logger.error("Consequent of theorem " + getName() + " does not match proof result.");
 			logger.error("Consequent:   " + consequent);
 			logger.error("Proof result: " + proofResult);
-			throw new VerifyException("Consequent does not match proof result", name);
+			throw new VerifyException("Consequent does not match proof result", getName());
 		}
 		// check required dinstinct variable constraints
 		final DVConstraints dvConstraints = statement.getDVConstraints();
@@ -222,12 +230,12 @@ public final class TheoremCommand extends AbstractStatementCommand {
 		resultBlacklist.addAll(proofResult.variables());
 		requiredDVConstraints.restrict(resultBlacklist); // throw out dummies
 		if (!dvConstraints.containsAll(requiredDVConstraints)) {
-			logger.error("Required distinct variable constraints for theorem " + name
+			logger.error("Required distinct variable constraints for theorem " + getName()
 				+ " are not a subset of actual distinct variable constraints.");
 			logger.error("Required constraints: " + requiredDVConstraints);
 			logger.error("Actual constraints:   " + dvConstraints);
 			throw new VerifyException("Required distinct variable constraints are not "
-				+ "a subset of actual distinct variable constraints " + dvConstraints, name);
+				+ "a subset of actual distinct variable constraints " + dvConstraints, getName());
 		}
 	}
 
@@ -259,9 +267,13 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			logger.error("Proof step is neither a symbol nor a hypothesis: " + label);
 			throw new VerifyException("Proof step is neither a symbol nor a hypothesis", label);
 		}
+		if (getName().equals(label)) {
+			logger.error("Invalid self-reference: " + label);
+			throw new VerifyException("Invalid self-reference", label);
+		}
 		// proof step is a variable?
 		if (symbol instanceof Variable) {
-			mandatoryStack.push(new TermExpression((Variable) symbol));
+			mandatoryStack.push(df.createTermExpression((Variable) symbol));
 			return;
 		}
 		// OK, only remaining possibility is Statement
@@ -283,9 +295,9 @@ public final class TheoremCommand extends AbstractStatementCommand {
 		for (int i = 0; i != size; ++i) {
 			final Variable var = pMandatoryVariables.get(i);
 			final TermExpression expr = mandatoryStack.get(i);
-			final String varKind = var.getKind();
-			final String exprKind = expr.getKind();
-			if (!varKind.equals(exprKind)) {
+			final Kind varKind = var.getKind();
+			final Kind exprKind = expr.getKind();
+			if (!varKind.toString().equals(exprKind.toString())) {
 				logger.error("Kind mismatch in proof statement " + label);
 				logger.error("Affected expression: " + expr);
 				logger.error("Kind of expression: " + exprKind);
@@ -307,7 +319,7 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			for (int i = 0; i != size; ++i)
 				pHypotheses.get(i).unify(proofStack.get(start + i), varAssignments);
 		} catch (UnifyException e) {
-			logger.error("Unification error during proof step " + label, e);
+			logger.error("Unification error during proof step " + label);
 			throw new VerifyException("Unification error while popping hypotheses from proof stack", label, e);
 		}
 		proofStack.setSize(start);
@@ -322,7 +334,7 @@ public final class TheoremCommand extends AbstractStatementCommand {
 				logger.error("First variable set:  " + varSet1);
 				logger.error("Second variable set: " + varSet2);
 				varSet1.removeAll(varSet2);
-				logger.error("Meet: " + varSet2);
+				logger.error("Meet: " + varSet1);
 				throw new VerifyException("Distinct variable constraint violated", label, e);
 			}
 			if (logger.isTraceEnabled())

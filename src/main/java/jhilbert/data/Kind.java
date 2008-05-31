@@ -22,24 +22,10 @@
 
 package jhilbert.data;
 
-import jhilbert.data.AbstractName;
+import jhilbert.data.Name;
 
 /**
- * Class representing a kind.
+ * Marker interface for kinds.
  */
-public final class Kind extends AbstractName {
-
-	/**
-	 * Creates a new kind with the specified name.
-	 *
-	 * @param name name of the new kind.
-	 */
-	public Kind(final String name) {
-		super(name);
-	}
-
-	public @Override Kind clone() {
-		return new Kind(getName().clone());
-	}
-
+public interface Kind extends Name {
 }

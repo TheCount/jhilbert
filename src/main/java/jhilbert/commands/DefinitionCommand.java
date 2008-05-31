@@ -27,7 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import jhilbert.commands.Command;
 import jhilbert.data.Data;
-import jhilbert.data.Definition;
+import jhilbert.data.DataFactory;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
@@ -53,6 +53,16 @@ public final class DefinitionCommand extends Command {
 	private static final Logger logger = Logger.getLogger(DefinitionCommand.class);
 
 	/**
+	 * Data.
+	 */
+	private final Data data;
+
+	/**
+	 * Name of the definition.
+	 */
+	private String defName;
+
+	/**
 	 * List of variables serving as parameters.
 	 */
 	final List<String> varNameList;
@@ -64,47 +74,40 @@ public final class DefinitionCommand extends Command {
 
 	/**
 	 * Scans a new DefinitionCommand from a TokenScanner.
-	 * The parameters must not be <code>null</code>.
 	 *
-	 * @param tokenScanner TokenScanner to scan from.
-	 * @param data Data.
+	 * @param tokenScanner TokenScanner to scan from (must not be <code>null</code>).
+	 * @param data Data (must not be <code>null</code>).
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public DefinitionCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
-		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
-		final StringBuilder context = new StringBuilder("def ");
-		varNameList = new ArrayList();
+		assert (data != null): "Supplied data are null.";
+		this.data = null;
+		defName = null;
 		try {
 			tokenScanner.beginExp();
-			name = tokenScanner.getAtom();
-			context.append(name);
-			context.append('(');
+			defName = tokenScanner.getAtom();
+			varNameList = new ArrayList();
 			Token token = tokenScanner.getToken();
 			while (token.tokenClass == Token.TokenClass.ATOM) {
-				final String tokenString =token.toString();
-				context.append(tokenString).append(", ");
-				varNameList.add(tokenString);
+				varNameList.add(token.toString());
 				token = tokenScanner.getToken();
 			}
-			final int length = context.length();
-			context.delete(length - 2, length);
-			context.append("): ");
 			if (token.tokenClass != Token.TokenClass.END_EXP) {
-				logger.error("Syntax error: expected \")\" in context " + context);
-				throw new SyntaxException("Expected \")\"", context.toString());
+				logger.error("Syntax error: expected \")\" in context " + tokenScanner.getContextString());
+				throw new SyntaxException("Expected \")\"", tokenScanner.getContextString());
 			}
-			definiens = new TermExpression(tokenScanner, data);
+			definiens = DataFactory.getInstance().scanTermExpression(tokenScanner, data);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning definition " + name, e);
-			throw new SyntaxException("Unexpected end of input", context.toString(), e);
+			logger.error("Unexpected end of input while scanning definition " + defName);
+			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
 		} catch (DataException e) {
-			logger.error("Error scanning definiens in context " + context, e);
-			throw new SyntaxException("Error scanning definiens", context.toString(), e);
+			logger.error("Error scanning definiens in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Error scanning definiens", tokenScanner.getContextString(), e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error in context " + context, e);
-			throw new SyntaxException("Scanner error", context.toString(), e);
+			logger.error("Scanner error in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Scanner error", tokenScanner.getContextString(), e);
 		}
 	}
 
@@ -114,21 +117,21 @@ public final class DefinitionCommand extends Command {
 			final Variable var = data.getVariable(varName);
 			if (var == null) {
 				logger.error("Variable " + varName + " does not exist.");
-				logger.error("Location: def " + name);
+				logger.error("Location: def " + defName);
 				throw new VerifyException("Variable does not exist", varName);
 			}
 			if (!varList.add(var)) {
 				logger.error("Duplicate entry in variable list.");
-				logger.error("Offending variable name:" + varName);
-				logger.error("Location: def " + name);
-				throw new VerifyException("Duplicte entry in variable list", name);
+				logger.error("Offending variable name: " + varName);
+				logger.error("Location: def " + defName);
+				throw new VerifyException("Duplicte entry in variable list", defName);
 			}
 		}
 		try {
-			data.defineTerm(new Definition(name, varList, definiens));
+			data.defineTerm(defName, varList, definiens);
 		} catch (DataException e) {
-			logger.error("A term with name " + name + " does already exist.", e);
-			throw new VerifyException("Term already exists", name, e);
+			logger.error("A term with name " + defName + " already exists.");
+			throw new VerifyException("Term already exists", defName, e);
 		}
 	}
 

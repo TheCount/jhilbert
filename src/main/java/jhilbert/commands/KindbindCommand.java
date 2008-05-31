@@ -24,6 +24,7 @@ package jhilbert.commands;
 
 import jhilbert.commands.Command;
 import jhilbert.data.Data;
+import jhilbert.data.Kind;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
@@ -46,40 +47,53 @@ public final class KindbindCommand extends Command {
 	private static final Logger logger = Logger.getLogger(KindbindCommand.class);
 
 	/**
-	 * Old kind.
+	 * Data.
 	 */
-	private final String oldKind;
+	private final Data data;
+
+	/**
+	 * Old kind name.
+	 */
+	private final String oldKindName;
+
+	/**
+	 * New kind name.
+	 */
+	private final String newKindName;
 
 	/**
 	 * Scans a new KindbindCommand from a TokenScanner.
 	 * The parameters must not be <code>null</code>.
 	 *
 	 * @param tokenScanner TokenScanner to scan from.
-	 * @param data ModuleData.
+	 * @param data data.
 	 * 
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public KindbindCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
-		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
-		StringBuilder context = new StringBuilder("kindbind ");
+		assert (data != null): "Supplied data are null.";
+		this.data = data;
 		try {
-			oldKind = tokenScanner.getAtom();
-			context.append(oldKind).append(' ');
-			name = tokenScanner.getAtom();
-			context.append(name);
+			oldKindName = tokenScanner.getAtom();
+			newKindName = tokenScanner.getAtom();
 		} catch (ScannerException e) {
-			logger.error("Scanner error in context " + context, e);
-			throw new SyntaxException("Scanner error", context.toString(), e);
+			logger.error("Scanner error in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Scanner error", tokenScanner.getContextString(), e);
 		}
 	}
 
 	public @Override void execute() throws VerifyException {
 		try {
-			data.bindKind(oldKind, name);
+			final Kind oldKind = data.getKind(oldKindName);
+			if (oldKind == null) {
+				logger.error("kindbind error: old kind " + oldKindName + " does not exist.");
+				throw new VerifyException("kindbind error", oldKindName);
+			}
+			data.bindKind(oldKind, newKindName);
 		} catch (DataException e) {
-			logger.error("kindbind error binding " + name + " to " + oldKind, e);
-			throw new VerifyException("kindbind error", oldKind + "/" + name, e);
+			logger.error("kindbind error binding " + newKindName + " to " + oldKindName);
+			throw new VerifyException("kindbind error", oldKindName + "/" + newKindName, e);
 		}
 	}
 

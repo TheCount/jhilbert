@@ -20,31 +20,28 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
-import java.util.List;
-import java.util.SortedSet;
-import jhilbert.data.AbstractStatement;
-import jhilbert.data.TermExpression;
+import jhilbert.data.Kind;
+import jhilbert.data.impl.NameImpl;
 
 /**
- * A temporary statement.
- * Use {@link Statement} for statements with anonymized variables.
+ * Implementation of {@link Kind}.
  */
-public final class TemporaryStatement extends AbstractStatement {
+final class KindImpl extends NameImpl implements Kind {
 
 	/**
-	 * Creates a new temporary statement.
-	 * The parameters must not be <code>null</code>.
+	 * Creates a new kind with the specified name.
 	 *
-	 * @param name name of the statement.
-	 * @param rawDV raw distinct variable constraints.
-	 * @param hypotheses list of hypotheses.
-	 * @param consequent the consequent.
+	 * @param name name of the new kind.
 	 */
-	public TemporaryStatement(final String name, final List<SortedSet<Variable>> rawDV,
-			final List<TermExpression> hypotheses, final TermExpression consequent) {
-		super(name, rawDV, hypotheses, consequent);
+	KindImpl(final String name) {
+		super(name);
 	}
+
+	//FIXME
+	//@Override Kind clone() {
+	//	return new Kind(getName().clone());
+	//}
 
 }

@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import jhilbert.commands.InterfaceCommand;
 import jhilbert.data.Data;
+import jhilbert.data.DataFactory;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.ModuleData;
 import jhilbert.data.Parameter;
@@ -33,7 +34,6 @@ import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
 import jhilbert.exceptions.SyntaxException;
 import jhilbert.exceptions.VerifyException;
-import jhilbert.util.InterfaceLoader;
 import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
@@ -58,24 +58,28 @@ public final class ImportCommand extends InterfaceCommand {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 *
-	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, ModuleData)
+	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, Data)
 	 */
-	public ImportCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
+	public ImportCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
 		super("import", tokenScanner, data);
 	}
 
 	public @Override void execute() throws VerifyException {
+		final DataFactory df = DataFactory.getInstance();
 		super.execute();
+		Parameter parameter = null;
 		try {
-			final ModuleData moduleData = (ModuleData) this.data;
-			final InterfaceData interfaceData = InterfaceLoader.loadInterface(parameter.getLocator());
-			interfaceData.importInto(moduleData, parameter);
-		} catch (InputException e) {
-			logger.error("Error loading interface " + parameter.getLocator(), e);
+			final ModuleData moduleData = (ModuleData) getData();
+			parameter = moduleData.getParameter(getName());
+			assert (parameter != null): "Newly defined parameter is null.";
+			final InterfaceData interfaceData = df.loadInterfaceData(parameter.getLocator());
+			df.importInterface(moduleData, interfaceData, parameter);
+		} catch (InputException e) { // FIXME: do we need this?
+			logger.error("Error loading interface " + parameter.getLocator());
 			throw new VerifyException("Error loading interface", parameter.getLocator(), e);
 		} catch (DataException e) {
-			logger.error("Error importing interface " + name, e);
-			throw new VerifyException("Error importing interface", name, e);
+			logger.error("Error importing interface " + parameter.toString());
+			throw new VerifyException("Error importing interface", parameter.toString(), e);
 		}
 	}
 

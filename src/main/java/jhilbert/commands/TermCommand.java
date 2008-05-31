@@ -25,7 +25,7 @@ package jhilbert.commands;
 import java.util.ArrayList;
 import java.util.List;
 import jhilbert.commands.Command;
-import jhilbert.data.ComplexTerm;
+import jhilbert.data.Kind;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.Token;
 import jhilbert.exceptions.DataException;
@@ -50,14 +50,24 @@ public final class TermCommand extends Command {
 	private final static Logger logger = Logger.getLogger(TermCommand.class);
 
 	/**
-	 * Kind.
+	 * Interface data.
 	 */
-	private final String kind;
+	private final InterfaceData data;
 
 	/**
-	 * List of input kinds.
+	 * Term name.
 	 */
-	private final List<String> inputKindList;
+	private String termName;
+
+	/**
+	 * Result kind name.
+	 */
+	private final String kindName;
+
+	/**
+	 * List of input kind names.
+	 */
+	private final List<String> inputKindNameList;
 
 	/**
 	 * Scans a new TermCommand from a TokenScanner.
@@ -69,63 +79,56 @@ public final class TermCommand extends Command {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public TermCommand(final TokenScanner tokenScanner, final InterfaceData data) throws SyntaxException {
-		super(data);
 		assert (tokenScanner != null): "Supplied token scanner is null.";
-		StringBuilder context = new StringBuilder("term (");
+		assert (data != null): "Supplied data are null.";
+		this.data = data;
+		termName = null;
 		try {
-			kind = tokenScanner.getAtom();
-			context.append(kind).append(' ');
+			kindName = tokenScanner.getAtom();
 			tokenScanner.beginExp();
-			context.append('(');
-			name = tokenScanner.getAtom();
-			context.append(name).append(' ');
-			inputKindList = new ArrayList();
+			termName = tokenScanner.getAtom();
+			inputKindNameList = new ArrayList();
 			Token token = tokenScanner.getToken();
 			while (token.tokenClass == Token.TokenClass.ATOM) {
-				String atom = token.toString();
-				context.append(atom).append(' ');
-				inputKindList.add(atom);
+				inputKindNameList.add(token.toString());
 				token = tokenScanner.getToken();
 			}
-			final int length = context.length();
-			context.delete(length - 1, length);
-			context.append(')');
 			if (token.tokenClass != Token.TokenClass.END_EXP) {
-				logger.error("Syntax error: expected \")\" in context " + context);
-				throw new SyntaxException("Expected \")\"", context.toString());
+				logger.error("Syntax error: expected \")\" in context " + tokenScanner.getContextString());
+				throw new SyntaxException("Expected \")\"", tokenScanner.getContextString());
 			}
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning term " + name, e);
-			throw new SyntaxException("Unexpected end of input", context.toString());
+			logger.error("Unexpected end of input while scanning term " + termName);
+			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error in context " + context, e);
-			throw new SyntaxException("Scanner error", context.toString());
+			logger.error("Scanner error in context " + tokenScanner.getContextString());
+			throw new SyntaxException("Scanner error", tokenScanner.getContextString(), e);
 		}
 	}
 
 	public @Override void execute() throws VerifyException {
-			final String definedResultKind = data.getKind(kind);
-			if (definedResultKind == null) {
-				logger.error("Result kind does not exist: " + kind);
-				logger.error("Cannot define term " + name);
-				throw new VerifyException("Result kind does not exist", kind);
+		final Kind resultKind = data.getKind(kindName);
+		if (resultKind == null) {
+			logger.error("Result kind does not exist: " + kindName);
+			logger.error("Cannot define term " + termName);
+			throw new VerifyException("Result kind does not exist", kindName);
+		}
+		final List<Kind> inputKindList = new ArrayList(inputKindNameList.size());
+		for (final String inputKindName: inputKindNameList) {
+			final Kind inputKind = data.getKind(inputKindName);
+			if (inputKind == null) {
+				logger.error("Input kind does not exist: " + inputKindName);
+				logger.error("Cannot define term " + termName);
+				throw new VerifyException("Input kind does not exist", inputKindName);
 			}
-			final List<String> definedInputKindList = new ArrayList(inputKindList.size());
-			for (final String inputKind: inputKindList) {
-				final String definedInputKind = data.getKind(inputKind);
-				if (definedInputKind == null) {
-					logger.error("Input kind does not exist: " + kind);
-					logger.error("Cannot defined term " + name);
-					throw new VerifyException("Input kind does not exist", kind);
-				}
-				definedInputKindList.add(definedInputKind);
-			}
-			try {
-				data.defineTerm(new ComplexTerm(name, definedResultKind, definedInputKindList));
-			} catch (DataException e) {
-				logger.error("A term named " + name + " does already exist.", e);
-				throw new VerifyException("Term already exists", name, e);
-			}
+			inputKindList.add(inputKind);
+		}
+		try {
+			data.defineTerm(termName, resultKind, inputKindList);
+		} catch (DataException e) {
+			logger.error("A term named " + termName + " already exists.");
+			throw new VerifyException("Term already exists", termName, e);
+		}
 	}
 
 }

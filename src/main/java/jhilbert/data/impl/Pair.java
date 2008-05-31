@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.data.impl;
 
 /**
  * A pair (2-tuple) of values.
@@ -28,8 +28,10 @@ package jhilbert.data;
  *
  * @param E1 type of first entry.
  * @param E2 type of second entry.
+ *
+ * FIXME: move this to util?
  */
-public class Pair<E1, E2> {
+class Pair<E1, E2> {
 
 	/**
 	 * First value.

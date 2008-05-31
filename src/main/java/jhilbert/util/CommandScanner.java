@@ -36,6 +36,7 @@ import jhilbert.commands.TheoremCommand;
 import jhilbert.commands.VariableCommand;
 import jhilbert.data.Data;
 import jhilbert.data.InterfaceData;
+import jhilbert.data.ModuleData;
 import jhilbert.data.Token;
 import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.SyntaxException;
@@ -119,7 +120,7 @@ public final class CommandScanner extends Scanner<Command> {
 				break;
 
 				case IMPORT:
-				c = new ImportCommand(tokenScanner, data);
+				c = new ImportCommand(tokenScanner, (ModuleData) data);
 				break;
 
 				case KIND:
@@ -143,7 +144,7 @@ public final class CommandScanner extends Scanner<Command> {
 				break;
 
 				case THEOREM:
-				c = new TheoremCommand(tokenScanner, data);
+				c = new TheoremCommand(tokenScanner, (ModuleData) data);
 				break;
 
 				case VARIABLE:
