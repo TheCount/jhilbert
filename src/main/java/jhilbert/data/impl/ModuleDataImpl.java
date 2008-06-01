@@ -73,20 +73,43 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 	//}
 
 	/**
-	 * Creates a deep copy of the maps in this object.
-	 * Keys are copied shallowly (they are Strings and hence immutable).
+	 * Creates a deep copy of this object.
 	 *
-	 * @return FIXME
+	 * @return a deep copy of this object.
 	 */
-	// FIXME
-	//public ModuleDataImpl clone() {
-	//	ModuleDataImpl result = new ModuleDataImpl();
-	//	Collections.clone(result.kinds, kinds);
-	//	Collections.clone(result.terms, terms);
-	//	Collections.clone(result.symbols, symbols);
-	//	Collections.clone(result.parameters, parameters);
-	//	return result;
-	//}
+	public ModuleDataImpl clone() {
+		final ModuleDataImpl result = new ModuleDataImpl();
+		// parameters
+		for (final Map.Entry<String, ParameterImpl> parameterMapping: parameters)
+			result.parameters.put(parameterMapping.getKey(), parameterMapping.getValue().clone());
+		// kinds
+		final HashMap<String, String> aliasMap = new HashMap();
+		for (final Map.Entry<String, Kind> kindMapping: kinds,entrySet()) {
+			final String key = kindMapping.getKey();
+			final String value = kindMapping.getValue().toString;
+			if (key.equals(value))
+				result.kinds.put(key, new Kind(value));
+			else
+				aliasMap.put(key, value);
+		}
+		for (final Map.Entry aliasMapping: aliasMap.entrySet())
+			result.kinds.put(aliasMapping.getKey(), result.kinds.get(aliasMap.get(aliasMapping.getValue())));
+		// variables
+		final HashMap<String, StatementImpl> statements;
+		for (final Map.Entry<String, Symbol> symbolMapping: symbols) {
+			final Symbol symbol = symbolMapping.getValue();
+			if (symbol instanceof VariableImpl) {
+				final Variable variable = (VariableImpl) symbol;
+				result.symbols.put(symbolMapping.getKey(), new VariableImpl(variable.toString(), result.kinds.get(variable.getKind().toString())));
+			} else if (symbol instanceof StatementImpl)
+				statements.put(symbolMapping.getKey(), (StatementImpl) symbol);
+			else
+				assert false: "Symbol mapping not from this implementation";
+		}
+		// terms
+		for (final MapEntry<String, ComplexTerm> termMapping: terms) {
+		}
+	}
 
 	// FIXME
 	public void defineKind(final Kind kind) throws DataException {
