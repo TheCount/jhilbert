@@ -50,25 +50,25 @@ public abstract class DataFactoryImpl extends DataFactory {
 
 	/**
 	 * The global data factory instance.
-	 * This field should be set according to user input.
+	 * FIXME: This field should be set according to user input.
 	 */
-	private static final DataFactory instance = new FileBasedDataFactory();
+	private static final DataFactoryImpl instance = new FileBasedDataFactory();
 
-	public static final @Override DataFactory getInstance() {
+	public static final @Override DataFactoryImpl getInstance() {
 		return instance;
 	}
 
-	public final @Override ModuleData createModuleData() {
+	public final @Override ModuleDataImpl createModuleData() {
 		return new ModuleDataImpl();
 	}
 
-	public abstract @Override InterfaceData loadInterfaceData(String locator) throws InputException;
+	public abstract @Override InterfaceDataImpl loadInterfaceData(String locator) throws InputException;
 
 	public final @Override TermExpression createTermExpression(final Variable var) {
 		return new TermExpressionImpl(var);
 	}
 
-	public final @Override TermExpression scanTermExpression(final TokenScanner scanner, final Data data)
+	public final @Override TermExpressionImpl scanTermExpression(final TokenScanner scanner, final Data data)
 	throws DataException {
 		assert (data instanceof DataImpl): "Data not from this implementation.";
 		return new TermExpressionImpl(scanner, (DataImpl) data);

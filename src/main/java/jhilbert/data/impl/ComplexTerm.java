@@ -294,7 +294,7 @@ abstract class ComplexTerm extends NameImpl implements Term {
 		if (kind == null)
 			out.writeInt(0);
 		else
-			out.writeInt(kindNameTable.get(kind));
+			out.writeInt(kindNameTable.get(kind.toString()));
 		// further storage done by subclasses
 	}
 

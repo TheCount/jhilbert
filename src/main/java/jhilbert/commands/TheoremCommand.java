@@ -91,7 +91,7 @@ public final class TheoremCommand extends AbstractStatementCommand {
 	/**
 	 * The statement that is to be proven.
 	 */
-	private final Statement statement;
+	private Statement statement;
 
 	/**
 	 * Proof.
@@ -178,7 +178,6 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			logger.error("Scanner error in context " + tokenScanner.toString());
 			throw new SyntaxException("Scanner error", tokenScanner.toString(), e);
 		}
-		statement = data.getStatement(getName());
 		this.data = data;
 		proofStack = new Stack();
 		mandatoryStack = new Stack();
@@ -187,6 +186,7 @@ public final class TheoremCommand extends AbstractStatementCommand {
 
 	public @Override void execute() throws VerifyException {
 		super.execute();
+		statement = data.getStatement(getName());
 		checkProof();
 	}
 

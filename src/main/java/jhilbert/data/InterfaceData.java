@@ -34,6 +34,7 @@ public interface InterfaceData extends Data {
 
 	/**
 	 * Defines a new kind.
+	 *
 	 * @param kindName name of the kind to be defined (must not be <code>null</code>).
 	 *
 	 * @throws DataException if a kind with the specified name already exists.

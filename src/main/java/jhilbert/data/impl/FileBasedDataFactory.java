@@ -54,7 +54,7 @@ final class FileBasedDataFactory extends DataFactoryImpl {
 	private static final String INTERFACE_SUFFIX = ".jhi";
 	private static final String LIBRARY_SUFFIX   = ".jhl";
 
-	public final @Override InterfaceData loadInterfaceData(final String locator) throws InputException {
+	public final @Override InterfaceDataImpl loadInterfaceData(final String locator) throws InputException {
 		assert (locator != null): "Specified interface locator is null";
 		final File interfaceFile = new File(locator + INTERFACE_SUFFIX);
 		final File libraryFile = new File(locator + LIBRARY_SUFFIX);
@@ -74,6 +74,8 @@ final class FileBasedDataFactory extends DataFactoryImpl {
 		// create library
 		final InterfaceDataImpl result = new InterfaceDataImpl();
 		try {
+			if (logger.isDebugEnabled())
+				logger.debug("Attemting to open interface file " + interfaceFile.getAbsolutePath());
 			final CommandScanner cs = new CommandScanner(new FileInputSource(interfaceFile), result,
 				Command.INTERFACE_COMMANDS);
 			for (Command c = cs.getToken(); c != null; c = cs.getToken()) {

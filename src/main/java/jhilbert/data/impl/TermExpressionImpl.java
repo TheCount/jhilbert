@@ -332,11 +332,11 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		assert (target != null): "Supplied target is null.";
 		assert (target instanceof TermExpressionImpl): "Target not from this implementation.";
 		assert (blacklist != null): "Supplied blacklist is null.";
-		final Map<DummyVariable, Variable> dummyAssignments = new HashMap();
-		return dummyMatches((TermExpressionImpl) target, blacklist, dummyAssignments);
+		final Map<Variable, Variable> varMap = new HashMap();
+		return dummyMatches((TermExpressionImpl) target, blacklist, varMap);
 	}
 
-	private boolean dummyMatches(final TermExpressionImpl target, final Set<Variable> blacklist, final Map<DummyVariable, Variable> dummyAssignments) {
+	private boolean dummyMatches(final TermExpressionImpl target, final Set<Variable> blacklist, final Map<Variable, Variable> varMap) {
 		if (logger.isTraceEnabled())
 			logger.trace("Dummy match: matching " + this + " against " + target);
 		final Term sValue = getValue();
@@ -346,19 +346,16 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 				logger.error("Error matching " + sValue + " against " + tValue);
 				return false;
 			}
-			if (sValue instanceof DummyVariable) {
-				final DummyVariable dummy = (DummyVariable) sValue;
-				if (dummyAssignments.containsKey(dummy))
-					return dummyAssignments.get(dummy).equals(tValue);
-				final Variable tVar = (Variable) tValue;
-				if (blacklist.contains(tVar)) {
+			final Variable sVar = (Variable) sValue;
+			final Variable tVar = (Variable) tValue;
+			if (!varMap.containsKey(sVar)) {
+				if ((sVar instanceof DummyVariable) && blacklist.contains(tVar)) {
 					logger.error("Error: " + tVar + " is blacklisted");
 					return false;
 				}
-				dummyAssignments.put(dummy, tVar);
-				return true;
+				varMap.put(sVar, tVar);
 			}
-			return sValue.equals(tValue);
+			return varMap.get(sVar).equals(tVar);
 		}
 		if (tValue.isVariable()) {
 			logger.error("Error matching " + sValue + " against " + tValue);
@@ -367,10 +364,10 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		if (sValue.equals(tValue)) {
 			final int childCount = childCount();
 			for (int i = 0; i != childCount; ++i)
-				if(!getChild(i).dummyMatches(target.getChild(i), blacklist, dummyAssignments)) {
+				if(!getChild(i).dummyMatches(target.getChild(i), blacklist, varMap)) {
 					logger.error("Dummy match error: " + getChild(i) + " does not match " + target.getChild(i));
-					logger.debug("Blacklisted variables: " + blacklist);
-					logger.debug("current dummy assignments: " + dummyAssignments);
+					logger.debug("Blacklisted variables:        " + blacklist);
+					logger.debug("Current variable assignments: " + varMap);
 					return false;
 				}
 			return true;
@@ -379,16 +376,23 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		final ComplexTerm tTerm = (ComplexTerm) tValue;
 		final int sDepth = sTerm.definitionDepth();
 		final int tDepth = tTerm.definitionDepth();
+		if (logger.isTraceEnabled()) {
+			logger.trace("Preparing to unfold definitions.");
+			logger.trace("Source: " + this);
+			logger.trace("Target: " + target);
+			logger.trace("Source definition depth: " + sDepth);
+			logger.trace("Target definition depth: " + tDepth);
+		}
 		if ((sDepth == 0) && (tDepth == 0)) {
 			logger.error("Error matching " + sValue + " against " + tValue);
 			return false;
 		}
 		if (sDepth == tDepth)
-			return ((Definition) sTerm).unfold(getChildren()).dummyMatches(((Definition) tTerm).unfold(target.getChildren()), blacklist, dummyAssignments);
+			return ((Definition) sTerm).unfold(getChildren()).dummyMatches(((Definition) tTerm).unfold(target.getChildren()), blacklist, varMap);
 		if (sDepth < tDepth)
-			return dummyMatches(((Definition) tTerm).unfold(target.getChildren()), blacklist, dummyAssignments);
+			return dummyMatches(((Definition) tTerm).unfold(target.getChildren()), blacklist, varMap);
 		else
-			return ((Definition) sTerm).unfold(getChildren()).dummyMatches(target, blacklist, dummyAssignments);
+			return ((Definition) sTerm).unfold(getChildren()).dummyMatches(target, blacklist, varMap);
 	}
 
 	public <E extends TermExpression> void unify(final E target, final Map<Variable, E> varMap) throws UnifyException {
@@ -469,21 +473,31 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		final Term sValue = getValue();
 		final Term tValue = target.getValue();
 		if (sValue.isVariable()) {
-			if (!(tValue.isVariable()))
+			if (!(tValue.isVariable())) {
+				logger.error("Equality check failed: expression rhs should be a variable.");
+				logger.error("lhs: " + this);
+				logger.error("rhs: " + target);
 				throw new DataException("Expression rhs should be a variable", sValue.toString() + "/" + target);
+			}
 			final Variable sVar = (Variable) sValue;
 			if (translationMap.containsKey(sVar)) {
-				if (!translationMap.get(sVar).equals(tValue))
-					throw new DataException("Inconsistent variable mapping",
-						"(" + sValue + ", " + translationMap.get(sVar) + ") vs. (" + sValue + ", " + tValue + ")");
-				else
+				if (!translationMap.get(sVar).equals(tValue)) {
+					logger.error("Equality check failed: inconsistent variable mapping.");
+					logger.error("Expected mapping: " + sValue + " -> " + translationMap.get(sVar));
+					logger.error("Received mapping: " + sValue + " -> " + tValue);
+					throw new DataException("Inconsistent variable mapping", sValue.toString());
+				} else
 					return;
 			}
 			translationMap.put(sVar, (Variable) tValue);
 			return;
 		}
-		if ((tValue.isVariable()) || (!sValue.equals(tValue)))
+		if ((tValue.isVariable()) || (!sValue.equals(tValue))) {
+			logger.error("Equality check failed: expressions are not equal.");
+			logger.error("lhs: " + this);
+			logger.error("rhs: " + target);
 			throw new DataException("Expressions are not equal", sValue.toString() + "/" + tValue);
+		}
 		final int childCount = childCount();
 		for (int i = 0; i != childCount; ++i)
 			getChild(i).equalityMap(target.getChild(i), translationMap);
@@ -515,6 +529,52 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			out.writeInt(varNameTable.get(value.toString()));
 		else
 			out.writeInt(termNameTable.get(value.toString()));
+	}
+
+	/**
+	 * Returns a copy of this expression which is adapted to
+	 * the specified module data.
+	 * This method is used to implement importing and exporting.
+	 *
+	 * @param data the module data this expression should be adapted to (must not be <code>null</code>).
+	 * 	The data must contain all necessary data to adapt this expression.
+	 * @param prefix namespace prefix (must not be <code>null</code>).
+	 * @param varMap variable mapping (must not be <code>null</code>).
+	 * 	This mapping is enhanced as the adaption progresses.
+	 *
+	 * @return data-adapted expression.
+	 */
+	TermExpressionImpl adapt(final ModuleDataImpl data, final String prefix, final Map<Variable, Variable> varMap) {
+		assert (data != null): "Supplied data are null.";
+		assert (prefix != null): "Supplied prefix is null.";
+		assert (varMap != null): "Supplied variable mapping is null.";
+		final Term value = getValue();
+		if (value.isVariable()) {
+			final Variable variable = (Variable) value;
+			if (!varMap.containsKey(variable)) {
+				final Kind kind = data.getKind(prefix + variable.getKind().toString());
+				assert (kind != null): "Kind data missing during expression adaption.";
+				if (variable instanceof DummyVariable)
+					varMap.put(variable, new DummyVariable(kind));
+				else if (variable instanceof UnnamedVariable)
+					varMap.put(variable, new UnnamedVariable(kind));
+				else
+					assert false: "Attempt to adapt unanonymized expression.";
+			}
+			return new TermExpressionImpl(varMap.get(variable));
+		}
+		// value is a complex term
+		final ComplexTerm term = data.getTerm(prefix + value.toString());
+		final TermExpressionImpl result = new TermExpressionImpl(term);
+		final int placeCount = term.placeCount();
+		try {
+			for (int i = 0; i != placeCount; ++i)
+				result.addChild(getChild(i).adapt(data, prefix, varMap));
+		} catch (IndexOutOfBoundsException e) {
+			assert false: "Place counts do not match.";
+			throw e;
+		}
+		return result;
 	}
 
 	/**

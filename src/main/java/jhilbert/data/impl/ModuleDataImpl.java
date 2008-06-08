@@ -23,6 +23,7 @@
 package jhilbert.data.impl;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import jhilbert.data.Kind;
 import jhilbert.data.ModuleData;
@@ -73,53 +74,34 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 	//}
 
 	/**
-	 * Creates a deep copy of this object.
+	 * Creates a deep copy of this data collection.
+	 * The contents is copied shallowly.
 	 *
-	 * @return a deep copy of this object.
+	 * @return a deep copy of this data collection.
 	 */
-	public ModuleDataImpl clone() {
-		final ModuleDataImpl result = new ModuleDataImpl();
-		// parameters
-		for (final Map.Entry<String, ParameterImpl> parameterMapping: parameters)
-			result.parameters.put(parameterMapping.getKey(), parameterMapping.getValue().clone());
-		// kinds
-		final HashMap<String, String> aliasMap = new HashMap();
-		for (final Map.Entry<String, Kind> kindMapping: kinds,entrySet()) {
-			final String key = kindMapping.getKey();
-			final String value = kindMapping.getValue().toString;
-			if (key.equals(value))
-				result.kinds.put(key, new Kind(value));
-			else
-				aliasMap.put(key, value);
-		}
-		for (final Map.Entry aliasMapping: aliasMap.entrySet())
-			result.kinds.put(aliasMapping.getKey(), result.kinds.get(aliasMap.get(aliasMapping.getValue())));
-		// variables
-		final HashMap<String, StatementImpl> statements;
-		for (final Map.Entry<String, Symbol> symbolMapping: symbols) {
-			final Symbol symbol = symbolMapping.getValue();
-			if (symbol instanceof VariableImpl) {
-				final Variable variable = (VariableImpl) symbol;
-				result.symbols.put(symbolMapping.getKey(), new VariableImpl(variable.toString(), result.kinds.get(variable.getKind().toString())));
-			} else if (symbol instanceof StatementImpl)
-				statements.put(symbolMapping.getKey(), (StatementImpl) symbol);
-			else
-				assert false: "Symbol mapping not from this implementation";
-		}
-		// terms
-		for (final MapEntry<String, ComplexTerm> termMapping: terms) {
-		}
-	}
+	// FIXME: Do we need this methods?
+	//public ModuleDataImpl clone() {
+	//	final ModuleDataImpl result = new ModuleDataImpl();
+	//	result.parameters.putAll(parameters);
+	//	result.kinds.putAll(kinds);
+	//	result.terms.putAll(terms);
+	//	result.symbols.putAll(symbols);
+	//}
 
-	// FIXME
-	public void defineKind(final Kind kind) throws DataException {
-		assert (kind != null): "Supplied kind is null.";
-		final String name = kind.toString();
+	/**
+	 * Defines a new kind.
+	 *
+	 * @param name name of the kind to be defined (must not be <code>null</code>).
+	 *
+	 * @throws DataException if a kind with the specified name already exists.
+	 */
+	void defineKind(final String name) throws DataException {
+		assert (name != null): "Supplied kind name is null.";
 		if (kinds.containsKey(name)) {
 			logger.error("Kind " + name + " already defined.");
 			throw new DataException("Kind already defined", name);
 		}
-		kinds.put(name, kind);
+		kinds.put(name, new KindImpl(name));
 	}
 
 	public Kind getKind(final String kind) {
@@ -152,6 +134,26 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 	//	terms.put(name, term);
 	//}
 
+	/**
+	 * Defines a new {@link Functor}.
+	 *
+	 * @param name name of the new Functor (must not be <code>null</code>).
+	 * @param resultKind resulting kind of the Functor (must not be <code>null</code>).
+	 * @param inputKindList list of input kinds for the new Functor (must not be <code>null</code>).
+	 *
+	 * @throws DataException if a functor with the specified name already exists.
+	 */
+	void defineTerm(final String name, final Kind resultKind, final List<Kind> inputKindList) throws DataException {
+		assert (name != null): "Supplied name is null.";
+		assert (resultKind != null): "Supplied result kind is null.";
+		assert (inputKindList != null): "Supplied input kind list is null.";
+		if (terms.containsKey(name)) {
+			logger.error("A term with name " + name + " already exists.");
+			throw new DataException("Term already exists", name);
+		}
+		terms.put(name, new Functor(name, resultKind, inputKindList));
+	}
+
 	public ComplexTerm getTerm(final String name) {
 		return terms.get(name);
 	}
@@ -176,10 +178,10 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 
 	// FIXME
 	public @Override String toString() {
-		return	  "Kinds: " + kinds.toString()
-			+ "\nTerms: " + terms.toString()
-			+ "\nSymbols: " + symbols.toString()
-			+ "\nParameters: " + parameters.toString();
+		return	  "Kinds: " + kinds.toString() + "; "
+			+ "Terms: " + terms.toString() + "; "
+			+ "Symbols: " + symbols.toString() + "; "
+			+ "Parameters: " + parameters.toString();
 	}
 
 }

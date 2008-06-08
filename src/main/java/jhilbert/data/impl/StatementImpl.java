@@ -59,7 +59,7 @@ final class StatementImpl extends NameImpl implements Statement {
 	/**
 	 * Disjoint variable constraints.
 	 */
-	private final DVConstraints dvConstraints;
+	private final DVConstraintsImpl dvConstraints;
 
 	/**
 	 * Hypotheses.
@@ -69,7 +69,7 @@ final class StatementImpl extends NameImpl implements Statement {
 	/**
 	 * Consequent.
 	 */
-	private final TermExpression consequent;
+	private final TermExpressionImpl consequent;
 
 	/**
 	 * Mandatory variables (those occurring in the conclusion but not in the hypotheses).
@@ -91,6 +91,7 @@ final class StatementImpl extends NameImpl implements Statement {
 		assert (rawDV != null): "Supplied distinct variable constraints are null.";
 		assert (hypotheses != null): "Supplied list of hypotheses is null.";
 		assert (consequent != null): "Supplied conclusion is null.";
+		assert (consequent instanceof TermExpressionImpl): "Consequent not from this implementation.";
 		// unname variables of raw DV
 		final Map<Variable, TermExpression> varMap = new HashMap();
 		final List<SortedSet<Variable>> unnamedDV = new ArrayList(rawDV.size());
@@ -134,7 +135,7 @@ final class StatementImpl extends NameImpl implements Statement {
 		this.hypotheses = new ArrayList(hypotheses.size());
 		for (final TermExpression hypothesis: hypotheses)
 			this.hypotheses.add(hypothesis.subst(varMap));
-		this.consequent = consequent.subst(varMap);
+		this.consequent = (TermExpressionImpl) consequent.subst(varMap);
 		// calculate mandatory variables
 		allVars.removeAll(allHypVars);
 		this.mandatoryVariables = new ArrayList(allVars); // NB: order is important here, make sure not to break anything
@@ -218,13 +219,13 @@ final class StatementImpl extends NameImpl implements Statement {
 		final Map<String, Integer> varNameTable = new HashMap();
 		for (Variable var: varSet) {
 			varNameTable.put(var.toString(), id--);
-			out.writeInt(kindNameTable.get(var.getKind()));
+			out.writeInt(kindNameTable.get(var.getKind().toString()));
 		}
 		// store DV constraints
 		out.writeInt(dvConstraints.size());
 		for (VariablePair p: dvConstraints) {
-			out.writeInt(varNameTable.get(p.getFirst()));
-			out.writeInt(varNameTable.get(p.getSecond()));
+			out.writeInt(varNameTable.get(p.getFirst().toString()));
+			out.writeInt(varNameTable.get(p.getSecond().toString()));
 		}
 		// store hypotheses
 		out.writeInt(hypotheses.size());
@@ -237,7 +238,7 @@ final class StatementImpl extends NameImpl implements Statement {
 		((TermExpressionImpl) consequent).store(out, termNameTable, varNameTable);
 	}
 
-	public DVConstraints getDVConstraints() {
+	public DVConstraintsImpl getDVConstraints() {
 		return dvConstraints;
 	}
 
@@ -245,7 +246,7 @@ final class StatementImpl extends NameImpl implements Statement {
 		return hypotheses;
 	}
 
-	public TermExpression getConsequent() {
+	public TermExpressionImpl getConsequent() {
 		return consequent;
 	}
 

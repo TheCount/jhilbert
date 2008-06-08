@@ -65,12 +65,12 @@ public final class DefinitionCommand extends Command {
 	/**
 	 * List of variables serving as parameters.
 	 */
-	final List<String> varNameList;
+	private final List<String> varNameList;
 
 	/**
 	 * The definiens.
 	 */
-	final TermExpression definiens;
+	private final TermExpression definiens;
 
 	/**
 	 * Scans a new DefinitionCommand from a TokenScanner.
@@ -83,7 +83,7 @@ public final class DefinitionCommand extends Command {
 	public DefinitionCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		assert (tokenScanner != null): "Supplied token scanner is null.";
 		assert (data != null): "Supplied data are null.";
-		this.data = null;
+		this.data = data;
 		defName = null;
 		try {
 			tokenScanner.beginExp();

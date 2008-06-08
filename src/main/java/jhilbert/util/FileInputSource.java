@@ -70,7 +70,7 @@ public class FileInputSource extends StreamInputSource {
 	 * @throws InputException if the file cannot be found or an I/O problem occurs.
 	 */
 	public FileInputSource(final File file) throws InputException {
-		super(createFileInputStream(file.getName()), file.getName());
+		super(createFileInputStream(file.getAbsolutePath()), file.getName());
 	}
 
 }

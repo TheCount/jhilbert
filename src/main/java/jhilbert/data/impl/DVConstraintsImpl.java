@@ -22,12 +22,17 @@
 
 package jhilbert.data.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import jhilbert.data.DVConstraints;
+import jhilbert.data.Kind;
 import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
 import jhilbert.exceptions.DataException;
@@ -54,6 +59,17 @@ class DVConstraintsImpl extends HashSet<VariablePair> implements DVConstraints {
 	 */
 	public DVConstraintsImpl() {
 		super();
+	}
+
+	/**
+	 * Creates a shallow copy of the specified DVConstraints object.
+	 *
+	 * @param dv DVConstraints to be copied (must not be <code>null</code>).
+	 */
+	DVConstraintsImpl(final DVConstraints dv) {
+		assert (dv != null): "Supplied DV constraints are null.";
+		for (final VariablePair p: dv)
+			add(p);
 	}
 
 	/**
@@ -162,6 +178,44 @@ class DVConstraintsImpl extends HashSet<VariablePair> implements DVConstraints {
 		boolean result = false;
 		for (Object o: c)
 			result |= remove(o);
+		return result;
+	}
+
+	/**
+	 * Adapts this object to the specified data with respect to the specified namespace prefix.
+	 *
+	 * @param data module data (must not be <code>null</code>).
+	 * @param prefix namespace prefix (must not be <code>null</code>).
+	 * @param varMap variable mapping (must not be <code>null</code>).
+	 *
+	 * @return data adapted DV constraints in raw format.
+	 */
+	List<SortedSet<Variable>> adapt(final ModuleDataImpl data, final String prefix,
+			final Map<Variable, Variable> varMap) {
+		assert (data != null): "Supplied data are null.";
+		assert (prefix != null): "Supplied prefix is null.";
+		assert (varMap != null): "Supplied variable map is null.";
+		final List<SortedSet<Variable>> result = new ArrayList(this.size());
+		for (final VariablePair pair: this) {
+			final Variable firstVar = pair.getFirst();
+			final Variable secondVar = pair.getSecond();
+			assert ((firstVar instanceof UnnamedVariable) && (secondVar instanceof UnnamedVariable)):
+				"disjoint variables not anonymized.";
+			if (!varMap.containsKey(firstVar)) {
+				final Kind kind = data.getKind(prefix + firstVar.getKind().toString());
+				assert (kind != null): "Kind missing from data.";
+				varMap.put(firstVar, new UnnamedVariable(kind));
+			}
+			if (!varMap.containsKey(secondVar)) {
+				final Kind kind = data.getKind(prefix + secondVar.getKind().toString());
+				assert (kind != null): "Kind missing from data.";
+				varMap.put(secondVar, new UnnamedVariable(kind));
+			}
+			final SortedSet<Variable> rawPair = new TreeSet();
+			rawPair.add(varMap.get(firstVar));
+			rawPair.add(varMap.get(secondVar));
+			result.add(rawPair);
+		}
 		return result;
 	}
 

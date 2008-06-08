@@ -94,9 +94,6 @@ abstract class DataImpl implements Data {
 
 	public abstract Kind getKind(String name);
 
-	// FIXME
-	//public abstract void defineKind(Kind kind) throws DataException;
-
 	public abstract void bindKind(Kind oldKind, String newKindName) throws DataException;
 
 	public abstract ComplexTerm getTerm(String name);
@@ -137,9 +134,9 @@ abstract class DataImpl implements Data {
 		symbols.put(name, new VariableImpl(name, kind));
 	}
 
-	public Statement getStatement(final String name) {
+	public StatementImpl getStatement(final String name) {
 		try {
-			return (Statement) symbols.get(name);
+			return (StatementImpl) symbols.get(name);
 		} catch (ClassCastException e) {
 			logger.warn("The name " + name + " of the requested statement is the name of a variable.");
 			return null;

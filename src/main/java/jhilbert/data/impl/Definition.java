@@ -233,6 +233,15 @@ final class Definition extends ComplexTerm {
 		throw new UnsupportedOperationException("Setting input kind not supported in definitions.");
 	}
 
+	/**
+	 * Returns the raw definiens of this definition.
+	 *
+	 * @return definiens of this definition.
+	 */
+	TermExpressionImpl getDefiniens() {
+		return definiens;
+	}
+
 	@Override void store(final DataOutputStream out, final Map<String, Integer> kindNameTable,
 			final Map<String, Integer> termNameTable) throws IOException {
 		super.store(out, kindNameTable, termNameTable);

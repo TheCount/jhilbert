@@ -135,6 +135,10 @@ public abstract class InterfaceCommand extends Command {
 	public @Override void execute() throws VerifyException { // subclasses extend this method.
 		List<Parameter> parameters = new ArrayList(paramNameList.size());
 		for (final String paramName: paramNameList) {
+			if (paramName.equals(parameterName)) {
+				logger.error("Invalid self-reference in parameter " + parameterName);
+				throw new VerifyException("Invalid parameter self-reference", parameterName);
+			}
 			final Parameter param = data.getParameter(paramName);
 			if (param == null) {
 				logger.error("Parameter " + paramName + " from parameter list of " + parameterName

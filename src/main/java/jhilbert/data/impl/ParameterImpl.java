@@ -25,7 +25,6 @@ package jhilbert.data.impl;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import jhilbert.data.Data;
@@ -76,7 +75,7 @@ class ParameterImpl extends NameImpl implements Parameter {
 		assert (parameterList != null): "Supplied parameter list is null.";
 		assert (prefix != null): "Supplied prefix is null.";
 		this.locator = locator;
-		this.parameterList = Collections.unmodifiableList(parameterList);
+		this.parameterList = parameterList;
 		this.prefix = prefix;
 	}
 
@@ -156,5 +155,21 @@ class ParameterImpl extends NameImpl implements Parameter {
 			out.writeInt(parameterNameTable.get(parameter.toString()));
 		out.writeString(prefix);
 	}
+
+	/**
+	 * Clones this parameter.
+	 *
+	 * @return deep copy of this parameter.
+	 */
+	// FIXME
+	//ParameterImpl clone() {
+	//	final ArrayList<Parameter> clonedList = new ArrayList(parameterList.size());
+	//	for (final Parameter p: clonedList) {
+	//		assert (p != null): "Null entry in parameter list.";
+	//		assert (p instanceof ParameterImpl): "Parameter not from this implementation.";
+	//		clonedList.add(((ParameterImpl) p).clone()):
+	//	}
+	//	return new Parameter(this.toString(), locator, clonedList, prefix);
+	//}
 
 }
