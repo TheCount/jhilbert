@@ -58,13 +58,16 @@ public abstract class DataFactory {
 	public abstract ModuleData createModuleData();
 
 	/**
-	 * Loads interface data.
+	 * Obtains interface data.
+	 * Depending on the underlying implementation, a call to this method may result in a file system access,
+	 * estalishment of a database connection, etc.
+	 * An implementor should cache repeated requests for the same locator.
 	 *
-	 * @param locator to determine which data to load.
+	 * @param locator to determine which data to obtain.
 	 *
-	 * @throws InputException if the interface could not be loaded.
+	 * @throws InputException if the interface could not be obtained.
 	 */
-	public abstract InterfaceData loadInterfaceData(String locator) throws InputException;
+	public abstract InterfaceData getInterfaceData(String locator) throws InputException;
 
 	/**
 	 * Creates a TermExpression consisting of a single variable.

@@ -86,7 +86,7 @@ public final class ExportCommand extends InterfaceCommand {
 			final ModuleData moduleData = (ModuleData) getData();
 			parameter = moduleData.getParameter(getName());
 			assert (parameter != null): "Newly defined parameter is null.";
-			final InterfaceData interfaceData = df.loadInterfaceData(parameter.getLocator());
+			final InterfaceData interfaceData = df.getInterfaceData(parameter.getLocator());
 			df.exportInterface(moduleData, interfaceData, parameter);
 		} catch (InputException e) { // FIXME: Do we need this?
 			logger.error("Error loading interface " + parameter.getLocator(), e);

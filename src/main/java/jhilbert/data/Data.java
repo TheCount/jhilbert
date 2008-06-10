@@ -48,8 +48,10 @@ public interface Data {
 	 * @param name name of the kind.
 	 *
 	 * @return kind with specified name, or <code>null</code> if no such kind exists.
+	 *
+	 * @throws DataException if a dependency could not be loaded.
 	 */
-	public Kind getKind(String name);
+	public Kind getKind(String name) throws DataException;
 
 	/**
 	 * Binds a previously defined kind to a new kind.

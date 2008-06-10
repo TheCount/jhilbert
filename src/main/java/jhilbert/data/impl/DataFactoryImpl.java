@@ -32,6 +32,7 @@ import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
 import jhilbert.data.impl.FileBasedDataFactory;
 import jhilbert.data.impl.InterfaceDataImpl;
+import jhilbert.data.impl.LRUCache;
 import jhilbert.data.impl.ModuleDataImpl;
 import jhilbert.data.impl.ParameterImpl;
 import jhilbert.data.impl.TermExpressionImpl;
@@ -54,6 +55,12 @@ public abstract class DataFactoryImpl extends DataFactory {
 	 */
 	private static final DataFactoryImpl instance = new FileBasedDataFactory();
 
+	/**
+	 * Interface cache.
+	 * FIXME: This field should be set according to user input.
+	 */
+	private static final LRUCache<String, InterfaceDataImpl> interfaceCache = new LRUCache(10);
+
 	public static final @Override DataFactoryImpl getInstance() {
 		return instance;
 	}
@@ -62,7 +69,23 @@ public abstract class DataFactoryImpl extends DataFactory {
 		return new ModuleDataImpl();
 	}
 
-	public abstract @Override InterfaceDataImpl loadInterfaceData(String locator) throws InputException;
+	/**
+	 * Implementation specific interface loader.
+	 * This method is called by {@link #loadInterfaceData} and should be implemented by subclasses.
+	 *
+	 * @param locator locator for the interface.
+	 *
+	 * @return interface data according to the locator.
+	 *
+	 * @throws InputException if the interface data could not be loaded.
+	 */
+	protected abstract InterfaceDataImpl loadInterfaceData(String locator) throws InputException;
+
+	public final @Override InterfaceDataImpl getInterfaceData(final String locator) throws InputException {
+		if (!interfaceCache.containsKey(locator))
+			interfaceCache.put(locator, loadInterfaceData(locator));
+		return interfaceCache.get(locator);
+	}
 
 	public final @Override TermExpression createTermExpression(final Variable var) {
 		return new TermExpressionImpl(var);

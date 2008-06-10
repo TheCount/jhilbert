@@ -92,11 +92,11 @@ abstract class DataImpl implements Data {
 	//	parameters = data.parameters;
 	//}
 
-	public abstract Kind getKind(String name);
+	public abstract Kind getKind(String name) throws DataException;
 
 	public abstract void bindKind(Kind oldKind, String newKindName) throws DataException;
 
-	public abstract ComplexTerm getTerm(String name);
+	public abstract ComplexTerm getTerm(String name) throws DataException;
 
 	public void defineTerm(final String name, final LinkedHashSet<Variable> varList,
 		final TermExpression definiens)

@@ -54,7 +54,7 @@ final class FileBasedDataFactory extends DataFactoryImpl {
 	private static final String INTERFACE_SUFFIX = ".jhi";
 	private static final String LIBRARY_SUFFIX   = ".jhl";
 
-	public final @Override InterfaceDataImpl loadInterfaceData(final String locator) throws InputException {
+	protected final @Override InterfaceDataImpl loadInterfaceData(final String locator) throws InputException {
 		assert (locator != null): "Specified interface locator is null";
 		final File interfaceFile = new File(locator + INTERFACE_SUFFIX);
 		final File libraryFile = new File(locator + LIBRARY_SUFFIX);
