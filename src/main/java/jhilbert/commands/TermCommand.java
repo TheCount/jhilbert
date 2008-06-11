@@ -107,21 +107,27 @@ public final class TermCommand extends Command {
 	}
 
 	public @Override void execute() throws VerifyException {
-		final Kind resultKind = data.getKind(kindName);
-		if (resultKind == null) {
-			logger.error("Result kind does not exist: " + kindName);
-			logger.error("Cannot define term " + termName);
-			throw new VerifyException("Result kind does not exist", kindName);
-		}
-		final List<Kind> inputKindList = new ArrayList(inputKindNameList.size());
-		for (final String inputKindName: inputKindNameList) {
-			final Kind inputKind = data.getKind(inputKindName);
-			if (inputKind == null) {
-				logger.error("Input kind does not exist: " + inputKindName);
+		Kind resultKind;
+		List<Kind> inputKindList = new ArrayList(inputKindNameList.size());
+		try {
+			resultKind = data.getKind(kindName);
+			if (resultKind == null) {
+				logger.error("Result kind does not exist: " + kindName);
 				logger.error("Cannot define term " + termName);
-				throw new VerifyException("Input kind does not exist", inputKindName);
+				throw new VerifyException("Result kind does not exist", kindName);
 			}
-			inputKindList.add(inputKind);
+			for (final String inputKindName: inputKindNameList) {
+				final Kind inputKind = data.getKind(inputKindName);
+				if (inputKind == null) {
+					logger.error("Input kind does not exist: " + inputKindName);
+					logger.error("Cannot define term " + termName);
+					throw new VerifyException("Input kind does not exist", inputKindName);
+				}
+				inputKindList.add(inputKind);
+			}
+		} catch (DataException e) {
+			logger.error("Unable to obtain kind while trying define term " + termName);
+			throw new VerifyException("Unable to obtain kind while trying to define term", termName, e);
 		}
 		try {
 			data.defineTerm(termName, resultKind, inputKindList);

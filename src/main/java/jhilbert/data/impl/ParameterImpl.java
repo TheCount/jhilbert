@@ -25,6 +25,7 @@ package jhilbert.data.impl;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import jhilbert.data.Data;
@@ -39,6 +40,12 @@ import org.apache.log4j.Logger;
  * Parameter data to denote an interface and the namespace prefix with which its data should be loaded.
  */
 class ParameterImpl extends NameImpl implements Parameter {
+
+	/**
+	 * A special parameter for the "main" module.
+	 */
+	public static final ParameterImpl MAIN_PARAMETER
+		= new ParameterImpl("(main)", "(invalid)", Collections.<Parameter>emptyList(), "");
 
 	/**
 	 * Logger for this class.

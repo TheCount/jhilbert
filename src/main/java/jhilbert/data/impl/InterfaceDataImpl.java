@@ -48,6 +48,7 @@ import jhilbert.data.VariablePair;
 import jhilbert.data.impl.DataFactoryImpl;
 import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.KindImpl;
+import jhilbert.data.impl.ParameterizedName;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
 import jhilbert.exceptions.UnknownFormatException;
@@ -74,20 +75,18 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 
 	/**
 	 * Undefined kinds names.
-	 * The names are mapped to their prefix + bare name pair.
 	 */
-	private final Map<String, Pair<String, String>> undefinedKindNames;
+	private final Map<String, ParameterizedName> undefinedKindNames;
 
 	/**
 	 * Kinds.
 	 */
-	private final Map<String, KindImpl> kinds;
+	private final LinkedHashMap<String, KindImpl> kinds;
 
 	/**
 	 * Undefined term names.
-	 * The names are mapped to their prefix + bare name pair.
 	 */
-	private final Map<String, Pair<String, String>> undefinedTermNames;
+	private final Map<String, ParameterizedName> undefinedTermNames;
 
 	/**
 	 * Creates new empty interface data.
@@ -95,7 +94,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 	public InterfaceDataImpl() {
 		super();
 		undefinedKindNames = new HashMap();
-		kinds = new HashMap();
+		kinds = new LinkedHashMap(); // for sound insertion order
 		undefinedTermNames = new HashMap();
 		terms = new LinkedHashMap(); // for sound insertion order
 	}
@@ -114,7 +113,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 		assert (in != null): "Supplied input stream is null.";
 		final DataInputStream ds = new DataInputStream(in);
 		undefinedKindNames = new HashMap();
-		kinds = new HashMap();
+		kinds = new LinkedHashMap();
 		undefinedTermNames = new HashMap();
 		terms = new HashMap();
 		try {
@@ -165,14 +164,15 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			// load undefined kinds
 			for (int i = undefinedKindsLowerBound; i != undefinedKindsUpperBound; ++i) {
 				final String kindName = nameList.get(i);
-				if (undefinedKindNames.containsKey(kindName)) {
-					logger.error("Undefined kind " + kindName + " specified twice.");
-					throw new DataException("Undefined kind specified twice", kindName);
+				final ParameterImpl parameter = parameters.get(nameList
+					.get(ds.readInt(parameterLowerBound, parameterUpperBound)));
+				final String fullName = parameter.getPrefix() + kindName;
+				if (undefinedKindNames.containsKey(fullName)) {
+					logger.error("Undefined kind " + fullName + " specified twice.");
+					throw new DataException("Undefined kind specified twice", fullName);
 				}
-				final int prefixLength = ds.readInt(0, kindName.length() - 1);
-				undefinedKindNames.put(kindName,
-					new Pair(kindName.substring(0, prefixLength), kindName.substring(prefixLength)));
-				kinds.put(kindName, new KindImpl(kindName));
+				undefinedKindNames.put(fullName, new ParameterizedName(parameter, kindName));
+				kinds.put(fullName, new KindImpl(fullName));
 			}
 			// load defined kinds
 			for (int i = definedKindsLowerBound; i != definedKindsUpperBound; ++i) {
@@ -193,14 +193,15 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			// load undefined terms
 			for (int i = undefinedTermNamesLowerBound; i != undefinedTermNamesUpperBound; ++i) {
 				final String termName = nameList.get(i);
-				if (undefinedTermNames.containsKey(termName)) {
-					logger.error("Undefined term " + termName + " specified twice.");
-					throw new DataException("Undefined term specified twice", termName);
+				final ParameterImpl parameter = parameters.get(nameList
+					.get(ds.readInt(parameterLowerBound, parameterUpperBound)));
+				final String fullName = parameter.getPrefix() + termName;
+				if (undefinedTermNames.containsKey(fullName)) {
+					logger.error("Undefined term " + fullName + " specified twice.");
+					throw new DataException("Undefined term specified twice", fullName);
 				}
-				final int prefixLength = ds.readInt(0, termName.length() - 1);
-				undefinedTermNames.put(termName,
-					new Pair(termName.substring(0, prefixLength), termName.substring(prefixLength)));
-				terms.put(termName, ComplexTerm.create(termName, ds, this, nameList,
+				undefinedTermNames.put(fullName, new ParameterizedName(parameter, termName));
+				terms.put(fullName, ComplexTerm.create(fullName, ds, this, nameList,
 					kindsLowerBound, kindsUpperBound));
 			}
 			// load defined terms
@@ -253,7 +254,8 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 						if (data.undefinedKindNames.containsKey(bareName))
 							continue;
 						if (data.kinds.containsKey(bareName)) {
-							undefinedKindNames.put(name, new Pair(prefix, bareName));
+							undefinedKindNames.put(name,
+								new ParameterizedName(parameter, bareName));
 							result = new KindImpl(name);
 							kinds.put(name, result);
 							return result;
@@ -310,7 +312,8 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 						if (data.undefinedTermNames.containsKey(bareName))
 							continue;
 						if (data.terms.containsKey(bareName)) {
-							undefinedTermNames.put(name, new Pair(prefix, bareName));
+							undefinedTermNames.put(name,
+								new ParameterizedName(parameter, bareName));
 							result = new Functor(name);
 							terms.put(name, result);
 							return result;
@@ -322,7 +325,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 					}
 			}
 			// nothing found? Then it's straight from the module
-			undefinedTermNames.put(name, new Pair("", name));
+			undefinedTermNames.put(name, new ParameterizedName(ParameterImpl.MAIN_PARAMETER, name));
 			result = new Functor(name);
 			terms.put(name, result);
 		}
@@ -376,13 +379,15 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 				parameterNameTable.put(parameterName, currentID++);
 				ds.writeString(parameterName);
 			}
-			for (final String undefinedKindName: undefinedKindNames.keySet()) {
-				kindNameTable.put(undefinedKindName, currentID++);
-				ds.writeString(undefinedKindName);
+			for (final Map.Entry<String, ParameterizedName> undefinedKindNameMapping:
+					undefinedKindNames.entrySet()) {
+				kindNameTable.put(undefinedKindNameMapping.getKey(), currentID++);
+				ds.writeString(undefinedKindNameMapping.getValue().getName());
 			}
-			for (final String undefinedTermName: undefinedTermNames.keySet()) {
-				termNameTable.put(undefinedTermName, currentID++);
-				ds.writeString(undefinedTermName);
+			for (final Map.Entry<String, ParameterizedName> undefinedTermNameMapping:
+					undefinedTermNames.entrySet()) {
+				termNameTable.put(undefinedTermNameMapping.getKey(), currentID++);
+				ds.writeString(undefinedTermNameMapping.getValue().getName());
 			}
 			for (final String definedKind: definedKinds) {
 				kindNameTable.put(definedKind, currentID++);
@@ -398,14 +403,14 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			for (final String parameterName: parameters.keySet())
 				parameters.get(parameterName).store(ds, parameterNameTable);
 			// undefined kinds
-			for (final Map.Entry<String, Pair<String, String>> mapping: undefinedKindNames.entrySet())
-				ds.writeInt(mapping.getValue().getFirst().length()); // prefix length
+			for (final Map.Entry<String, ParameterizedName> mapping: undefinedKindNames.entrySet())
+				ds.writeInt(parameterNameTable.get(mapping.getValue().getInterfaceName()));
 			// kind mappings (defined kinds only)
 			for (final String definedKind: definedKinds)
 				ds.writeInt(kindNameTable.get(kinds.get(definedKind).toString()));
 			// undefined terms (partial info)
-			for (final Map.Entry<String, Pair<String, String>> mapping: undefinedTermNames.entrySet()) {
-				ds.writeInt(mapping.getValue().getFirst().length());
+			for (final Map.Entry<String, ParameterizedName> mapping: undefinedTermNames.entrySet()) {
+				ds.writeInt(parameterNameTable.get(mapping.getValue().getInterfaceName()));
 				terms.get(mapping.getKey()).store(ds, kindNameTable, termNameTable);
 			}
 			// defined terms
@@ -434,55 +439,70 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 		assert (parameter != null): "Supplied parameter is null.";
 		final Map<Variable, Variable> varMap = new HashMap();
 		// parameters
-		checkParameters(moduleData, parameter);
+		final Map<String, ParameterImpl> parameterMap = checkParameters(moduleData, parameter);
+		setParameters(parameterMap);
 		final String prefix = parameter.getPrefix();
+		final Map<String, String> kindNameMap = new HashMap();
+		final Map<String, String> termNameMap = new HashMap();
 		// kinds
-		final Map<String, String> aliasMap = new HashMap();
+		final Map<String, String> aliasMap = new LinkedHashMap();
 		for (final Map.Entry<String, KindImpl> kindMapping: kinds.entrySet()) {
 			final String key = kindMapping.getKey();
 			final String value = kindMapping.getValue().toString();
 			if (undefinedKindNames.containsKey(key)) {
-				if (moduleData.getKind(prefix + undefinedKindNames.get(key).getSecond()) == null) {
-					logger.error("Import: unable to link kind " + key + " to "
-						+ prefix + undefinedKindNames.get(key).getSecond());
+				final ParameterizedName pn = undefinedKindNames.get(key);
+				final String fullName = pn.getModulePrefix() + pn.getName();
+				if (moduleData.getKind(fullName) == null) {
+					logger.error("Import: unable to link kind " + key + " to " + fullName);
 					throw new DataException("Unable to link kind", key);
 				}
-			} else if (key.equals(value))
-				moduleData.defineKind(prefix + key);
-			else
+				kindNameMap.put(key, fullName);
+			} else if (key.equals(value)) {
+				final String fullName = prefix + key;
+				moduleData.defineKind(fullName);
+				kindNameMap.put(key, fullName);
+			} else
 				aliasMap.put(key, value);
 		}
-		for (final Map.Entry<String, String> aliasMapping: aliasMap.entrySet())
-			moduleData.bindKind(moduleData.getKind(prefix + aliasMapping.getValue()),
-				prefix + aliasMapping.getKey());
+		for (final Map.Entry<String, String> aliasMapping: aliasMap.entrySet()) {
+			final String key = aliasMapping.getKey();
+			final String fullName = prefix + key;
+			moduleData.bindKind(moduleData.getKind(kindNameMap.get(aliasMapping.getValue())),
+				fullName);
+			kindNameMap.put(key, fullName);
+		}
 		// terms
 		for (final Map.Entry<String, ComplexTerm> termMapping: terms.entrySet()) {
 			final String key = termMapping.getKey();
 			final ComplexTerm value = termMapping.getValue();
 			if (undefinedTermNames.containsKey(key)) {
-				if (moduleData.getTerm(prefix + undefinedTermNames.get(key).getSecond()) == null) {
-					logger.error("Import: unable to link term " + key + " to "
-						+ prefix + undefinedTermNames.get(key).getSecond());
+				final ParameterizedName pn = undefinedTermNames.get(key);
+				final String fullName = pn.getModulePrefix() + pn.getName();
+				if (moduleData.getTerm(fullName) == null) {
+					logger.error("Import: unable to link term " + key + " to " + fullName);
 					throw new DataException("Unable to link term", key);
 				}
+				termNameMap.put(key, fullName);
 			} else if (value instanceof Functor) {
 				final Functor functor = (Functor) value;
-				final Kind resultKind = moduleData.getKind(prefix + functor.getKind().toString());
+				final Kind resultKind = moduleData.getKind(kindNameMap.get(functor.getKind().toString()));
 				assert (resultKind != null): "Result kind null during Functor import.";
 				final int placeCount = functor.placeCount();
 				assert (placeCount >= 0): "Place count negative during Functor import.";
 				final List<Kind> inputKinds = new ArrayList(placeCount);
 				for (int i = 0; i != placeCount; ++i) {
-					final Kind inputKind = moduleData.getKind(prefix
-						+ functor.getInputKind(i).toString());
+					final Kind inputKind = moduleData.getKind(kindNameMap
+						.get(functor.getInputKind(i).toString()));
 					assert (inputKind != null): "Input kind null during Functor import.";
 					inputKinds.add(inputKind);
 				}
-				moduleData.defineTerm(prefix + functor.toString(), resultKind, inputKinds);
+				final String fullName = prefix + key;
+				moduleData.defineTerm(fullName, resultKind, inputKinds);
+				termNameMap.put(key, fullName);
 			} else if (value instanceof Definition) {
 				final Definition definition = (Definition) value;
 				final TermExpressionImpl definiens
-					= definition.getDefiniens().adapt(moduleData, prefix, varMap);
+					= definition.getDefiniens().adapt(moduleData, kindNameMap, termNameMap, varMap);
 				final LinkedHashSet<Variable> varList = definiens.variables();
 				// throw out dummies
 				// FIXME: removed: definiens should not contain dummies in folded state
@@ -494,7 +514,9 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 				//}
 				assert (varList.size() == definition.placeCount()):
 					"Place count mismatch during Definition import.";
-				moduleData.defineTerm(prefix + definition.toString(), varList, definiens);
+				final String fullName = prefix + key;
+				moduleData.defineTerm(fullName, varList, definiens);
+				termNameMap.put(key, fullName);
 			} else
 				assert false: "Term not from this implementation.";
 		}
@@ -505,16 +527,19 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			assert (symbol instanceof StatementImpl): "Symbol not from this implementation.";
 			final StatementImpl statement = (StatementImpl) symbol;
 			final List<SortedSet<Variable>> rawDV
-				= statement.getDVConstraints().adapt(moduleData, prefix, varMap);
+				= statement.getDVConstraints().adapt(moduleData, kindNameMap, varMap);
 			final List<TermExpression> hypotheses = new ArrayList();
 			for (final TermExpression hypothesis: statement.getHypotheses()) {
 				assert (hypothesis instanceof TermExpressionImpl):
 					"Hypothesis not from this implementation.";
-				hypotheses.add(((TermExpressionImpl) hypothesis).adapt(moduleData, prefix, varMap));
+				hypotheses.add(((TermExpressionImpl) hypothesis)
+					.adapt(moduleData, kindNameMap, termNameMap, varMap));
 			}
-			final TermExpressionImpl consequent = statement.getConsequent().adapt(moduleData, prefix, varMap);
+			final TermExpressionImpl consequent = statement.getConsequent()
+				.adapt(moduleData, kindNameMap, termNameMap, varMap);
 			moduleData.defineStatement(statement.toString(), rawDV, hypotheses, consequent);
 		}
+		unsetParameters();
 	}
 
 	/**
@@ -528,26 +553,35 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 	void exportFrom(final ModuleDataImpl moduleData, final ParameterImpl parameter) throws DataException {
 		assert (moduleData != null): "Supplied module dara are null.";
 		assert (parameter != null): "Supplied parameter is null.";
-		checkParameters(moduleData, parameter);
+		final Map<String, ParameterImpl> parameterMap = checkParameters(moduleData, parameter);
+		setParameters(parameterMap);
 		final String prefix = parameter.getPrefix();
+		final Map<String, String> kindNameMap = new HashMap();
+		final Map<String, String> termNameMap = new HashMap();
 		// kinds
 		for (final String kindName: kinds.keySet()) {
-			String bareName;
-			if (undefinedKindNames.containsKey(kindName))
-				bareName = undefinedKindNames.get(kindName).getSecond();
-			else
-				bareName = kindName;
-			if (moduleData.getKind(prefix + bareName) == null) {
+			String moduleName;
+			if (undefinedKindNames.containsKey(kindName)) {
+				final ParameterizedName pn = undefinedKindNames.get(kindName);
+				moduleName = pn.getModulePrefix() + pn.getName();
+			} else
+				moduleName = prefix + kindName;
+			if (moduleData.getKind(moduleName) == null) {
 				logger.error("Kind " + kindName + " unknown during export.");
 				throw new DataException("Kind unknown during export", kindName);
 			}
+			kindNameMap.put(kindName, moduleName);
 		}
 		// terms
 		for (final ComplexTerm term: terms.values()) {
-			String bareName = term.toString();
-			if (undefinedTermNames.containsKey(bareName))
-				bareName = undefinedTermNames.get(bareName).getSecond();
-			final ComplexTerm moduleTerm = moduleData.getTerm(prefix + bareName);
+			final String key = term.toString();
+			String moduleName = key;
+			if (undefinedTermNames.containsKey(moduleName)) {
+				final ParameterizedName pn = undefinedTermNames.get(moduleName);
+				moduleName = pn.getModulePrefix() + pn.getName();
+			} else
+				moduleName = prefix + moduleName;
+			final ComplexTerm moduleTerm = moduleData.getTerm(moduleName);
 			if (moduleTerm == null) {
 				logger.error("Term " + term + " unknown during export.");
 				throw new DataException("Term unknown during export", term.toString());
@@ -555,9 +589,11 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			// result kind
 			final Kind resultKind = term.getKind();
 			if (resultKind != null) {
-				if (!moduleTerm.getKind().equals(moduleData.getKind(prefix + resultKind.toString()))) {
+				if (!moduleTerm.getKind()
+						.equals(moduleData.getKind(kindNameMap.get(resultKind.toString())))) {
 					logger.error("Result kind mismatch during export of term " + term);
-					logger.error("Needed result kind: " + moduleData.getKind(prefix + resultKind.toString()));
+					logger.error("Needed result kind: "
+						+ moduleData.getKind(kindNameMap.get(resultKind.toString())));
 					logger.error("Found result kind:  " + moduleTerm.getKind());
 					throw new DataException("Result kind mismatch during term export", term.toString());
 				}
@@ -576,16 +612,20 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			for (int i = 0; i != placeCount; ++i) {
 				final Kind inputKind = term.getInputKind(i);
 				if (inputKind != null) {
-					if (!moduleTerm.getInputKind(i).equals(moduleData.getKind(prefix + inputKind.toString()))) {
+					if (!moduleTerm.getInputKind(i)
+							.equals(moduleData
+							.getKind(kindNameMap.get(inputKind.toString())))) {
 						logger.error("Input kind mismatch during export of term " + term);
 						logger.error("Position: " + (i+1));
-						logger.error("Needed input kind: " + moduleData.getKind(prefix + inputKind.toString()));
+						logger.error("Needed input kind: "
+							+ moduleData.getKind(kindNameMap.get(inputKind.toString())));
 						logger.error("Found input kind:  " + moduleTerm.getInputKind(i));
 						throw new DataException("Input kind mismatch during term export", term.toString());
 					}
 				} else
-					assert (undefinedTermNames.containsKey(term.toString())): "Unknown input kind for known term.";
+					assert (undefinedTermNames.containsKey(key)): "Unknown input kind for known term.";
 			}
+			termNameMap.put(key, moduleName);
 		}
 		// symbols
 		for (final Symbol symbol: symbols.values()) {
@@ -603,9 +643,11 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			final List<TermExpressionImpl> hypotheses = new ArrayList();
 			for (final TermExpression hypothesis: statement.getHypotheses()) {
 				assert (hypothesis instanceof TermExpressionImpl): "hypothesis not from this implementation.";
-				hypotheses.add(((TermExpressionImpl) hypothesis).adapt(moduleData, prefix, varMap));
+				hypotheses.add(((TermExpressionImpl) hypothesis)
+					.adapt(moduleData, kindNameMap, termNameMap, varMap));
 			}
-			final TermExpressionImpl consequent = statement.getConsequent().adapt(moduleData, prefix, varMap);
+			final TermExpressionImpl consequent = statement.getConsequent()
+				.adapt(moduleData, kindNameMap, termNameMap, varMap);
 			// compare expressions
 			final Map<Variable, Variable> translationMap = new HashMap();
 			final List<TermExpression> moduleHypotheses = moduleStatement.getHypotheses();
@@ -624,7 +666,11 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			consequent.equalityMap(moduleStatement.getConsequent(), translationMap);
 			// check DV constraints
 			final DVConstraintsImpl moduleDV = new DVConstraintsImpl(moduleStatement.getDVConstraints());
-			for (final VariablePair p: statement.getDVConstraints()) {
+			final List<SortedSet<Variable>> rawDVConstraints = statement.getDVConstraints().adapt(moduleData, kindNameMap, varMap);
+			final DVConstraintsImpl dvConstraints = new DVConstraintsImpl();
+			for (final SortedSet<Variable> rawDVConstraint: rawDVConstraints)
+				dvConstraints.add(rawDVConstraint);
+			for (final VariablePair p: dvConstraints) {
 				if (!moduleDV.remove(new VariablePairImpl(translationMap.get(p.getFirst()), translationMap.get(p.getSecond())))) {
 					logger.error("Missing DV constraints in target of " + statement + " during export.");
 					logger.error("Offending constraint: " + p);
@@ -637,9 +683,53 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 				throw new DataException("Superfluous DV constraints during export", statement.toString());
 			}
 		}
+		unsetParameters();
 	}
 
-	private void checkParameters(final ModuleDataImpl moduleData, final ParameterImpl parameter) throws DataException {
+	/**
+	 * Sets the module parameters of the undefined names.
+	 */
+	private void setParameters(final Map<String, ParameterImpl> parameterMap) {
+		for (final ParameterizedName pn: undefinedKindNames.values()) {
+			final String name = pn.getInterfaceName();
+			if (parameterMap.containsKey(name))
+				pn.setModuleParameter(parameterMap.get(name));
+			else
+				pn.setModuleParameter(); // FIXME: for null parameters (currently not implemented)
+		}
+		for (final ParameterizedName pn: undefinedTermNames.values()) {
+			final String name = pn.getInterfaceName();
+			if (parameterMap.containsKey(name))
+				pn.setModuleParameter(parameterMap.get(name));
+			else
+				pn.setModuleParameter(); // for MAIN parameters
+		}
+	}
+
+	/**
+	 * Unsets the module parameters of the undefined names.
+	 */
+	private void unsetParameters() {
+		for (final ParameterizedName pn: undefinedKindNames.values())
+			pn.setModuleParameter(null);
+		for (final ParameterizedName pn: undefinedTermNames.values())
+			pn.setModuleParameter(null);
+	}
+
+	/**
+	 * Checks whether the parameters provided by the module's import or export command
+	 * satisfy the interface parameters specified by the param commands.
+	 *
+	 * @param moduleData the module data
+	 * @param parameter the parameter these interface data should define, provided the import/export succeeds.
+	 *
+	 * @return a map mapping interface parameter names to their module parameters.
+	 *
+	 * @throws DataException if an argument does not verify, or if an interface cannot be loaded.
+	 */
+	private Map<String, ParameterImpl> checkParameters(final ModuleDataImpl moduleData,
+		final ParameterImpl parameter)
+	throws DataException {
 		final List<Parameter> parameterList = parameter.getParameterList();
 		final int paramCount = parameterList.size();
 		final DataFactoryImpl df = DataFactoryImpl.getInstance();
@@ -649,10 +739,12 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			logger.error("Received number of parameters: " + paramCount);
 			throw new DataException("Wrong number of parameters", parameter.toString());
 		}
+		final Map<String, ParameterImpl> result = new HashMap();
 		int i = 0;
 		for (final Map.Entry<String,ParameterImpl> ifParamMapping: parameters.entrySet()) {
 			final ParameterImpl ifParam = ifParamMapping.getValue();
 			final ParameterImpl argument = (ParameterImpl) parameterList.get(i);
+			result.put(ifParamMapping.getKey(), argument);
 			if (!(ifParam.getLocator().equals(argument.getLocator()) && ifParam.getPrefix().equals(argument.getPrefix()))) {
 				logger.info("Checking whether parameter " + argument + " satisfies " + parameter);
 				try {
@@ -668,6 +760,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			}
 			++i;
 		}
+		return result;
 	}
 
 }

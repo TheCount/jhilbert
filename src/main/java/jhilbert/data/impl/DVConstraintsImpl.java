@@ -185,15 +185,15 @@ class DVConstraintsImpl extends HashSet<VariablePair> implements DVConstraints {
 	 * Adapts this object to the specified data with respect to the specified namespace prefix.
 	 *
 	 * @param data module data (must not be <code>null</code>).
-	 * @param prefix namespace prefix (must not be <code>null</code>).
+	 * @param kindNameMap map mapping interface kind names to module kind names (must not be <code>null</code>).
 	 * @param varMap variable mapping (must not be <code>null</code>).
 	 *
 	 * @return data adapted DV constraints in raw format.
 	 */
-	List<SortedSet<Variable>> adapt(final ModuleDataImpl data, final String prefix,
+	List<SortedSet<Variable>> adapt(final ModuleDataImpl data, final Map<String, String> kindNameMap,
 			final Map<Variable, Variable> varMap) {
 		assert (data != null): "Supplied data are null.";
-		assert (prefix != null): "Supplied prefix is null.";
+		assert (kindNameMap != null): "Supplied kind name map is null.";
 		assert (varMap != null): "Supplied variable map is null.";
 		final List<SortedSet<Variable>> result = new ArrayList(this.size());
 		for (final VariablePair pair: this) {
@@ -202,12 +202,12 @@ class DVConstraintsImpl extends HashSet<VariablePair> implements DVConstraints {
 			assert ((firstVar instanceof UnnamedVariable) && (secondVar instanceof UnnamedVariable)):
 				"disjoint variables not anonymized.";
 			if (!varMap.containsKey(firstVar)) {
-				final Kind kind = data.getKind(prefix + firstVar.getKind().toString());
+				final Kind kind = data.getKind(kindNameMap.get(firstVar.getKind().toString()));
 				assert (kind != null): "Kind missing from data.";
 				varMap.put(firstVar, new UnnamedVariable(kind));
 			}
 			if (!varMap.containsKey(secondVar)) {
-				final Kind kind = data.getKind(prefix + secondVar.getKind().toString());
+				final Kind kind = data.getKind(kindNameMap.get(secondVar.getKind().toString()));
 				assert (kind != null): "Kind missing from data.";
 				varMap.put(secondVar, new UnnamedVariable(kind));
 			}

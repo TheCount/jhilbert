@@ -225,7 +225,7 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			throw new VerifyException("Consequent does not match proof result", getName());
 		}
 		// check required dinstinct variable constraints
-		final DVConstraints dvConstraints = statement.getDVConstraints();
+		final DVConstraints dvConstraints = getUnanonymizedDVConstraints();
 		final Set<Variable> resultBlacklist = hypBlacklist;
 		resultBlacklist.addAll(proofResult.variables());
 		requiredDVConstraints.restrict(resultBlacklist); // throw out dummies

@@ -29,6 +29,7 @@ import java.util.TreeSet;
 import jhilbert.commands.Command;
 import jhilbert.data.Data;
 import jhilbert.data.DataFactory;
+import jhilbert.data.DVConstraints;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
@@ -74,6 +75,12 @@ public abstract class AbstractStatementCommand extends Command {
 	private final List<List<String>> rawDVList;
 
 	/**
+	 * DV constraints.
+	 * These are the <em>unanonymized </em> DV constraints of the statement.
+	 */
+	private final DVConstraints dvConstraints;
+
+	/**
 	 * Hypotheses.
 	 */
 	protected final List<TermExpression> hypotheses;
@@ -111,6 +118,8 @@ public abstract class AbstractStatementCommand extends Command {
 		assert (tokenScanner != null): "Supplied token scanner is null.";
 		assert (data != null): "Supplied data are null.";
 		this.data = data;
+		final DataFactory df = DataFactory.getInstance();
+		dvConstraints = df.createDVConstraints();
 		try {
 			statementName = tokenScanner.getAtom();
 			tokenScanner.beginExp();
@@ -139,7 +148,7 @@ public abstract class AbstractStatementCommand extends Command {
 			hypotheses = new ArrayList();
 			scanHypotheses(tokenScanner, data);
 			tokenScanner.endExp();
-			consequent = DataFactory.getInstance().scanTermExpression(tokenScanner, data);
+			consequent = df.scanTermExpression(tokenScanner, data);
 		} catch (NullPointerException e) {
 			logger.error("Unexpected end of input in context " + tokenScanner.getContextString());
 			throw new SyntaxException("Unexpected end of input", tokenScanner.getContextString(), e);
@@ -183,6 +192,8 @@ public abstract class AbstractStatementCommand extends Command {
 			logger.error("Error defining statement " + statementName);
 			throw new VerifyException("Error defining statement", statementName, e);
 		}
+		for (final SortedSet<Variable> cookedDV: cookedDVList)
+			dvConstraints.add(cookedDV);
 	}
 
 	/**
@@ -201,6 +212,15 @@ public abstract class AbstractStatementCommand extends Command {
 	 */
 	protected Data getData() {
 		return data;
+	}
+
+	/**
+	 * Returns the unanonymized DV constraints of this statement.
+	 *
+	 * @return unanonymized DV constraints of this statement.
+	 */
+	protected DVConstraints getUnanonymizedDVConstraints() {
+		return dvConstraints;
 	}
 
 }

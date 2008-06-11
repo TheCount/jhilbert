@@ -65,9 +65,9 @@ final class FileBasedDataFactory extends DataFactoryImpl {
 			} catch (FileNotFoundException e) { // This should not happen
 				logger.info("Compiling library for interface " + locator);
 			} catch (UnknownFormatException e) {
-				logger.warn("Obsolete library format. Recreating library.", e);
+				logger.warn("Obsolete library format while loading " + libraryFile + ". Recreating library.", e);
 			} catch (DataException e) {
-				logger.warn("Unable to load library. Attempt to recreate library.", e);
+				logger.warn("Unable to load library " + libraryFile + ". Attempt to recreate library.", e);
 			}
 		} else
 			logger.info("No recent library for " + locator + " detected, creating...");

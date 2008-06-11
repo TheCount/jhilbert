@@ -538,21 +538,24 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 	 *
 	 * @param data the module data this expression should be adapted to (must not be <code>null</code>).
 	 * 	The data must contain all necessary data to adapt this expression.
-	 * @param prefix namespace prefix (must not be <code>null</code>).
+	 * @param kindNameMap map mapping interface kind names to module kind names (must not be <code>null</code>).
+	 * @param termNameMap map mapping interface term names to module term names (must not be <code>null</code>).
 	 * @param varMap variable mapping (must not be <code>null</code>).
 	 * 	This mapping is enhanced as the adaption progresses.
 	 *
 	 * @return data-adapted expression.
 	 */
-	TermExpressionImpl adapt(final ModuleDataImpl data, final String prefix, final Map<Variable, Variable> varMap) {
+	TermExpressionImpl adapt(final ModuleDataImpl data, final Map<String, String> kindNameMap,
+			final Map<String, String> termNameMap, final Map<Variable, Variable> varMap) {
 		assert (data != null): "Supplied data are null.";
-		assert (prefix != null): "Supplied prefix is null.";
-		assert (varMap != null): "Supplied variable mapping is null.";
+		assert (kindNameMap != null): "Supplied kind name map is null.";
+		assert (termNameMap != null): "Supplied term name map is null.";
+		assert (varMap != null): "Supplied variable map is null.";
 		final Term value = getValue();
 		if (value.isVariable()) {
 			final Variable variable = (Variable) value;
 			if (!varMap.containsKey(variable)) {
-				final Kind kind = data.getKind(prefix + variable.getKind().toString());
+				final Kind kind = data.getKind(kindNameMap.get(variable.getKind().toString()));
 				assert (kind != null): "Kind data missing during expression adaption.";
 				if (variable instanceof DummyVariable)
 					varMap.put(variable, new DummyVariable(kind));
@@ -564,12 +567,12 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			return new TermExpressionImpl(varMap.get(variable));
 		}
 		// value is a complex term
-		final ComplexTerm term = data.getTerm(prefix + value.toString());
+		final ComplexTerm term = data.getTerm(termNameMap.get(value.toString()));
 		final TermExpressionImpl result = new TermExpressionImpl(term);
 		final int placeCount = term.placeCount();
 		try {
 			for (int i = 0; i != placeCount; ++i)
-				result.addChild(getChild(i).adapt(data, prefix, varMap));
+				result.addChild(getChild(i).adapt(data, kindNameMap, termNameMap, varMap));
 		} catch (IndexOutOfBoundsException e) {
 			assert false: "Place counts do not match.";
 			throw e;
