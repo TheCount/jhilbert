@@ -23,7 +23,10 @@
 package jhilbert.data.impl;
 
 import java.io.EOFException;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +42,7 @@ import org.apache.log4j.Logger;
 /**
  * Parameter data to denote an interface and the namespace prefix with which its data should be loaded.
  */
-class ParameterImpl extends NameImpl implements Parameter {
+class ParameterImpl extends NameImpl implements Parameter, Externalizable {
 
 	/**
 	 * A special parameter for the "main" module.
@@ -55,17 +58,17 @@ class ParameterImpl extends NameImpl implements Parameter {
 	/**
 	 * Locator.
 	 */
-	private final String locator;
+	private String locator;
 
 	/**
 	 * List of parameters to this parameter.
 	 */
-	private final List<Parameter> parameterList;
+	private List<Parameter> parameterList;
 
 	/**
 	 * Namespace prefix.
 	 */
-	private final String prefix;
+	private String prefix;
 
 	/**
 	 * Creates a new parameter.
@@ -122,6 +125,17 @@ class ParameterImpl extends NameImpl implements Parameter {
 		prefix = in.readString();
 	}
 
+	/**
+	 * Creates an uninitialized Parameter.
+	 * Used by serialization.
+	 */
+	public ParameterImpl() {
+		super();
+		locator = null;
+		parameterList = null;
+		prefix = null;
+	}
+
 	public String getLocator() {
 		return locator;
 	}
@@ -163,20 +177,23 @@ class ParameterImpl extends NameImpl implements Parameter {
 		out.writeString(prefix);
 	}
 
-	/**
-	 * Clones this parameter.
-	 *
-	 * @return deep copy of this parameter.
-	 */
-	// FIXME
-	//ParameterImpl clone() {
-	//	final ArrayList<Parameter> clonedList = new ArrayList(parameterList.size());
-	//	for (final Parameter p: clonedList) {
-	//		assert (p != null): "Null entry in parameter list.";
-	//		assert (p instanceof ParameterImpl): "Parameter not from this implementation.";
-	//		clonedList.add(((ParameterImpl) p).clone()):
-	//	}
-	//	return new Parameter(this.toString(), locator, clonedList, prefix);
-	//}
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			setName((String) in.readObject());
+			locator = (String) in.readObject();
+			parameterList = (List<Parameter>) in.readObject();
+			prefix = (String) in.readObject();
+		} catch (ClassCastException e) {
+			logger.error("Wrong class during parameter deserialization.");
+			throw new ClassNotFoundException("Wrong class during parameter deserialization.", e);
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(this.toString());
+		out.writeObject(locator);
+		out.writeObject(parameterList);
+		out.writeObject(prefix);
+	}
 
 }

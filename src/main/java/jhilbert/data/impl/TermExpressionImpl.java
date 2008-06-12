@@ -23,7 +23,10 @@
 package jhilbert.data.impl;
 
 import java.io.EOFException;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -59,7 +62,7 @@ import org.apache.log4j.Logger;
  * </ul>
  * </ul>
  */
-final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implements TermExpression {
+final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implements TermExpression, Externalizable {
 
 	/**
 	 * Logger for this class.
@@ -241,6 +244,14 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 	 */
 	private TermExpressionImpl(final Term term) {
 		super(term);
+	}
+
+	/**
+	 * Creates an uninitialized TermExpression.
+	 * Used by serialization.
+	 */
+	public TermExpressionImpl() {
+		super();
 	}
 
 	/**
@@ -595,6 +606,31 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			result.append(' ').append(child.toString());
 		result.append(')');
 		return result.toString();
+	}
+
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			setValue((Term) in.readObject());
+			// FIXME
+			// setChildren((List<TermExpressionImpl>) in.readObject());
+			final int childSize = in.readInt();
+			for (int i = 0; i != childSize; ++i)
+				addChild((TermExpressionImpl) in.readObject());
+			// End FIXME
+		} catch (ClassCastException e) {
+			logger.error("Unknown class during expression deserialization.");
+			throw new ClassNotFoundException("Unknown class during expression deserialization.", e);
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(getValue());
+		// FIXME
+		// out.writeObject(getChildren());
+		out.writeInt(childCount());
+		for (final TermExpressionImpl child: getChildren())
+			out.writeObject(child);
+		// End FIXME
 	}
 
 }

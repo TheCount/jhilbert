@@ -69,7 +69,7 @@ abstract class DataImpl implements Data {
 	/**
 	 * Parameters (insertion-ordered).
 	 */
-	protected final LinkedHashMap<String, ParameterImpl> parameters;
+	protected LinkedHashMap<String, ParameterImpl> parameters;
 
 	/**
 	 * Initializes common data with empty collections.

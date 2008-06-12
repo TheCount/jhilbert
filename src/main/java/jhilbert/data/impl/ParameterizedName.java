@@ -22,27 +22,37 @@
 
 package jhilbert.data.impl;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import jhilbert.data.impl.ParameterImpl;
+import org.apache.log4j.Logger;
 
 /**
  * A name accompanied with parameter data.
  */
-class ParameterizedName {
+class ParameterizedName implements Externalizable {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(ParameterizedName.class);
 
 	/**
 	 * The name.
 	 */
-	private final String name;
+	private String name;
 
 	/**
 	 * Interface parameter first introducing the name.
 	 */
-	private final ParameterImpl interfaceParameter;
+	private ParameterImpl interfaceParameter;
 
 	/**
 	 * Module parameter provided during export or import of the interface.
 	 */
-	private ParameterImpl moduleParameter;
+	private transient ParameterImpl moduleParameter;
 
 	/**
 	 * Creates a new parameterized name.
@@ -56,6 +66,16 @@ class ParameterizedName {
 		interfaceParameter = parameter;
 		moduleParameter = null;
 		this.name = name;
+	}
+
+	/**
+	 * Creates an uninitalized parameterized name.
+	 * Used by serialization.
+	 */
+	public ParameterizedName() {
+		name = null;
+		interfaceParameter = null;
+		moduleParameter = null;
 	}
 
 	/**
@@ -126,6 +146,21 @@ class ParameterizedName {
 		} catch (ClassCastException e) {
 			return false;
 		}
+	}
+
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			name = (String) in.readObject();
+			interfaceParameter = (ParameterImpl) in.readObject();
+		} catch (ClassCastException e) {
+			logger.error("Wrong class during parameterized name deserialization.");
+			throw new ClassNotFoundException("Wrong class during parameterized name deserialization.", e);
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(name);
+		out.writeObject(interfaceParameter);
 	}
 
 }

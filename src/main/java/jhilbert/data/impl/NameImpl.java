@@ -45,6 +45,14 @@ abstract class NameImpl implements Name {
 	}
 
 	/**
+	 * Creates a Name initialized with <code>null</code>.
+	 * Used by serialization.
+	 */
+	protected NameImpl() {
+		name = null;
+	}
+
+	/**
 	 * Returns this name as a String.
 	 *
 	 * @return name as a String.
@@ -63,12 +71,20 @@ abstract class NameImpl implements Name {
 
 	/**
 	 * Returns a String representation of this name.
-	 * This is an alias for {@link #getName()}.
 	 *
-	 * @see #getName()
+	 * @return name as a String.
 	 */
 	public final String toString() {
 		return name;
+	}
+
+	/**
+	 * Sets the name.
+	 *
+	 * @param name the name.
+	 */
+	protected final void setName(final String name) {
+		this.name = name;
 	}
 
 	public int hashCode() {

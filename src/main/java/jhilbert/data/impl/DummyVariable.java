@@ -49,6 +49,14 @@ class DummyVariable extends VariableImpl {
 	}
 
 	/**
+	 * Creates an uninitialized dummy variable.
+	 * Used by serialization.
+	 */
+	public DummyVariable() {
+		super();
+	}
+
+	/**
 	 * Upgrades the specified variable to a dummy variable.
 	 * Use with caution.
 	 *

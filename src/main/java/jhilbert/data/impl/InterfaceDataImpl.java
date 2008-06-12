@@ -23,8 +23,11 @@
 package jhilbert.data.impl;
 
 import java.io.EOFException;
+import java.io.Externalizable;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,27 +69,27 @@ import org.apache.log4j.Logger;
  * <p>
  * This class uses permissive querying: unknown kinds and terms are created on demand and internally marked undefined.
  */
-final class InterfaceDataImpl extends DataImpl implements InterfaceData {
+final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externalizable {
 
 	/**
 	 * Logger for this class.
 	 */
-	private final Logger logger = Logger.getLogger(InterfaceDataImpl.class);
+	private static final Logger logger = Logger.getLogger(InterfaceDataImpl.class);
 
 	/**
 	 * Undefined kinds names.
 	 */
-	private final Map<String, ParameterizedName> undefinedKindNames;
+	private Map<String, ParameterizedName> undefinedKindNames;
 
 	/**
 	 * Kinds.
 	 */
-	private final LinkedHashMap<String, KindImpl> kinds;
+	private LinkedHashMap<String, KindImpl> kinds;
 
 	/**
 	 * Undefined term names.
 	 */
-	private final Map<String, ParameterizedName> undefinedTermNames;
+	private Map<String, ParameterizedName> undefinedTermNames;
 
 	/**
 	 * Creates new empty interface data.
@@ -437,6 +440,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 	void importInto(final ModuleDataImpl moduleData, final ParameterImpl parameter) throws DataException {
 		assert (moduleData != null): "Supplied module data are null.";
 		assert (parameter != null): "Supplied parameter is null.";
+		logger.info("Importing " + parameter);
 		final Map<Variable, Variable> varMap = new HashMap();
 		// parameters
 		final Map<String, ParameterImpl> parameterMap = checkParameters(moduleData, parameter);
@@ -553,6 +557,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 	void exportFrom(final ModuleDataImpl moduleData, final ParameterImpl parameter) throws DataException {
 		assert (moduleData != null): "Supplied module dara are null.";
 		assert (parameter != null): "Supplied parameter is null.";
+		logger.info("Exporting " + parameter);
 		final Map<String, ParameterImpl> parameterMap = checkParameters(moduleData, parameter);
 		setParameters(parameterMap);
 		final String prefix = parameter.getPrefix();
@@ -761,6 +766,45 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData {
 			++i;
 		}
 		return result;
+	}
+
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		final int version = in.readInt();
+		if (version != DataImpl.FORMAT_VERSION)
+			throw new ClassNotFoundException("Obsolete library format version " + version);
+		try {
+			undefinedKindNames = (Map<String, ParameterizedName>) in.readObject();
+			kinds = (LinkedHashMap<String, KindImpl>) in.readObject();
+			undefinedTermNames = (Map<String, ParameterizedName>) in.readObject();
+			terms = (Map<String, ComplexTerm>) in.readObject();
+			// FIXME
+			// symbols = (Map<String, Symbol>) in.readObject();
+			final int symSize = in.readInt();
+			for (int i = 0; i != symSize; ++i)
+				symbols.put((String) in.readObject(), (Symbol) in.readObject());
+			// End FIXME
+			parameters = (LinkedHashMap<String, ParameterImpl>) in.readObject();
+		} catch (ClassCastException e) {
+			logger.error("Wrong class during deserialization of interface data.");
+			throw new ClassNotFoundException("Wrong class during deserialization of interface data.", e);
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeInt(DataImpl.FORMAT_VERSION);
+		out.writeObject(undefinedKindNames);
+		out.writeObject(kinds);
+		out.writeObject(undefinedTermNames);
+		out.writeObject(terms);
+		// FIXME
+		// out.writeObject(symbols);
+		out.writeInt(symbols.size());
+		for (final Map.Entry<String, Symbol> symMapping: symbols.entrySet()) {
+			out.writeObject(symMapping.getKey());
+			out.writeObject(symMapping.getValue());
+		}
+		// End FIXME
+		out.writeObject(parameters);
 	}
 
 }

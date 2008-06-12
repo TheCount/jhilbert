@@ -23,7 +23,10 @@
 package jhilbert.data.impl;
 
 import java.io.EOFException;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -47,7 +50,7 @@ import org.apache.log4j.Logger;
  * A Definition.
  * That is a {@link Term} defining another Term, in dependence on a list of variables.
  */
-final class Definition extends ComplexTerm {
+final class Definition extends ComplexTerm implements Externalizable {
 
 	/**
 	 * Logger for this class.
@@ -67,7 +70,7 @@ final class Definition extends ComplexTerm {
 	/**
 	 * Definition depth of this definition.
 	 */
-	final int definitionDepth;
+	private int definitionDepth;
 
 	/**
 	 * Creates a new definition.
@@ -171,15 +174,15 @@ final class Definition extends ComplexTerm {
 	}
 
 	/**
-	 * Creates blank definition for cloning.
-	 * See {@link #clone()}.
-	 *
-	 * @param name name of definition (must not be <code>null</code>).
+	 * Creates an uninitalized definition.
+	 * Used by serialization.
 	 */
-	// FIXME
-	//private Definition(final String name) {
-	//	super(name);
-	//}
+	public Definition() {
+		super();
+		varList = null;
+		definiens = null;
+		definitionDepth = 0;
+	}
 
 	/**
 	 * Returns the definition depth of this term.
@@ -265,10 +268,30 @@ final class Definition extends ComplexTerm {
 		definiens.store(out, termNameTable, varNameTable);
 	}
 
-	// FIXME
-	//public @Override Definition clone() {
-	//	final Definition result = new Definition(getName().clone());
-	//	result.ensureKind(getKind().clone());
-	//}
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			setName((String) in.readObject());
+			ensureKind((Kind) in.readObject());
+			varList = (List<Variable>) in.readObject();
+			definiens = (TermExpressionImpl) in.readObject();
+			definitionDepth = in.readInt();
+		} catch (ClassCastException e) {
+			logger.error("Wrong class during definition deserialization.");
+			throw new ClassNotFoundException("Wrong class during definition deserialization.", e);
+		} catch (DataException e) {
+			final Error err = new AssertionError("Result kind already set during deserialization. "
+				+ "This should not happen.");
+			err.initCause(e);
+			throw err;
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(this.toString());
+		out.writeObject(getKind());
+		out.writeObject(varList);
+		out.writeObject(definiens);
+		out.writeInt(definitionDepth);
+	}
 
 }

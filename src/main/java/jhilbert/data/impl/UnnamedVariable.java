@@ -52,6 +52,14 @@ final class UnnamedVariable extends VariableImpl {
 	}
 
 	/**
+	 * Creates an uninitialized unnamed variable.
+	 * Used by serialization.
+	 */
+	public UnnamedVariable() {
+		super();
+	}
+
+	/**
 	 * Upgrades the given variable to an unnamed one.
 	 * Use with caution.
 	 *

@@ -22,6 +22,12 @@
 
 package jhilbert.data.impl;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import org.apache.log4j.Logger;
+
 /**
  * A pair (2-tuple) of values.
  * <code>null</code> values are not allowed.
@@ -31,17 +37,22 @@ package jhilbert.data.impl;
  *
  * FIXME: move this to util?
  */
-class Pair<E1, E2> {
+class Pair<E1, E2> implements Externalizable {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(Pair.class);
 
 	/**
 	 * First value.
 	 */
-	private final E1 first;
+	private E1 first;
 
 	/**
 	 * Second value.
 	 */
-	private final E2 second;
+	private E2 second;
 
 	/**
 	 * Creates a new Pair.
@@ -54,6 +65,15 @@ class Pair<E1, E2> {
 		assert ((first != null) && (second != null)): "Null values are not allowed in Pairs.";
 		this.first = first;
 		this.second = second;
+	}
+
+	/**
+	 * Creates an uninitialized pair.
+	 * Used by serialization.
+	 */
+	public Pair() {
+		first = null;
+		second = null;
 	}
 
 	/**
@@ -101,6 +121,21 @@ class Pair<E1, E2> {
 
 	public @Override String toString() {
 		return "(" + first.toString() + ", " + second.toString() + ")";
+	}
+
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			first = (E1) in.readObject();
+			second = (E2) in.readObject();
+		} catch (ClassCastException e) {
+			logger.error("Wrong class during pair deserialization.");
+			throw new ClassNotFoundException("Wrong class during pair deserialization.");
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(first);
+		out.writeObject(second);
 	}
 
 }

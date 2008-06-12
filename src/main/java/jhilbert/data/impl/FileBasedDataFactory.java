@@ -26,6 +26,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.InvalidClassException;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OptionalDataException;
+import java.io.StreamCorruptedException;
 import jhilbert.commands.Command;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.impl.DataFactoryImpl;
@@ -61,13 +68,26 @@ final class FileBasedDataFactory extends DataFactoryImpl {
 		// load from library if interface wasn't modified
 		if (libraryFile.lastModified() > interfaceFile.lastModified()) {
 			try {
-				return new InterfaceDataImpl(new FileInputStream(libraryFile));
+				final ObjectInputStream ois = new ObjectInputStream(new FileInputStream(libraryFile));
+				final InterfaceDataImpl result = (InterfaceDataImpl) ois.readObject();
+				logger.info("Library " + libraryFile + " loaded.");
+				return result;
 			} catch (FileNotFoundException e) { // This should not happen
 				logger.info("Compiling library for interface " + locator);
-			} catch (UnknownFormatException e) {
-				logger.warn("Obsolete library format while loading " + libraryFile + ". Recreating library.", e);
-			} catch (DataException e) {
-				logger.warn("Unable to load library " + libraryFile + ". Attempt to recreate library.", e);
+			} catch (StreamCorruptedException e) {
+				logger.warn("Invalid library header in file " + libraryFile + ", recreating library.", e);
+			} catch (ClassNotFoundException e) {
+				logger.warn("No interface data in library file " + libraryFile + " (obsolete format?), recreating library.", e);
+			} catch (InvalidClassException e) {
+				logger.warn("Library " + libraryFile + " uses an old format, recreating library.", e);
+			} catch (OptionalDataException e) {
+				logger.warn("Primitive data found in interface library " + libraryFile + ", this shouldn't happen.", e);
+				logger.warn("Or did SOME CLOWN feed me a bogus file? Recreating library.");
+			} catch (IOException e) {
+				logger.warn("I/O error while creating library " + libraryFile + ", attempting to recreate library.", e);
+			} catch (ClassCastException e) {
+				logger.warn("Library file " + libraryFile + " does not appear to contain interface data.", e);
+				logger.warn("Or did SOME CLOWN feed me a bogus file? Recreating library.");
 			}
 		} else
 			logger.info("No recent library for " + locator + " detected, creating...");
@@ -85,7 +105,7 @@ final class FileBasedDataFactory extends DataFactoryImpl {
 				cs.resetContext();
 			}
 			libraryFile.delete();
-			result.store(new FileOutputStream(libraryFile));
+			(new ObjectOutputStream(new FileOutputStream(libraryFile))).writeObject(result);
 			logger.info("Library for interface " + locator + " created.");
 		} catch (InputException e) {
 			logger.error("Unable to open interface file for reading while loading interface " + locator);
@@ -99,8 +119,16 @@ final class FileBasedDataFactory extends DataFactoryImpl {
 		} catch (FileNotFoundException e) {
 			logger.warn("Unable to open library file for writing while creating library for interface "
 				+ locator, e);
-		} catch (DataException e) {
-			logger.warn("Unable to store library for interface " + locator, e);
+		} catch (InvalidClassException e) {
+			final AssertionError err = new AssertionError("Invalid class while serializing InterfaceDataImpl");
+			err.initCause(e);
+			throw err;
+		} catch (NotSerializableException e) {
+			final AssertionError err = new AssertionError("InterfaceDataImpl not serializable");
+			err.initCause(e);
+			throw err;
+		} catch (IOException e) {
+			logger.warn("Unable to write library file while creating library for interface " + locator, e);
 		}
 		return result;
 	}

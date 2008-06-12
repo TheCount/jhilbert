@@ -45,6 +45,14 @@ class VariablePairImpl extends Pair<Variable, Variable> implements VariablePair,
 	}
 
 	/**
+	 * Creates an uninitalized variable pair.
+	 * Used by serialization.
+	 */
+	public VariablePairImpl() {
+		super();
+	}
+
+	/**
 	 * Returns a new VariablePair with reversed values.
 	 *
 	 * @return new VariablePair with reversed values.

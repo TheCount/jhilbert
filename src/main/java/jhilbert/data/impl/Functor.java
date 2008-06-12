@@ -23,7 +23,10 @@
 package jhilbert.data.impl;
 
 import java.io.EOFException;
+import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,17 +37,17 @@ import jhilbert.exceptions.DataException;
 import jhilbert.util.DataInputStream;
 import jhilbert.util.DataOutputStream;
 import jhilbert.util.Collections;
-// import org.apache.log4j.Logger;
+import org.apache.log4j.Logger;
 
 /**
  * A term which combines zero or more input terms to a new term.
  */
-final class Functor extends ComplexTerm {
+final class Functor extends ComplexTerm implements Externalizable {
 
 	/**
 	 * Logger for this class.
 	 */
-	// private static final Logger logger = Logger.getLogger(ComplexTerm.class);
+	private static final Logger logger = Logger.getLogger(Functor.class);
 
 	/**
 	 * Place count.
@@ -54,7 +57,7 @@ final class Functor extends ComplexTerm {
 	/**
 	 * Input kinds.
 	 */
-	private final List<Kind> inputKinds;
+	private List<Kind> inputKinds;
 
 	/**
 	 * Creates a new complex term with the specified name, kind and input terms.
@@ -81,6 +84,16 @@ final class Functor extends ComplexTerm {
 		super(name);
 		placeCount = -1;
 		inputKinds = new LinkedList();
+	}
+
+	/**
+	 * Creates an uninitialized functor.
+	 * Used by serialization.
+	 */
+	public Functor() {
+		super();
+		placeCount = 0;
+		inputKinds = null;
 	}
 
 	/**
@@ -157,11 +170,28 @@ final class Functor extends ComplexTerm {
 				out.writeInt(kindNameTable.get(inputKind.toString()));
 	}
 
-	// FIXME
-	//public @Override ComplexTerm clone() {
-	//	List<String> clonedList = new ArrayList(inputKinds.size());
-	//	Collections.clone(clonedList, inputKinds);
-	//	return new ComplexTerm(getName().clone(), kind.clone(), clonedList);
-	//}
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			setName((String) in.readObject());
+			ensureKind((Kind) in.readObject());
+			placeCount = in.readInt();
+			inputKinds = (List<Kind>) in.readObject();
+		} catch (ClassCastException e) {
+			logger.error("Wrong class while deserializing functor.");
+			throw new ClassNotFoundException("Wrong class while deserializing functor.", e);
+		} catch (DataException e) {
+			final Error err = new AssertionError("Result kind already set during deserialization. "
+				+ "This should not happen.");
+			err.initCause(e);
+			throw err;
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(this.toString());
+		out.writeObject(getKind());
+		out.writeInt(placeCount);
+		out.writeObject(inputKinds);
+	}
 
 }

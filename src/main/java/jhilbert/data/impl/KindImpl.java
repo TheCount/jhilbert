@@ -22,13 +22,23 @@
 
 package jhilbert.data.impl;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import jhilbert.data.Kind;
 import jhilbert.data.impl.NameImpl;
+import org.apache.log4j.Logger;
 
 /**
  * Implementation of {@link Kind}.
  */
-final class KindImpl extends NameImpl implements Kind {
+final class KindImpl extends NameImpl implements Kind, Externalizable {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(KindImpl.class);
 
 	/**
 	 * Creates a new kind with the specified name.
@@ -39,9 +49,25 @@ final class KindImpl extends NameImpl implements Kind {
 		super(name);
 	}
 
-	//FIXME
-	//@Override Kind clone() {
-	//	return new Kind(getName().clone());
-	//}
+	/**
+	 * Creates an uninitalized kind.
+	 * Used by serialization.
+	 */
+	public KindImpl() {
+		super();
+	}
+
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			setName((String) in.readObject());
+		} catch (ClassCastException e) {
+			logger.error("Wrong class while deserializing kind.");
+			throw new ClassNotFoundException("Wrong class while deserializing kind.", e);
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(super.toString());
+	}
 
 }

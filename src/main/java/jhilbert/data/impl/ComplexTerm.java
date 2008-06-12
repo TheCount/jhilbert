@@ -121,6 +121,15 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	}
 
 	/**
+	 * Creates an uninitialized complex term.
+	 * Used by serialization.
+	 */
+	protected ComplexTerm() {
+		super();
+		kind = null;
+	}
+
+	/**
 	 * Returns the resulting kind of this term.
 	 *
 	 * @return resulting kind of this term, or <code>null</code> if the resulting kind is unknown.
@@ -144,7 +153,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 * @throws DataException if the resulting kind of this term is known and the specified kind is not
 	 * 	<code>null</code>, yet they are not equal.
 	 */
-	// FIXME
 	public final void ensureKind(final Kind kind) throws DataException {
 		if (this.kind == null) {
 			this.kind = kind;

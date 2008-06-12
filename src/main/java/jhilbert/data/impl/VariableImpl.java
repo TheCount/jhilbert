@@ -22,14 +22,24 @@
 
 package jhilbert.data.impl;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import jhilbert.data.impl.NameImpl;
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
+import org.apache.log4j.Logger;
 
 /**
  * Default implementation of the {@link Variable} interface.
  */
-class VariableImpl extends NameImpl implements Variable {
+class VariableImpl extends NameImpl implements Variable, Externalizable {
+
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(VariableImpl.class);
 
 	/**
 	 * Kind of this variable.
@@ -37,7 +47,7 @@ class VariableImpl extends NameImpl implements Variable {
 	private Kind kind;
 
 	/**
-	 * Create a new Variable with the specified name and kind.
+	 * Creates a new Variable with the specified name and kind.
 	 *
 	 * @param name name of this variable (must not be <code>null</code>).
 	 * @param kind kind of this variable (must not be <code>null</code>).
@@ -46,6 +56,15 @@ class VariableImpl extends NameImpl implements Variable {
 		super(name);
 		assert (kind != null): "Supplied kind is null.";
 		this.kind = kind;
+	}
+
+	/**
+	 * Creates an uninitialized variable.
+	 * Used by serialization.
+	 */
+	public VariableImpl() {
+		super();
+		kind = null;
 	}
 
 	/**
@@ -61,9 +80,19 @@ class VariableImpl extends NameImpl implements Variable {
 		return true;
 	}
 
-	// FIXME
-	//@Override Variable clone() {
-	//	return new Variable(getName().clone(), kind.clone());
-	//}
+	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+		try {
+			setName((String) in.readObject());
+			kind = (Kind) in.readObject();
+		} catch (ClassCastException e) {
+			logger.error("Wrong class during variable deserialization.");
+			throw new ClassNotFoundException("Wrong class during variable deserialization.", e);
+		}
+	}
+
+	public void writeExternal(final ObjectOutput out) throws IOException {
+		out.writeObject(this.toString());
+		out.writeObject(kind);
+	}
 
 }

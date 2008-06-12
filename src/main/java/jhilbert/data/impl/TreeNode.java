@@ -47,7 +47,7 @@ class TreeNode<E, T extends TreeNode<E,T>> {
 	/**
 	 * List of children.
 	 */
-	private final List<T> children;
+	private List<T> children;
 
 	/**
 	 * Creates a new TreeNode with the specified value and no children.
@@ -75,6 +75,16 @@ class TreeNode<E, T extends TreeNode<E,T>> {
 		assert (child != null): "Supplied child is null.";
 		children.add(child);
 	}
+
+	/**
+	 * Sets the children of this node.
+	 *
+	 * @param children children to set.
+	 */
+	// FIXME: java serializer broken; need externalizer
+	//protected void setChildren(final List<T> children) {
+	//	this.children = children;
+	//}
 
 	/**
 	 * Returns the number of children of this node.

@@ -96,6 +96,7 @@ public abstract class Command {
 			CommandClass.STATEMENT,
 			CommandClass.TERM);
 		INTERFACE_COMMANDS.add(CommandClass.VARIABLE);
+		INTERFACE_COMMANDS.add(CommandClass.DEFINITION); // NEW!
 	}
 
 	/**
