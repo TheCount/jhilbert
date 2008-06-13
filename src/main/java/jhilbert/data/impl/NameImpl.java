@@ -53,23 +53,6 @@ abstract class NameImpl implements Name {
 	}
 
 	/**
-	 * Returns this name as a String.
-	 *
-	 * @return name as a String.
-	 *
-	 * @see #toString()
-	 */
-	// FIXME
-	//public final String getName() {
-	//	return name;
-	//}
-
-	// FIXME
-	//public final void prefix(final String prefix) {
-	//	name = prefix + name;
-	//}
-
-	/**
 	 * Returns a String representation of this name.
 	 *
 	 * @return name as a String.
@@ -96,10 +79,9 @@ abstract class NameImpl implements Name {
 		return name.equals(n.toString());
 	}
 
-	// FIXME
-	//public boolean equals(final String s) {
-	//	return name.equals(s);
-	//}
+	public final boolean equals(final String s) {
+		return name.equals(s);
+	}
 
 	public int compareTo(final Name n) {
 		return name.compareTo(n.toString());

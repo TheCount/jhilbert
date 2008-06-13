@@ -39,7 +39,7 @@ public class Main
 {
 
 	/**
-	 * FIXME
+	 * Program entry point.
 	 *
 	 * @param args command line arguments.
 	 *
@@ -58,6 +58,10 @@ public class Main
 				else
 					inputFileName = arg;
 			}
+			if (inputFileName == null) {
+				logger.fatal("No input file name specified.");
+				System.exit(1);
+			}
 			logger.info("Scanning file " + inputFileName);
 			ModuleData md = DataFactory.getInstance().createModuleData();
 			CommandScanner cs = new CommandScanner(new FileInputSource(inputFileName), md, Command.MODULE_COMMANDS);
@@ -67,10 +71,9 @@ public class Main
 				c.execute();
 				cs.resetContext();
 			}
-//			logger.info("Finished. Press Return to exit.");
-//			System.in.read();
 		} catch (GeneralException e) {
-			throw e;
+			logger.fatal("Exiting due to unrecoverable error:", e);
+			System.exit(1);
 		} catch (Exception e) {
 			logger.fatal("Caught unexpected exception:");
 			throw e;

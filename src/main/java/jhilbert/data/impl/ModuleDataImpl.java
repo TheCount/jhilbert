@@ -31,7 +31,6 @@ import jhilbert.data.Parameter;
 import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
 import jhilbert.exceptions.DataException;
-import jhilbert.util.Collections;
 import org.apache.log4j.Logger;
 
 /**
@@ -52,41 +51,11 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 	/**
 	 * Creates a new instance of module data.
 	 */
-	// FIXME
 	public ModuleDataImpl() {
 		super();
 		kinds = new HashMap();
 		terms = new HashMap();
 	}
-
-	/**
-	 * Copy constructor.
-	 * Creates a shallow copy.
-	 * FIXME: Do we need this method?
-	 *
-	 * @param moduleData module data to be copied (must not be <code>null</code>).
-	 */
-	// FIXME
-	//protected ModuleDataImpl(final ModuleDataImpl moduleData) {
-	//	super(moduleData);
-	//	kinds = moduleData.kinds;
-	//	terms = moduleData.terms;
-	//}
-
-	/**
-	 * Creates a deep copy of this data collection.
-	 * The contents is copied shallowly.
-	 *
-	 * @return a deep copy of this data collection.
-	 */
-	// FIXME: Do we need this methods?
-	//public ModuleDataImpl clone() {
-	//	final ModuleDataImpl result = new ModuleDataImpl();
-	//	result.parameters.putAll(parameters);
-	//	result.kinds.putAll(kinds);
-	//	result.terms.putAll(terms);
-	//	result.symbols.putAll(symbols);
-	//}
 
 	/**
 	 * Defines a new kind.
@@ -123,17 +92,6 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 		kinds.put(newKindName, kinds.get(oldKindName));
 	}
 
-	// FIXME
-	//public void defineTerm(final ComplexTerm term) throws DataException {
-	//	assert (term != null): "Supplied term is null.";
-	//	final String name = term.getName();
-	//	if (terms.containsKey(name)) {
-	//		logger.error("A term with name " + name + " is already defined.");
-	//		throw new DataException("Term already defined", name);
-	//	}
-	//	terms.put(name, term);
-	//}
-
 	/**
 	 * Defines a new {@link Functor}.
 	 *
@@ -158,25 +116,6 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 		return terms.get(name);
 	}
 
-	/**
-	 * Defines a new Parameter.
-	 *
-	 * @param param Parameter to define (must not be <code>null</code>).
-	 *
-	 * @throws DataException if the parameter is already defined.
-	 */
-	// FIXME
-	//public void defineParameter(final Parameter param) throws DataException {
-	//	assert (param != null): "Supplied parameter is null.";
-	//	final String name = param.toString();
-	//	if (parameters.containsKey(name)) {
-	//		logger.error("Parameter with name " + name + " already defined.");
-	//		throw new DataException("Parameter already defined", name);
-	//	}
-	//	parameters.put(name, param);
-	//}
-
-	// FIXME
 	public @Override String toString() {
 		return	  "Kinds: " + kinds.toString() + "; "
 			+ "Terms: " + terms.toString() + "; "

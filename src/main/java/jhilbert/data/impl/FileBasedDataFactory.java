@@ -39,7 +39,6 @@ import jhilbert.data.impl.DataFactoryImpl;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
 import jhilbert.exceptions.ScannerException;
-import jhilbert.exceptions.UnknownFormatException;
 import jhilbert.exceptions.VerifyException;
 import jhilbert.util.CommandScanner;
 import jhilbert.util.FileInputSource;

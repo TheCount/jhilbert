@@ -33,8 +33,6 @@ import jhilbert.data.impl.Definition;
 import jhilbert.data.impl.Functor;
 import jhilbert.data.impl.NameImpl;
 import jhilbert.exceptions.DataException;
-import jhilbert.util.DataInputStream;
-import jhilbert.util.DataOutputStream;
 import org.apache.log4j.Logger;
 
 /**
@@ -53,58 +51,11 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	private Kind kind;
 
 	/**
-	 * Loads a new complex term from the specified input stream.
-	 *
-	 * @param name term name.
-	 * @param in data input stream.
-	 * @param data interface data.
-	 * @param nameList list of names.
-	 * @param kindsLower lower bound for kind names.
-	 * @param kindsUpper upper bound for kind names.
-	 * @param termsLower lower bound for term names (optional).
-	 * @param termsUpper upper bound for term names (mandatory iff termsLower is provided).
-	 *
-	 * @throws EOFException upon unexpected end of stream.
-	 * @throws IOException if an I/O error occurs.
-	 * @throws DataException if the input stream is inconsistent.
-	 */
-	// FIXME
-	static ComplexTerm create(final String name, final DataInputStream in, final DataImpl data,
-		final List<String> nameList, final int kindsLower, final int kindsUpper)
-	throws EOFException, IOException, DataException {
-		return create(name, in, data, nameList, kindsLower, kindsUpper, -1, -1);
-	}
-	static ComplexTerm create(final String name, final DataInputStream in, final DataImpl data,
-		final List<String> nameList, final int kindsLower, final int kindsUpper, final int termsLower,
-		final int termsUpper)
-	throws EOFException, IOException, DataException {
-		assert (name != null): "Specified name is null.";
-		assert (in != null): "Specified data input stream is null.";
-		assert (data != null): "Specified data are null.";
-		assert (nameList != null): "Specified name list is null.";
-		assert (kindsLower > 0): "Specified lower kinds bound is not positive.";
-		assert (kindsUpper >= kindsLower): "Specified upper kinds bound is smaller than lower bound.";
-		assert (termsUpper >= termsLower): "Specified upper terms bound is smaller than lower bound.";
-		final Kind kind = data.getKind(nameList.get(in.readIntOr0(kindsLower, kindsUpper)));
-		final int placeCount = in.readInt();
-		if (placeCount >= 0)
-			return new Functor(name, kind, placeCount, in, data, nameList, kindsLower, kindsUpper);
-		else if (termsLower != -1)
-			return new Definition(name, kind, ~placeCount, in, data, nameList, kindsLower, kindsUpper,
-					termsLower, termsUpper);
-		else {
-			logger.error("No term bounds provided for loading definition " + name);
-			throw new DataException("No term bounds provided for loading definition", name);
-		}
-	}
-
-	/**
 	 * Creates a new complex term with the specified name and kind.
 	 *
 	 * @param name term name (must not be <code>null</code>).
 	 * @param kind result kind (may be <code>null</code> if unknown).
 	 */
-	// FIXME
 	protected ComplexTerm(final String name, final Kind kind) {
 		super(name);
 		this.kind = kind;
@@ -115,7 +66,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @param name term name (must not be <code>null</code>).
 	 */
-	// FIXME
 	protected ComplexTerm(final String name) {
 		this(name, null);
 	}
@@ -134,7 +84,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @return resulting kind of this term, or <code>null</code> if the resulting kind is unknown.
 	 */
-	// FIXME
 	public Kind getKind() {
 		return kind;
 	}
@@ -170,17 +119,12 @@ abstract class ComplexTerm extends NameImpl implements Term {
 
 	/**
 	 * Returns the definition depth of this term.
-	 * This method always returns <code>0</code>. The {@link Definition} subclass
-	 * overrides this method.
 	 *
 	 * @return definition depth of this term.
 	 *
 	 * @see Definition#definitionDepth()
 	 */
-	// FIXME
-	public int definitionDepth() {
-		return 0;
-	}
+	public abstract int definitionDepth();
 
 	/**
 	 * Returns the number of places of this term.
@@ -188,7 +132,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @return number of places of this term, or <code>-1</code> if the number of places is not known yet.
 	 */
-	// FIXME
 	public abstract int placeCount();
 
 	/**
@@ -196,7 +139,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @param count number of places this term should have.
 	 */
-	// FIXME
 	protected abstract void setPlaceCount(int count);
 
 	/**
@@ -215,7 +157,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 * @see #placeCount()
 	 * @see #ensureInputKind()
 	 */
-	// FIXME
 	public final void ensurePlaceCount(final int placeCount) throws DataException {
 		if (placeCount == -1)
 			return;
@@ -240,7 +181,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @return kind of the i-th input term, or <code>null</code> if that kind is not known yet.
 	 */
-	// FIXME
 	public abstract Kind getInputKind(final int i);
 
 	/**
@@ -249,7 +189,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 * @param i input term number (starting from zero).
 	 * @param kind the kind.
 	 */
-	// FIXME
 	protected abstract void setInputKind(int i, Kind kind);
 
 	/**
@@ -263,7 +202,6 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @see #ensureKind()
 	 */
-	// FIXME
 	public final void ensureInputKind(final int i, final Kind kind) throws DataException {
 		final Kind thisInputKind = getInputKind(i);
 		if (thisInputKind == null) {
@@ -281,69 +219,8 @@ abstract class ComplexTerm extends NameImpl implements Term {
 		}
 	}
 
-	// FIXME
 	public final boolean isVariable() {
 		return false;
 	}
-
-	/**
-	 * Stores this term to the specified data output stream.
-	 *
-	 * @param out data output stream.
-	 * @param kindNameTable name to ID table for storing kinds.
-	 * @param termNameTable name to ID table for storing term names.
-	 *
-	 * @throws IOException if an I/O-Error occurs.
-	 */
-	// FIXME
-	void store(final DataOutputStream out, final Map<String, Integer> kindNameTable,
-			final Map<String, Integer> termNameTable)
-	throws IOException {
-		if (kind == null)
-			out.writeInt(0);
-		else
-			out.writeInt(kindNameTable.get(kind.toString()));
-		// further storage done by subclasses
-	}
-
-	/**
-	 * Checks whether this term's result kind and input kinds match that of the specified one.
-	 * This may only be called on fully defined terms.
-	 *
-	 * @param term AbstractComplexTerm to compare against. Must be fully defined!
-	 * @param data1 data context for this term.
-	 * @param data2 data context for specified term.
-	 *
-	 * @return <code>true</code> if the result kind and input kinds of this term and the specified term match.
-	 *
-	 * FIXME: We should, at some point, add a containsKind() method to {@link Data} which does not add undefined kinds.
-	 * FIXME: broken, don't use
-	 */
-	// FIXME
-	//public boolean equalsSuperficially(final ComplexTerm term, final Data data1, final Data data2) {
-	//	assert (term != null): "Supplied term is null.";
-	//	assert ((data1 != null) && (data2 != null)): "Supplied data are null.";
-	//	assert (this.kind != null): "Result kind undefined.";
-	//	final String kind = data1.getKind(this.kind);
-	//	assert (kind != null): "No such result kind.";
-	//	if (!kind.equals(data2.getKind(term.kind)))
-	//		return false;
-	//	final int placeCount = getPlaceCount();
-	//	assert (placeCount >= 0): "Place count undefined.";
-	//	if (placeCount != term.getPlaceCount())
-	//		return false;
-	//	for (int i = 0; i != placeCount; ++i) {
-	//		String inputKind = getInputKind(i);
-	//		assert (inputKind != null): "Input kind undefined.";
-	//		inputKind = data1.getKind(inputKind);
-	//		assert (inputKind != null): "No such input kind.";
-	//		if (!inputKind.equals(data2.getKind(term.getInputKind(i))))
-	//			return false;
-	//	}
-	//	return true;
-	//}
-
-	// FIXME
-	//public abstract @Override ComplexTerm clone();
 
 }

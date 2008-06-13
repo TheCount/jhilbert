@@ -42,8 +42,6 @@ import jhilbert.data.Variable;
 import jhilbert.data.impl.DummyVariable;
 import jhilbert.data.impl.UnnamedVariable;
 import jhilbert.exceptions.DataException;
-import jhilbert.util.DataInputStream;
-import jhilbert.util.DataOutputStream;
 import org.apache.log4j.Logger;
 
 /**
@@ -99,74 +97,6 @@ final class Definition extends ComplexTerm implements Externalizable {
 		this.definiens = (TermExpressionImpl) definiens.subst(varMap);
 		// calculate definition depth, see description of #definitionDepth()
 		final Term value = this.definiens.getValue();
-		if (value.isVariable())
-			definitionDepth = 1;
-		else
-			definitionDepth = ((ComplexTerm) value).definitionDepth() + 1;
-	}
-
-	/**
-	 * Creates a new definition from the specified input stream.
-	 *
-	 * @param name definition name.
-	 * @param kind result kind.
-	 * @param placeCount number of arguments to this definition.
-	 * @param in data input stream.
-	 * @param data interface data.
-	 * @param nameList list of names.
-	 * @param kindsLower lower bound for kind names.
-	 * @param kindsUpper upper bound for kind names.
-	 * @param termsLower lower bound for term names.
-	 * @param termsUpper upper bound for term names.
-	 *
-	 * @throws EOFException upon unexpected end of stream.
-	 * @throws IOException if an I/O error occurs.
-	 * @throws DataException if the input stream is inconsistent.
-	 */
-	Definition(final String name, final Kind kind, final int placeCount, final DataInputStream in, final DataImpl data,
-		final List<String> nameList, final int kindsLower, final int kindsUpper, final int termsLower,
-		final int termsUpper)
-	throws EOFException, IOException, DataException {
-		super(name, kind);
-		assert (placeCount >= 0): "Supplied place count is negative.";
-		if (kind == null) { // definition result kinds are always known
-			logger.error("Unknown result kind in definition " + name);
-			throw new DataException("Unknown result kind in definition", name);
-		}
-		varList = new ArrayList(placeCount);
-		// load variable kinds
-		final int kindListSize = in.readNonNegativeInt();
-		if (kindListSize < placeCount) {
-			logger.error("Kind list size of definition " + name
-				+ " is smaller than the number of its arguments.");
-			logger.error("Kind list size: " + kindListSize);
-			logger.error("Place count: " + placeCount);
-			throw new DataException("Kind list size of definition is smaller than the number of its arguments",
-						name);
-		}
-		final ArrayList<Kind> kindList = new ArrayList(kindListSize);
-		for (int i = 0; i != kindListSize; ++i)
-			kindList.add(data.getKind(nameList.get(in.readInt(kindsLower, kindsUpper))));
-		// create extended variable list for expression parsing
-		final ArrayList extendedVarList = new ArrayList(kindListSize);
-		for (int i = 0; i != placeCount; ++i)
-			varList.add(new UnnamedVariable(kindList.get(i)));
-		extendedVarList.addAll(varList);
-		for (int i = placeCount; i != kindListSize; ++i)
-			extendedVarList.add(new UnnamedVariable(kindList.get(i)));
-		// load definiens
-		definiens = TermExpressionImpl.create(in, data, nameList, extendedVarList, termsLower, termsUpper);
-		final Kind defKind = definiens.getKind();
-		final Term value = definiens.getValue();
-		if (defKind == null)
-			((ComplexTerm) value).ensureKind(kind);
-		else if (!kind.toString().equals(defKind.toString())) {
-			logger.error("Definiendum/definiens kind mismatch in definition " + name);
-			logger.error("Definiendum kind: " + kind);
-			logger.error("Definiens kind: " + defKind);
-			throw new DataException("Definiendum/definiens kind mismatch in definition", name);
-		}
-		// definition depth
 		if (value.isVariable())
 			definitionDepth = 1;
 		else
@@ -243,29 +173,6 @@ final class Definition extends ComplexTerm implements Externalizable {
 	 */
 	TermExpressionImpl getDefiniens() {
 		return definiens;
-	}
-
-	@Override void store(final DataOutputStream out, final Map<String, Integer> kindNameTable,
-			final Map<String, Integer> termNameTable) throws IOException {
-		super.store(out, kindNameTable, termNameTable);
-		out.writeInt(~varList.size());
-		// create variable name map
-		final Map<String, Integer> varNameTable = new HashMap();
-		int id = -1;
-		for (Variable var: varList)
-			varNameTable.put(var.toString(), id--);
-		final Set<Variable> remainingVars = definiens.variables();
-		remainingVars.removeAll(varList);
-		for (Variable var: remainingVars)
-			varNameTable.put(var.toString(), id--);
-		// variable list
-		out.writeInt(varNameTable.size());
-		for (Variable var: varList)
-			out.writeInt(kindNameTable.get(var.getKind()));
-		for (Variable var: remainingVars)
-			out.writeInt(kindNameTable.get(var.getKind()));
-		// definiens
-		definiens.store(out, termNameTable, varNameTable);
 	}
 
 	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {

@@ -57,40 +57,4 @@ public final class ParamCommand extends InterfaceCommand {
 		super("param", tokenScanner, data);
 	}
 
-	// FIXME
-//	public @Override void execute() throws VerifyException {
-//		super.execute();
-//		InterfaceData data = (InterfaceData) this.data;
-//		try {
-//			data.addParameter(parameter);
-//		} catch (DataException e) {
-//			logger.error("Error adding parameter " + name + " to interface.");
-//			throw new VerifyException("Error adding parameter", name);
-//		}
-		// FIXME: the following stuff should go into the InterfaceData class... or scrap it
-//		try {
-//			Interface param = data.getNextParameter();
-//			// copy data
-//			final String paramPrefix = param.getPrefix();
-//			for (Map.Entry<String, String> entry: param.getKindMap().entrySet())
-//				data.defineLocalKind(prefix + entry.getKey(), entry.getValue());
-//			for (String termName: param.getTermNames())
-//				data.defineLocalTerm(prefix + termName, paramPrefix + termName);
-//			// Now check if this parameter satisfies the specified interface
-//			Interface iface = data.getInterface(name);
-//			if ((iface == null) || (!locator.equals(iface.getLocator()))) {
-//				logger.info("Checking whether interface " + name + " is satisfied:");
-//				ExportCommand ec = new ExportCommand(this);
-//				ec.execute();
-//				logger.info("Interface " + name + " is satisfied.");
-//			} else {
-//				logger.info("Interface " + name + " is satisfied (cached).");
-//			}
-//		} catch (VerifyException e) {
-//			throw new VerifyException("Parameter does not satisfy specified interface", name, e);
-//		} catch (DataException e) {
-//			throw new VerifyException("Data error", name, e);
-//		}
-//	}
-
 }

@@ -116,22 +116,6 @@ public abstract class InterfaceCommand extends Command {
 		}
 	}
 
-	/**
-	 * Copy constructor.
-	 * Data are copied deeply, everything else is copied shallowly.
-	 * The String &quot;&nbsp;(copy)&quot; is appended to the interface name.
-	 *
-	 * @param interfaceCommand InterfaceCommand to be copied. Must not be <code>null</code>.
-	 */
-	// FIXME
-	//protected InterfaceCommand(final InterfaceCommand interfaceCommand) {
-	//	super(interfaceCommand.data.clone());
-	//	name = interfaceCommand.name + " (copy)";
-	//	locator = interfaceCommand.locator;
-	//	paramNameList = interfaceCommand.paramNameList;
-	//	prefix = interfaceCommand.prefix;
-	//}
-
 	public @Override void execute() throws VerifyException { // subclasses extend this method.
 		List<Parameter> parameters = new ArrayList(paramNameList.size());
 		for (final String paramName: paramNameList) {

@@ -56,21 +56,4 @@ class DummyVariable extends VariableImpl {
 		super();
 	}
 
-	/**
-	 * Upgrades the specified variable to a dummy variable.
-	 * Use with caution.
-	 *
-	 * @param var variable to be upgraded.
-	 *
-	 * @throws NullPointerException if var is <code>null</code>.
-	 */
-	private DummyVariable(final Variable var) {
-		super(var.toString(), var.getKind());
-	}
-
-	// FIXME
-	//public @Override DummyVariable clone() {
-	//	return new DummyVariable(super.clone());
-	//}
-
 }

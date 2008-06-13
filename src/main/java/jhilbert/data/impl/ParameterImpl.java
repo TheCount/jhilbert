@@ -35,8 +35,6 @@ import jhilbert.data.Data;
 import jhilbert.data.Parameter;
 import jhilbert.data.impl.NameImpl;
 import jhilbert.exceptions.DataException;
-import jhilbert.util.DataInputStream;
-import jhilbert.util.DataOutputStream;
 import org.apache.log4j.Logger;
 
 /**
@@ -90,42 +88,6 @@ class ParameterImpl extends NameImpl implements Parameter, Externalizable {
 	}
 
 	/**
-	 * Loads a parameter from a data input stream.
-	 *
-	 * @param name name of this parameter.
-	 * @param in data input stream to load parameter from.
-	 * @param data context data.
-	 * @param nameList list of names.
-	 * @param lower lower bound for parameter name indices
-	 * @param upper upper bound for parameter name indices
-	 *
-	 * @throws DataException if the input stream is inconsistent.
-	 * @throws IOException if an I/O error occurs.
-	 * @throws EOFException upon unexpected end of stream.
-	 */
-	// FIXME
-	ParameterImpl(final String name, final DataInputStream in, final Data data, final List<String> nameList,
-		final int lower, final int upper)
-	throws DataException, IOException, EOFException {
-		super(name);
-		assert (in != null): "Supplied data input stream is null.";
-		assert (data != null): "Supplied data are null.";
-		locator = in.readString();
-		final int parameterListSize = in.readNonNegativeInt();
-		parameterList = new ArrayList(parameterListSize);
-		for (int i = 0; i != parameterListSize; ++i) {
-			final int nameIndex = in.readInt(lower, upper);
-			final Parameter parameter = data.getParameter(nameList.get(nameIndex));
-			if (parameter == null) {
-				logger.error("Invalid parameter " + nameList.get(nameIndex) + " requested.");
-				throw new DataException("Invalid parameter requested", name);
-			}
-			parameterList.add(parameter);
-		}
-		prefix = in.readString();
-	}
-
-	/**
 	 * Creates an uninitialized Parameter.
 	 * Used by serialization.
 	 */
@@ -145,7 +107,6 @@ class ParameterImpl extends NameImpl implements Parameter, Externalizable {
 	 *
 	 * @return unmodifiable parameter list to this parameter.
 	 */
-	// FIXME
 	public List<Parameter> getParameterList() {
 		return parameterList;
 	}
@@ -155,26 +116,8 @@ class ParameterImpl extends NameImpl implements Parameter, Externalizable {
 	 *
 	 * @return namespace prefix for this interface parameter.
 	 */
-	// FIXME
 	public String getPrefix() {
 		return prefix;
-	}
-
-	/**
-	 * Stores this parameter in the specified data output stream.
-	 *
-	 * @param out output stream.
-	 * @param parameterNameTable name to ID table for storing parameter names.
-	 *
-	 * @throws IOException if an I/O error occurs.
-	 */
-	// FIXME
-	void store(final DataOutputStream out, final Map<String, Integer> parameterNameTable) throws IOException {
-		out.writeString(locator);
-		out.writeInt(parameterList.size());
-		for (Parameter parameter: parameterList)
-			out.writeInt(parameterNameTable.get(parameter.toString()));
-		out.writeString(prefix);
 	}
 
 	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {

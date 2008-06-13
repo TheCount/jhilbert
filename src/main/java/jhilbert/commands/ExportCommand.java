@@ -64,20 +64,6 @@ public final class ExportCommand extends InterfaceCommand {
 		super("export", tokenScanner, data);
 	}
 
-	/**
-	 * Create a new ExportCommand from a {@link ParamCommand}.
-	 * This is used to create a phony export command for parameter checking.
-	 * Package access only, used by ParamCommand.
-	 *
-	 * FIXME: scrap this ctor?
-	 *
-	 * @param paramCommand ParamCommand to be copied.
-	 */
-	// FIXME
-	//ExportCommand(final ParamCommand paramCommand) {
-	//	super(paramCommand);
-	//}
-
 	public @Override void execute() throws VerifyException {
 		final DataFactory df = DataFactory.getInstance();
 		Parameter parameter = null;
@@ -88,8 +74,8 @@ public final class ExportCommand extends InterfaceCommand {
 			assert (parameter != null): "Newly defined parameter is null.";
 			final InterfaceData interfaceData = df.getInterfaceData(parameter.getLocator());
 			df.exportInterface(moduleData, interfaceData, parameter);
-		} catch (InputException e) { // FIXME: Do we need this?
-			logger.error("Error loading interface " + parameter.getLocator(), e);
+		} catch (InputException e) {
+			logger.error("Error obtaining interface " + parameter.getLocator(), e);
 			throw new VerifyException("Error loading interface", parameter.getLocator(), e);
 		} catch (DataException e) {
 			logger.error("Error exporting interface " + getName());

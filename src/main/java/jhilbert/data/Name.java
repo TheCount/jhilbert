@@ -28,37 +28,10 @@ package jhilbert.data;
 public interface Name extends Comparable<Name> {
 
 	/**
-	 * Returns this name as a String.
-	 *
-	 * @return name as a String.
-	 *
-	 * @see #toString()
-	 */
-	// FIXME
-	// public String getName();
-
-	/**
 	 * Returns this Name as a String.
 	 *
 	 * @return this Name as a String.
 	 */
 	public String toString();
-
-	/**
-	 * Checks whether this Name is equal to another object.
-	 *
-	 * @param o Object to be compared with this Name.
-	 *
-	 * @return <code>true</code> if and only if o is an instance of Name, and <code>getName().equals(o.toString())</code>.
-	 */
-	// FIXME
-	// public boolean equals(final Object o);
-
-	/**
-	 * Returns a hash code for this name.
-	 * Reimplemented so that equal names return equal hash codes.
-	 */
-	// FIXME
-	// public int hashCode();
 
 }

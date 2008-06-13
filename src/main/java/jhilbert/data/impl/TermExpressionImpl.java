@@ -45,8 +45,6 @@ import jhilbert.data.impl.TreeNode;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.ScannerException;
 import jhilbert.exceptions.UnifyException;
-import jhilbert.util.DataInputStream;
-import jhilbert.util.DataOutputStream;
 import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
@@ -68,83 +66,6 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 	 * Logger for this class.
 	 */
 	private static final Logger logger = Logger.getLogger(TermExpressionImpl.class);
-
-	/**
-	 * Creates a new TermExpression from the specified data input stream.
-	 *
-	 * @param in data input stream.
-	 * @param data context data.
-	 * @param nameList name list for IDs.
-	 * @param varList variable list.
-	 * @param termsLower lower bound for terms.
-	 * @param termsUpper upper bound for terms.
-	 *
-	 * @throws EOFException upon unexpected end of stream.
-	 * @throws IOException if an I/O error occurs.
-	 * @throws DataException if the input stream is inconsistent.
-	 */
-	static TermExpressionImpl create(final DataInputStream in, final DataImpl data, final List<String> nameList,
-		final List<Variable> varList, final int termsLower, final int termsUpper)
-	throws EOFException, IOException, DataException {
-		// load expression stack
-		final Stack<Integer> exprStack = new Stack();
-		for (int id = in.readInt(); id != 0; id = in.readInt())
-			exprStack.push(id);
-		// create term expression
-		final TermExpressionImpl result = createPrivate(exprStack, data, nameList, varList, termsLower, termsUpper);
-		if (!exprStack.empty()) {
-			logger.error("Stack not empty after loading term " + result.getValue());
-			logger.debug("Stack: " + exprStack);
-			logger.debug("Variable list: " + varList);
-			logger.trace("Name list: " + nameList);
-			throw new DataException("Stack not empty after parsing term", result.getValue().toString());
-		}
-		return result;
-	}
-
-	private static TermExpressionImpl createPrivate(final Stack<Integer> exprStack, final DataImpl data, final List<String> nameList,
-		final List<Variable> varList, final int termsLower, final int termsUpper)
-	throws DataException {
-		if (exprStack.empty()) {
-			logger.error("Stack underflow while loading term expression.");
-			logger.debug("Variable list: " + varList);
-			throw new DataException("Stack underflow while loading term expression.", "none");
-		}
-		final int leadingID = exprStack.pop();
-		assert (leadingID != 0): "Zero id in expression stack: this cannot happen.";
-		if (leadingID < 0) {
-			if (~leadingID >= varList.size()) {
-				logger.error("Invalid variable ID: " + leadingID);
-				logger.debug("Valid IDs: -1 >= ID > " + ~varList.size());
-				throw new DataException("Invalid variable ID", Integer.toString(leadingID));
-			}
-			return new TermExpressionImpl(varList.get(~leadingID));
-		} else {
-			if ((leadingID < termsLower) || (leadingID >= termsUpper)) {
-				logger.error("Invalid term ID: " + leadingID);
-				logger.debug("Valid IDs: " + termsLower + " <= ID < " + termsUpper);
-				throw new DataException("Invalid term ID", Integer.toString(leadingID));
-			}
-			final ComplexTerm term = data.getTerm(nameList.get(leadingID));
-			if (term == null) {
-				logger.error("Term not found: " + nameList.get(leadingID));
-				throw new DataException("Term not found", nameList.get(leadingID));
-			}
-			final TermExpressionImpl result = new TermExpressionImpl(term);
-			final int placeCount = term.placeCount();
-			assert (placeCount >= 0): "Unknown term place count while loading term (this cannot happen)";
-			for (int i = 0; i != placeCount; ++i) {
-				final TermExpressionImpl child = createPrivate(exprStack, data, nameList, varList, termsLower, termsUpper);
-				// mutual kind assurance
-				final Term value = child.getValue();
-				term.ensureInputKind(i, value.getKind());
-				if (!value.isVariable())
-					((ComplexTerm) value).ensureKind(term.getInputKind(i));
-				result.addChild(child);
-			}
-			return result;
-		}
-	}
 
 	/**
 	 * Scans a new TermExpression.
@@ -512,34 +433,6 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		final int childCount = childCount();
 		for (int i = 0; i != childCount; ++i)
 			getChild(i).equalityMap(target.getChild(i), translationMap);
-	}
-
-	/**
-	 * Stores this TermExpression to the specified output stream.
-	 *
-	 * @param out data output stream.
-	 * @param termNameTable name to ID table for storing terms.
-	 * @param varNameTable name to ID table for storing variables.
-	 *
-	 * @throws IOException if an I/O error occurs.
-	 */
-	void store(final DataOutputStream out, final Map<String, Integer> termNameTable,
-			final Map<String, Integer> varNameTable) throws IOException {
-		// store zero terminated term
-		storePrivate(out, termNameTable, varNameTable);
-		out.writeInt(0);
-	}
-
-	void storePrivate(final DataOutputStream out, final Map<String, Integer> termNameTable,
-			final Map<String, Integer> varNameTable) throws IOException {
-		// store TermExpression in RPN format
-		for (int i = childCount() - 1; i >= 0; --i)
-			getChild(i).storePrivate(out, termNameTable, varNameTable);
-		final Term value = getValue();
-		if (value.isVariable())
-			out.writeInt(varNameTable.get(value.toString()));
-		else
-			out.writeInt(termNameTable.get(value.toString()));
 	}
 
 	/**

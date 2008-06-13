@@ -34,9 +34,6 @@ import java.util.Map;
 import jhilbert.data.Kind;
 import jhilbert.data.impl.ComplexTerm;
 import jhilbert.exceptions.DataException;
-import jhilbert.util.DataInputStream;
-import jhilbert.util.DataOutputStream;
-import jhilbert.util.Collections;
 import org.apache.log4j.Logger;
 
 /**
@@ -66,7 +63,6 @@ final class Functor extends ComplexTerm implements Externalizable {
 	 * @param kind result kind (must not be <code>null</code>).
 	 * @param inputKinds list of input kinds (must not be <code>null</code>).
 	 */
-	// FIXME
 	public Functor(final String name, final Kind kind, final List<Kind> inputKinds) {
 		super(name, kind);
 		assert (inputKinds != null): "Supplied list of input kinds is null.";
@@ -79,8 +75,7 @@ final class Functor extends ComplexTerm implements Externalizable {
 	 *
 	 * @param name term name (must not be <code>null</code>).
 	 */
-	// FIXME
-	public Functor (final String name) {
+	public Functor(final String name) {
 		super(name);
 		placeCount = -1;
 		inputKinds = new LinkedList();
@@ -96,39 +91,10 @@ final class Functor extends ComplexTerm implements Externalizable {
 		inputKinds = null;
 	}
 
-	/**
-	 * Loads a new complex term with the specified name, kind and place count from the specified input stream.
-	 *
-	 * @param name name of this term.
-	 * @param kind kind of this term.
-	 * @param placeCount number of places of this term.
-	 * @param in data input stream.
-	 * @param data data.
-	 * @param nameList list of names.
-	 * @param kindsLower lower bound for kind names.
-	 * @param kindsUpper upper bound for kind names.
-	 *
-	 * @throws EOFException upon unexpected end of stream.
-	 * @throws IOException if an I/O error occurs.
-	 * @throws DataException if the input stream is inconsistent.
-	 */
-	Functor(final String name, final Kind kind, final int placeCount, final DataInputStream in, final DataImpl data,
-		final List<String> nameList, final int kindsLower, final int kindsUpper)
-	throws EOFException, IOException, DataException {
-		super(name, kind);
-		assert (placeCount >= 0): "Negative place count specified.";
-		this.placeCount = placeCount;
-		inputKinds = new ArrayList(placeCount);
-		for (int i = 0; i != placeCount; ++i)
-			inputKinds.add(data.getKind(nameList.get(in.readIntOr0(kindsLower, kindsUpper))));
-	}
-
-	// FIXME
 	public @Override int placeCount() {
 		return placeCount;
 	}
 
-	// FIXME
 	protected @Override void setPlaceCount(final int count) {
 		assert (placeCount == -1): "Attempted to set already determined place count.";
 		placeCount = count;
@@ -157,17 +123,8 @@ final class Functor extends ComplexTerm implements Externalizable {
 		}
 	}
 
-	// FIXME
-	@Override void store(final DataOutputStream out, final Map<String, Integer> kindNameTable,
-			final Map<String, Integer> termNameTable) throws IOException {
-		assert (placeCount != -1): "Attempted to store complex term with unknown place count";
-		super.store(out, kindNameTable, termNameTable);
-		out.writeInt(placeCount);
-		for(final Kind inputKind: inputKinds)
-			if (inputKind == null)
-				out.writeInt(0);
-			else
-				out.writeInt(kindNameTable.get(inputKind.toString()));
+	public @Override int definitionDepth() {
+		return 0;
 	}
 
 	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {

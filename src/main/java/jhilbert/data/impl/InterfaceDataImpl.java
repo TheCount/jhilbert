@@ -54,9 +54,6 @@ import jhilbert.data.impl.KindImpl;
 import jhilbert.data.impl.ParameterizedName;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
-import jhilbert.exceptions.UnknownFormatException;
-import jhilbert.util.DataInputStream;
-import jhilbert.util.DataOutputStream;
 import org.apache.log4j.Logger;
 
 /**
@@ -64,8 +61,6 @@ import org.apache.log4j.Logger;
  * <p>
  * The parameters to the methods and constructors of this class must never be <code>null</code>.
  * Otherwise, the behavior of the whole class and its objects is undefined.
- * <p>
- * This class provides the {@link #store()} method to byte-compile the interface data.
  * <p>
  * This class uses permissive querying: unknown kinds and terms are created on demand and internally marked undefined.
  */
@@ -100,145 +95,6 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 		kinds = new LinkedHashMap(); // for sound insertion order
 		undefinedTermNames = new HashMap();
 		terms = new LinkedHashMap(); // for sound insertion order
-	}
-
-	/**
-	 * Loads previously stored interface data from the specified input stream.
-	 *
-	 * @param in input stream.
-	 *
-	 * @throws UnknownFormatException if the {@link DataImpl#FORMAT_VERSION} is incorrect.
-	 * @throws DataException if any other error occurs while loading the data.
-	 *
-	 * @see #store()
-	 */
-	public InterfaceDataImpl(final InputStream in) throws UnknownFormatException, DataException {
-		assert (in != null): "Supplied input stream is null.";
-		final DataInputStream ds = new DataInputStream(in);
-		undefinedKindNames = new HashMap();
-		kinds = new LinkedHashMap();
-		undefinedTermNames = new HashMap();
-		terms = new HashMap();
-		try {
-			final int format = ds.readInt();
-			if (format != DataImpl.FORMAT_VERSION) {
-				logger.error("Unknown interface data file format version.");
-				logger.error("Got version: " + format);
-				logger.error("Expected version: " + DataImpl.FORMAT_VERSION);
-				throw new UnknownFormatException("Unknown interface data file format version",
-					in.toString());
-			}
-			// read data sizes
-			final int parameterSize = ds.readNonNegativeInt();
-			final int undefinedKindsSize = ds.readNonNegativeInt();
-			final int undefinedTermNamesSize = ds.readNonNegativeInt();
-			final int definedKindsSize = ds.readNonNegativeInt();
-			final int definedTermNamesSize = ds.readNonNegativeInt();
-			final int statementsSize = ds.readNonNegativeInt();
-			// calculate bounds
-			final int parameterLowerBound = 1;
-			final int parameterUpperBound = parameterLowerBound + parameterSize;
-			final int kindsLowerBound = parameterUpperBound;
-			final int undefinedKindsLowerBound = kindsLowerBound;
-			final int undefinedKindsUpperBound = undefinedKindsLowerBound + undefinedKindsSize;
-			final int definedKindsLowerBound = undefinedKindsUpperBound;
-			final int definedKindsUpperBound = definedKindsLowerBound + definedKindsSize;
-			final int kindsUpperBound = definedKindsUpperBound;
-			final int termNamesLowerBound = definedKindsUpperBound;
-			final int undefinedTermNamesLowerBound = termNamesLowerBound;
-			final int undefinedTermNamesUpperBound = undefinedTermNamesLowerBound + undefinedTermNamesSize;
-			final int definedTermNamesLowerBound = undefinedTermNamesUpperBound;
-			final int definedTermNamesUpperBound = definedTermNamesLowerBound + definedTermNamesSize;
-			final int termNamesUpperBound = definedTermNamesUpperBound;
-			final int statementsLowerBound = definedTermNamesUpperBound;
-			final int statementsUpperBound = statementsLowerBound + statementsSize;
-			final int totalSize = statementsUpperBound;
-			// read name list
-			final List<String> nameList = new ArrayList(totalSize);
-			nameList.add(null); // for unknown kinds, see ComplexTerm#store()
-			for (int i = 1; i != totalSize; ++i)
-				nameList.add(ds.readString());
-			// load parameters
-			for (int i = parameterLowerBound; i != parameterUpperBound; ++i) {
-				final String parameterName = nameList.get(i);
-				parameters.put(parameterName, new ParameterImpl(parameterName, ds, this, nameList,
-									parameterLowerBound, parameterUpperBound));
-			}
-			// load undefined kinds
-			for (int i = undefinedKindsLowerBound; i != undefinedKindsUpperBound; ++i) {
-				final String kindName = nameList.get(i);
-				final ParameterImpl parameter = parameters.get(nameList
-					.get(ds.readInt(parameterLowerBound, parameterUpperBound)));
-				final String fullName = parameter.getPrefix() + kindName;
-				if (undefinedKindNames.containsKey(fullName)) {
-					logger.error("Undefined kind " + fullName + " specified twice.");
-					throw new DataException("Undefined kind specified twice", fullName);
-				}
-				undefinedKindNames.put(fullName, new ParameterizedName(parameter, kindName));
-				kinds.put(fullName, new KindImpl(fullName));
-			}
-			// load defined kinds
-			for (int i = definedKindsLowerBound; i != definedKindsUpperBound; ++i) {
-				final String kindName = nameList.get(i);
-				if (kinds.containsKey(kindName)) {
-					logger.error("Kind " + kindName + " specified twice.");
-					throw new DataException("Kind specified twice", kindName);
-				}
-				final String targetKindName = nameList.get(ds.readInt(kindsLowerBound, kindsUpperBound));
-				final KindImpl newKind = new KindImpl(kindName);
-				// make sure only one new kind is created for every kind name
-				kinds.put(kindName, newKind);
-				KindImpl targetKind = kinds.get(targetKindName);
-				if (targetKind == null)
-					targetKind = new KindImpl(targetKindName);
-				kinds.put(kindName, targetKind);
-			}
-			// load undefined terms
-			for (int i = undefinedTermNamesLowerBound; i != undefinedTermNamesUpperBound; ++i) {
-				final String termName = nameList.get(i);
-				final ParameterImpl parameter = parameters.get(nameList
-					.get(ds.readInt(parameterLowerBound, parameterUpperBound)));
-				final String fullName = parameter.getPrefix() + termName;
-				if (undefinedTermNames.containsKey(fullName)) {
-					logger.error("Undefined term " + fullName + " specified twice.");
-					throw new DataException("Undefined term specified twice", fullName);
-				}
-				undefinedTermNames.put(fullName, new ParameterizedName(parameter, termName));
-				terms.put(fullName, ComplexTerm.create(fullName, ds, this, nameList,
-					kindsLowerBound, kindsUpperBound));
-			}
-			// load defined terms
-			for (int i = definedTermNamesLowerBound; i != definedTermNamesUpperBound; ++i) {
-				final String termName = nameList.get(i);
-				if (terms.containsKey(termName)) {
-					logger.error("Defined term " + termName + " specified twice.");
-					throw new DataException("Defined term specified twice", termName);
-				}
-				terms.put(termName, ComplexTerm.create(termName, ds, this, nameList,
-					kindsLowerBound, kindsUpperBound, termNamesLowerBound, i));
-			}
-			// load statements
-			for (int i = statementsLowerBound; i != statementsUpperBound; ++i) {
-				final String statementName = nameList.get(i);
-				if (symbols.containsKey(statementName)) {
-					logger.error("Statement " + statementName + " specified twice.");
-					throw new DataException("Statement specified twice", statementName);
-				}
-				symbols.put(statementName, new StatementImpl(statementName, ds, this, nameList, kindsLowerBound,
-					kindsUpperBound, termNamesLowerBound, termNamesUpperBound));
-			}
-			if (ds.read() != -1) {
-				logger.error("Interface completely loaded but input stream " + ds + "is not at EOF");
-				throw new DataException("Interface completely loaded but input stream is not at EOF",
-						ds.toString());
-			}
-		} catch (EOFException e) {
-			logger.error("Unexpected end of input while loading interface.", e);
-			throw new DataException("Unexpected end of input while loading interface.", ds.toString(), e);
-		} catch (IOException e) {
-			logger.error("I/O error while loading interface.", e);
-			throw new DataException("I/O error while loading interface.", ds.toString(), e);
-		}
 	}
 
 	public @Override KindImpl getKind(final String name) throws DataException {
@@ -348,88 +204,6 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 	}
 
 	/**
-	 * Stores interface data in the specified output stream.
-	 *
-	 * @param out OutputStream.
-	 *
-	 * @throws DataException if an I/O error occurs.
-	 */
-	public void store(final OutputStream out) throws DataException {
-		final Map<String, Integer> parameterNameTable = new HashMap();
-		final Map<String, Integer> kindNameTable = new HashMap();
-		final Map<String, Integer> termNameTable = new HashMap();
-		int currentID = 1;
-		final Set<String> definedKinds = new HashSet(kinds.keySet());
-		definedKinds.removeAll(undefinedKindNames.keySet());
-		final Set<String> definedTermNames = new HashSet(terms.keySet());
-		definedTermNames.removeAll(undefinedTermNames.keySet());
-		final Map<String, StatementImpl> statements = new HashMap();
-		for (Symbol symbol: symbols.values())
-			if (!symbol.isVariable())
-				statements.put(symbol.toString(), (StatementImpl) symbol);
-		try {
-			final DataOutputStream ds = new DataOutputStream(out);
-			// structure sizes
-			ds.writeInt(DataImpl.FORMAT_VERSION);	// 0: version
-			ds.writeInt(parameters.size());		// 4: number of parameters
-			ds.writeInt(undefinedKindNames.size());	// 8: # of undefined kinds
-			ds.writeInt(undefinedTermNames.size());	// 12: # of undefined terms
-			ds.writeInt(definedKinds.size());	// 16: # of defined kinds
-			ds.writeInt(definedTermNames.size());	// 20: # of defined terms
-			ds.writeInt(statements.size());		// 24: # of statements
-			// name list
-			for (final String parameterName: parameters.keySet()) {
-				parameterNameTable.put(parameterName, currentID++);
-				ds.writeString(parameterName);
-			}
-			for (final Map.Entry<String, ParameterizedName> undefinedKindNameMapping:
-					undefinedKindNames.entrySet()) {
-				kindNameTable.put(undefinedKindNameMapping.getKey(), currentID++);
-				ds.writeString(undefinedKindNameMapping.getValue().getName());
-			}
-			for (final Map.Entry<String, ParameterizedName> undefinedTermNameMapping:
-					undefinedTermNames.entrySet()) {
-				termNameTable.put(undefinedTermNameMapping.getKey(), currentID++);
-				ds.writeString(undefinedTermNameMapping.getValue().getName());
-			}
-			for (final String definedKind: definedKinds) {
-				kindNameTable.put(definedKind, currentID++);
-				ds.writeString(definedKind);
-			}
-			for (final String definedTermName: definedTermNames) {
-				termNameTable.put(definedTermName, currentID++);
-				ds.writeString(definedTermName);
-			}
-			for (final String statementName: statements.keySet())
-				ds.writeString(statementName);
-			// parameters
-			for (final String parameterName: parameters.keySet())
-				parameters.get(parameterName).store(ds, parameterNameTable);
-			// undefined kinds
-			for (final Map.Entry<String, ParameterizedName> mapping: undefinedKindNames.entrySet())
-				ds.writeInt(parameterNameTable.get(mapping.getValue().getInterfaceName()));
-			// kind mappings (defined kinds only)
-			for (final String definedKind: definedKinds)
-				ds.writeInt(kindNameTable.get(kinds.get(definedKind).toString()));
-			// undefined terms (partial info)
-			for (final Map.Entry<String, ParameterizedName> mapping: undefinedTermNames.entrySet()) {
-				ds.writeInt(parameterNameTable.get(mapping.getValue().getInterfaceName()));
-				terms.get(mapping.getKey()).store(ds, kindNameTable, termNameTable);
-			}
-			// defined terms
-			for (String definedTermName: definedTermNames)
-				terms.get(definedTermName).store(ds, kindNameTable, termNameTable);
-			// statements
-			for (String statementName: statements.keySet())
-				statements.get(statementName).store(ds, kindNameTable, termNameTable);
-			ds.flush();
-		} catch (IOException e) {
-			logger.error("I/O error while writing interface data to " + out, e);
-			throw new DataException("I/O error while writing interface data", out.toString(), e);
-		}
-	}
-
-	/**
 	 * Imports these interface data into the specified module data, defining the specified parameter.
 	 *
 	 * @param moduleData module data to import these data into (must not be <code>null</code>).
@@ -508,14 +282,6 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 				final TermExpressionImpl definiens
 					= definition.getDefiniens().adapt(moduleData, kindNameMap, termNameMap, varMap);
 				final LinkedHashSet<Variable> varList = definiens.variables();
-				// throw out dummies
-				// FIXME: removed: definiens should not contain dummies in folded state
-				// final Iterator<Variable> i = varList.iterator();
-				// while (i.hasNext()) {
-				//	final Variable var = i.next();
-				//	if (var instanceof DummyVariable)
-				//		i.remove();
-				//}
 				assert (varList.size() == definition.placeCount()):
 					"Place count mismatch during Definition import.";
 				final String fullName = prefix + key;

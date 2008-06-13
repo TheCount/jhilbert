@@ -65,16 +65,6 @@ public interface Data {
 	public void bindKind(Kind oldKind, String newKindName) throws DataException;
 
 	/**
-	 * Obtains a term.
-	 *
-	 * @param name name of the term.
-	 *
-	 * @return {@link AbstractComplexTerm} with the specified name, or <code>null</code> if no such term exists.
-	 */
-	// FIXME
-	//public AbstractComplexTerm getTerm(String name);
-
-	/**
 	 * Defines a new term with the specified name.
 	 * The specified variable list serves as the list of parameters for the term.
 	 * In a {@link TermExpression}, the term so defined can be replaces by the specified definiens,
@@ -143,16 +133,6 @@ public interface Data {
 	public void defineStatement(String name, List<SortedSet<Variable>> rawDV, List<TermExpression> hypotheses,
 		TermExpression consequent)
 	throws DataException;
-
-	/**
-	 * Defines a new symbol.
-	 *
-	 * @param symbol symbol to be defined (must not be <code>null</code>).
-	 *
-	 * @throws DataException if a symbol with the same name as the specified symbol already exists.
-	 */
-	// FIXME
-	//public void defineSymbol(Symbol symbol) throws DataException;
 
 	/**
 	 * Obtains a parameter.

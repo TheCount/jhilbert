@@ -59,20 +59,4 @@ final class UnnamedVariable extends VariableImpl {
 		super();
 	}
 
-	/**
-	 * Upgrades the given variable to an unnamed one.
-	 * Use with caution.
-	 *
-	 * @param var variable to be upgraded.
-	 */
-	// FIXME
-	//private UnnamedVariable(final Variable var) {
-	//	super(var.getName(), var.getKind());
-	//}
-
-	// FIXME
-	//public @Override UnnamedVariable clone() {
-	//	return new UnnamedVariable(super.clone());
-	//}
-
 }

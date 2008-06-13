@@ -45,8 +45,6 @@ import jhilbert.data.VariablePair;
 import jhilbert.data.impl.UnnamedVariable;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
-import jhilbert.util.DataInputStream;
-import jhilbert.util.DataOutputStream;
 import org.apache.log4j.Logger;
 
 /**
@@ -145,63 +143,6 @@ final class StatementImpl extends NameImpl implements Statement, Externalizable 
 	}
 
 	/**
-	 * Loads a new statement from the specified input stream.
-	 *
-	 * @param name statement name.
-	 * @param in input stream.
-	 * @param data interface data.
-	 * @param nameList list of names.
-	 * @param kindsLower lower bound for kinds.
-	 * @param kindsUpper upper bound for kinds.
-	 * @param termsLower lower bound for terms.
-	 * @param termsUpper upper bound for terms.
-	 *
-	 * @throws EOFException upon unexpected end of input.
-	 * @throws IOException if an I/O-Error occurs.
-	 * @throws DataException if the input stream is inconsistent.
-	 */
-	// FIXME
-	StatementImpl(final String name, final DataInputStream in, final DataImpl data, final List<String> nameList,
-		final int kindsLower, final int kindsUpper, final int termsLower, final int termsUpper)
-	throws EOFException, IOException, DataException {
-		super(name);
-		assert (in != null): "Supplied data input stream is null.";
-		assert (data != null): "Supplied data are null.";
-		assert (nameList != null): "Supplied name list is null.";
-		assert (kindsLower > 0): "Supplied lower kinds bound is not positive.";
-		assert (kindsUpper >= kindsLower): "Supplied upper kinds bound is smaller than lower bound.";
-		assert (termsLower > 0): "Supplied lower terms bound is not positive.";
-		assert (termsUpper >= termsLower): "Supplied upper terms bound is smaller than lower bound.";
-		// load variables
-		final int numVars = in.readNonNegativeInt();
-		final List<Variable> varList = new ArrayList(numVars);
-		for (int i = 0; i != numVars; ++i)
-			varList.add(new UnnamedVariable(data.getKind(nameList.get(in.readInt(kindsLower, kindsUpper)))));
-		// load DV constraints
-		final int numDVC = in.readNonNegativeInt();
-		dvConstraints = new DVConstraintsImpl();
-		for (int i = 0; i != numDVC; ++i) {
-			final int first = in.readInt(~numVars, 0);
-			final int second = in.readInt(~numVars, 0);
-			dvConstraints.add(new VariablePairImpl(varList.get(~first), varList.get(~second)));
-		}
-		// load hypotheses
-		final LinkedHashSet<Variable> allHypVars = new LinkedHashSet();
-		final int numHyp = in.readNonNegativeInt();
-		hypotheses = new ArrayList(numHyp);
-		for (int i = 0; i != numHyp; ++i) {
-			hypotheses.add(TermExpressionImpl.create(in, data, nameList, varList, termsLower, termsUpper));
-			allHypVars.addAll(hypotheses.get(i).variables());
-		}
-		// load consequent
-		consequent = TermExpressionImpl.create(in, data, nameList, varList, termsLower, termsUpper);
-		// mandatory variables
-		final LinkedHashSet<Variable> mandVars = consequent.variables();
-		mandVars.removeAll(allHypVars);
-		mandatoryVariables = new ArrayList(mandVars);
-	}
-
-	/**
 	 * Creates an uninitialized Statement.
 	 * Used by serialization.
 	 */
@@ -211,46 +152,6 @@ final class StatementImpl extends NameImpl implements Statement, Externalizable 
 		hypotheses = null;
 		consequent = null;
 		mandatoryVariables = null;
-	}
-
-	/**
-	 * Stores this statement in the specified output stream.
-	 *
-	 * @param out data output stream.
-	 * @param kindNameTable name to ID map for kinds.
-	 * @param termNameTable name to ID map for terms.
-	 *
-	 * @throws IOException if an I/O-Error occurs.
-	 */
-	// FIXME
-	void store(final DataOutputStream out, final Map<String, Integer> kindNameTable, final Map<String, Integer> termNameTable) throws IOException {
-		// get all variables
-		final Set<Variable> varSet = new HashSet(consequent.variables());
-		for (TermExpression hypothesis: hypotheses)
-			varSet.addAll(hypothesis.variables());
-		// create variable to ID mapping and store kinds
-		out.writeInt(varSet.size());
-		int id = -1;
-		final Map<String, Integer> varNameTable = new HashMap();
-		for (Variable var: varSet) {
-			varNameTable.put(var.toString(), id--);
-			out.writeInt(kindNameTable.get(var.getKind().toString()));
-		}
-		// store DV constraints
-		out.writeInt(dvConstraints.size());
-		for (VariablePair p: dvConstraints) {
-			out.writeInt(varNameTable.get(p.getFirst().toString()));
-			out.writeInt(varNameTable.get(p.getSecond().toString()));
-		}
-		// store hypotheses
-		out.writeInt(hypotheses.size());
-		for (TermExpression hypothesis: hypotheses) {
-			assert (hypothesis instanceof TermExpressionImpl): "hypothesis not from this implementation.";
-			((TermExpressionImpl) hypothesis).store(out, termNameTable, varNameTable);
-		}
-		// store consequent
-		assert (consequent instanceof TermExpressionImpl): "consequent not from this implementation.";
-		((TermExpressionImpl) consequent).store(out, termNameTable, varNameTable);
 	}
 
 	public DVConstraintsImpl getDVConstraints() {

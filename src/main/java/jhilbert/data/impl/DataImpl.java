@@ -79,19 +79,6 @@ abstract class DataImpl implements Data {
 		parameters = new LinkedHashMap();
 	}
 
-	/**
-	 * Copy constructor.
-	 * Creates a shallow copy.
-	 *
-	 * @param data AbstractData to be copied (must not be <code>null</code>).
-	 */
-	// FIXME
-	//protected AbstractData(final AbstractData data) {
-	//	assert (data != null): "Supplied data are null.";
-	//	symbols = data.symbols;
-	//	parameters = data.parameters;
-	//}
-
 	public abstract Kind getKind(String name) throws DataException;
 
 	public abstract void bindKind(Kind oldKind, String newKindName) throws DataException;
@@ -174,8 +161,5 @@ abstract class DataImpl implements Data {
 		}
 		parameters.put(name, new ParameterImpl(name, locator, paramList, prefix));
 	}
-
-	// FIXME
-	//public abstract DataImpl clone();
 
 }

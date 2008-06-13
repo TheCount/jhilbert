@@ -27,9 +27,7 @@ import jhilbert.exceptions.GeneralException;
 /**
  * Exception thrown when something goes wrong with the data.
  *
- * @see jhilbert.data.ModuleData
- *
- * FIXME: more stuff
+ * @see jhilbert.data.Data
  */
 public final class DataException extends GeneralException {
 
