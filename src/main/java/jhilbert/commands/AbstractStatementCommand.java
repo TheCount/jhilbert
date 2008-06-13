@@ -23,7 +23,9 @@
 package jhilbert.commands;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import jhilbert.commands.Command;
@@ -194,6 +196,10 @@ public abstract class AbstractStatementCommand extends Command {
 		}
 		for (final SortedSet<Variable> cookedDV: cookedDVList)
 			dvConstraints.add(cookedDV);
+		final Set<Variable> allVars = new HashSet(consequent.variables());
+		for (final TermExpression hypothesis: hypotheses)
+			allVars.addAll(hypothesis.variables());
+		dvConstraints.restrict(allVars);
 	}
 
 	/**
