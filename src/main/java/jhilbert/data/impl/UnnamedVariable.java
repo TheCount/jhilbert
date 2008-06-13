@@ -24,6 +24,7 @@ package jhilbert.data.impl;
 
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.VariableImpl;
 
 /**
@@ -35,6 +36,11 @@ import jhilbert.data.impl.VariableImpl;
  * variables may be replaced with.
  */
 final class UnnamedVariable extends VariableImpl {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Internal ID of this unnamed variable.

@@ -22,36 +22,31 @@
 
 package jhilbert.data.impl;
 
-import java.io.EOFException;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import jhilbert.data.Data;
 import jhilbert.data.Parameter;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.NameImpl;
 import jhilbert.exceptions.DataException;
-import org.apache.log4j.Logger;
 
 /**
  * Parameter data to denote an interface and the namespace prefix with which its data should be loaded.
  */
-class ParameterImpl extends NameImpl implements Parameter, Externalizable {
+class ParameterImpl extends NameImpl implements Parameter {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * A special parameter for the "main" module.
 	 */
 	public static final ParameterImpl MAIN_PARAMETER
 		= new ParameterImpl("(main)", "(invalid)", Collections.<Parameter>emptyList(), "");
-
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger logger = Logger.getLogger(ParameterImpl.class);
 
 	/**
 	 * Locator.
@@ -118,25 +113,6 @@ class ParameterImpl extends NameImpl implements Parameter, Externalizable {
 	 */
 	public String getPrefix() {
 		return prefix;
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			setName((String) in.readObject());
-			locator = (String) in.readObject();
-			parameterList = (List<Parameter>) in.readObject();
-			prefix = (String) in.readObject();
-		} catch (ClassCastException e) {
-			logger.error("Wrong class during parameter deserialization.");
-			throw new ClassNotFoundException("Wrong class during parameter deserialization.", e);
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(this.toString());
-		out.writeObject(locator);
-		out.writeObject(parameterList);
-		out.writeObject(prefix);
 	}
 
 }

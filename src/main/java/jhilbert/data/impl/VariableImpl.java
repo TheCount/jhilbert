@@ -22,24 +22,20 @@
 
 package jhilbert.data.impl;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import jhilbert.data.impl.NameImpl;
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
-import org.apache.log4j.Logger;
+import jhilbert.data.impl.DataImpl;
 
 /**
  * Default implementation of the {@link Variable} interface.
  */
-class VariableImpl extends NameImpl implements Variable, Externalizable {
+class VariableImpl extends NameImpl implements Variable {
 
 	/**
-	 * Logger for this class.
+	 * Serialization ID.
 	 */
-	private static final Logger logger = Logger.getLogger(VariableImpl.class);
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Kind of this variable.
@@ -78,21 +74,6 @@ class VariableImpl extends NameImpl implements Variable, Externalizable {
 
 	public final boolean isVariable() {
 		return true;
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			setName((String) in.readObject());
-			kind = (Kind) in.readObject();
-		} catch (ClassCastException e) {
-			logger.error("Wrong class during variable deserialization.");
-			throw new ClassNotFoundException("Wrong class during variable deserialization.", e);
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(this.toString());
-		out.writeObject(kind);
 	}
 
 }

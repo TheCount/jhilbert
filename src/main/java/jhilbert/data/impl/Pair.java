@@ -22,11 +22,8 @@
 
 package jhilbert.data.impl;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import org.apache.log4j.Logger;
+import java.io.Serializable;
+import jhilbert.data.impl.DataImpl;
 
 /**
  * A pair (2-tuple) of values.
@@ -37,12 +34,12 @@ import org.apache.log4j.Logger;
  *
  * FIXME: move this to util?
  */
-class Pair<E1, E2> implements Externalizable {
+class Pair<E1, E2> implements Serializable {
 
 	/**
-	 * Logger for this class.
+	 * Serialization ID.
 	 */
-	private static final Logger logger = Logger.getLogger(Pair.class);
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * First value.
@@ -121,21 +118,6 @@ class Pair<E1, E2> implements Externalizable {
 
 	public @Override String toString() {
 		return "(" + first.toString() + ", " + second.toString() + ")";
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			first = (E1) in.readObject();
-			second = (E2) in.readObject();
-		} catch (ClassCastException e) {
-			logger.error("Wrong class during pair deserialization.");
-			throw new ClassNotFoundException("Wrong class during pair deserialization.");
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(first);
-		out.writeObject(second);
 	}
 
 }

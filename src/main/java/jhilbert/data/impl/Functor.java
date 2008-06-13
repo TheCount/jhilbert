@@ -22,29 +22,23 @@
 
 package jhilbert.data.impl;
 
-import java.io.EOFException;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import jhilbert.data.Kind;
 import jhilbert.data.impl.ComplexTerm;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.exceptions.DataException;
-import org.apache.log4j.Logger;
 
 /**
  * A term which combines zero or more input terms to a new term.
  */
-final class Functor extends ComplexTerm implements Externalizable {
+final class Functor extends ComplexTerm {
 
 	/**
-	 * Logger for this class.
+	 * Serialization ID.
 	 */
-	private static final Logger logger = Logger.getLogger(Functor.class);
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Place count.
@@ -125,30 +119,6 @@ final class Functor extends ComplexTerm implements Externalizable {
 
 	public @Override int definitionDepth() {
 		return 0;
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			setName((String) in.readObject());
-			ensureKind((Kind) in.readObject());
-			placeCount = in.readInt();
-			inputKinds = (List<Kind>) in.readObject();
-		} catch (ClassCastException e) {
-			logger.error("Wrong class while deserializing functor.");
-			throw new ClassNotFoundException("Wrong class while deserializing functor.", e);
-		} catch (DataException e) {
-			final Error err = new AssertionError("Result kind already set during deserialization. "
-				+ "This should not happen.");
-			err.initCause(e);
-			throw err;
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(this.toString());
-		out.writeObject(getKind());
-		out.writeInt(placeCount);
-		out.writeObject(inputKinds);
 	}
 
 }

@@ -543,12 +543,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 			kinds = (LinkedHashMap<String, KindImpl>) in.readObject();
 			undefinedTermNames = (Map<String, ParameterizedName>) in.readObject();
 			terms = (Map<String, ComplexTerm>) in.readObject();
-			// FIXME
-			// symbols = (Map<String, Symbol>) in.readObject();
-			final int symSize = in.readInt();
-			for (int i = 0; i != symSize; ++i)
-				symbols.put((String) in.readObject(), (Symbol) in.readObject());
-			// End FIXME
+			symbols = (Map<String, Symbol>) in.readObject();
 			parameters = (LinkedHashMap<String, ParameterImpl>) in.readObject();
 		} catch (ClassCastException e) {
 			logger.error("Wrong class during deserialization of interface data.");
@@ -562,14 +557,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 		out.writeObject(kinds);
 		out.writeObject(undefinedTermNames);
 		out.writeObject(terms);
-		// FIXME
-		// out.writeObject(symbols);
-		out.writeInt(symbols.size());
-		for (final Map.Entry<String, Symbol> symMapping: symbols.entrySet()) {
-			out.writeObject(symMapping.getKey());
-			out.writeObject(symMapping.getValue());
-		}
-		// End FIXME
+		out.writeObject(symbols);
 		out.writeObject(parameters);
 	}
 

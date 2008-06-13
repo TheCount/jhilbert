@@ -22,11 +22,6 @@
 
 package jhilbert.data.impl;
 
-import java.io.EOFException;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -39,6 +34,7 @@ import jhilbert.data.Kind;
 import jhilbert.data.Term;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.DummyVariable;
 import jhilbert.data.impl.UnnamedVariable;
 import jhilbert.exceptions.DataException;
@@ -48,7 +44,12 @@ import org.apache.log4j.Logger;
  * A Definition.
  * That is a {@link Term} defining another Term, in dependence on a list of variables.
  */
-final class Definition extends ComplexTerm implements Externalizable {
+final class Definition extends ComplexTerm {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Logger for this class.
@@ -173,32 +174,6 @@ final class Definition extends ComplexTerm implements Externalizable {
 	 */
 	TermExpressionImpl getDefiniens() {
 		return definiens;
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			setName((String) in.readObject());
-			ensureKind((Kind) in.readObject());
-			varList = (List<Variable>) in.readObject();
-			definiens = (TermExpressionImpl) in.readObject();
-			definitionDepth = in.readInt();
-		} catch (ClassCastException e) {
-			logger.error("Wrong class during definition deserialization.");
-			throw new ClassNotFoundException("Wrong class during definition deserialization.", e);
-		} catch (DataException e) {
-			final Error err = new AssertionError("Result kind already set during deserialization. "
-				+ "This should not happen.");
-			err.initCause(e);
-			throw err;
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(this.toString());
-		out.writeObject(getKind());
-		out.writeObject(varList);
-		out.writeObject(definiens);
-		out.writeInt(definitionDepth);
 	}
 
 }

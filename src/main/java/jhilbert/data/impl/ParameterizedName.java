@@ -22,22 +22,19 @@
 
 package jhilbert.data.impl;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.ParameterImpl;
-import org.apache.log4j.Logger;
 
 /**
  * A name accompanied with parameter data.
  */
-class ParameterizedName implements Externalizable {
+class ParameterizedName implements Serializable {
 
 	/**
-	 * Logger for this class.
+	 * Serialization ID.
 	 */
-	private static final Logger logger = Logger.getLogger(ParameterizedName.class);
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * The name.
@@ -146,21 +143,6 @@ class ParameterizedName implements Externalizable {
 		} catch (ClassCastException e) {
 			return false;
 		}
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			name = (String) in.readObject();
-			interfaceParameter = (ParameterImpl) in.readObject();
-		} catch (ClassCastException e) {
-			logger.error("Wrong class during parameterized name deserialization.");
-			throw new ClassNotFoundException("Wrong class during parameterized name deserialization.", e);
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(name);
-		out.writeObject(interfaceParameter);
 	}
 
 }

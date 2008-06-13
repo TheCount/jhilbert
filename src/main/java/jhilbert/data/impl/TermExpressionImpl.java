@@ -22,11 +22,6 @@
 
 package jhilbert.data.impl;
 
-import java.io.EOFException;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -40,6 +35,7 @@ import jhilbert.data.Term;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Token;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.DummyVariable;
 import jhilbert.data.impl.TreeNode;
 import jhilbert.exceptions.DataException;
@@ -60,7 +56,12 @@ import org.apache.log4j.Logger;
  * </ul>
  * </ul>
  */
-final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implements TermExpression, Externalizable {
+final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implements TermExpression {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Logger for this class.
@@ -499,31 +500,6 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			result.append(' ').append(child.toString());
 		result.append(')');
 		return result.toString();
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			setValue((Term) in.readObject());
-			// FIXME
-			// setChildren((List<TermExpressionImpl>) in.readObject());
-			final int childSize = in.readInt();
-			for (int i = 0; i != childSize; ++i)
-				addChild((TermExpressionImpl) in.readObject());
-			// End FIXME
-		} catch (ClassCastException e) {
-			logger.error("Unknown class during expression deserialization.");
-			throw new ClassNotFoundException("Unknown class during expression deserialization.", e);
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(getValue());
-		// FIXME
-		// out.writeObject(getChildren());
-		out.writeInt(childCount());
-		for (final TermExpressionImpl child: getChildren())
-			out.writeObject(child);
-		// End FIXME
 	}
 
 }

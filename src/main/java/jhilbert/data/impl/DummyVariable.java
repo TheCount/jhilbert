@@ -24,6 +24,7 @@ package jhilbert.data.impl;
 
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.VariableImpl;
 
 /**
@@ -31,6 +32,11 @@ import jhilbert.data.impl.VariableImpl;
  * Dummy variables are never equal to non-dummy variables.
  */
 class DummyVariable extends VariableImpl {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Internal id of this dummy.

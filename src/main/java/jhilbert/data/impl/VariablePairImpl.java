@@ -24,6 +24,7 @@ package jhilbert.data.impl;
 
 import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.Pair;
 
 /**
@@ -31,6 +32,11 @@ import jhilbert.data.impl.Pair;
  * Variable Pairs are Cloneable and Comparable.
  */
 class VariablePairImpl extends Pair<Variable, Variable> implements VariablePair, Comparable<VariablePair> {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Creates a new VariablePair.

@@ -22,8 +22,10 @@
 
 package jhilbert.data.impl;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import jhilbert.data.impl.DataImpl;
 
 /**
  * A node in a tree data structure.
@@ -37,7 +39,12 @@ import java.util.List;
  * @param E value type.
  * @param T child type.
  */
-class TreeNode<E, T extends TreeNode<E,T>> {
+class TreeNode<E, T extends TreeNode<E,T>> implements Serializable {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Value of this node.
@@ -81,10 +88,9 @@ class TreeNode<E, T extends TreeNode<E,T>> {
 	 *
 	 * @param children children to set.
 	 */
-	// FIXME: java serializer broken; need externalizer
-	//protected void setChildren(final List<T> children) {
-	//	this.children = children;
-	//}
+	protected void setChildren(final List<T> children) {
+		this.children = children;
+	}
 
 	/**
 	 * Returns the number of children of this node.

@@ -22,11 +22,6 @@
 
 package jhilbert.data.impl;
 
-import java.io.EOFException;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +37,7 @@ import jhilbert.data.Statement;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
+import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.UnnamedVariable;
 import jhilbert.exceptions.DataException;
 import jhilbert.exceptions.InputException;
@@ -50,7 +46,12 @@ import org.apache.log4j.Logger;
 /**
  * A statement.
  */
-final class StatementImpl extends NameImpl implements Statement, Externalizable {
+final class StatementImpl extends NameImpl implements Statement {
+
+	/**
+	 * Serialization ID.
+	 */
+	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
 
 	/**
 	 * Logger for this class.
@@ -172,38 +173,6 @@ final class StatementImpl extends NameImpl implements Statement, Externalizable 
 
 	public boolean isVariable() {
 		return false;
-	}
-
-	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-		try {
-			setName((String) in.readObject());
-			dvConstraints = (DVConstraintsImpl) in.readObject();
-			// FIXME
-			// hypotheses = (List<TermExpression>) in.readObject();
-			final int hypSize = in.readInt();
-			hypotheses = new ArrayList(hypSize);
-			for (int i = 0; i != hypSize; ++i)
-				hypotheses.add((TermExpression) in.readObject());
-			// End FIXME
-			consequent = (TermExpressionImpl) in.readObject();
-			mandatoryVariables = (List<Variable>) in.readObject();
-		} catch (ClassCastException e) {
-			logger.error("Wrong class during statement deserialization.");
-			throw new ClassNotFoundException("Wrong class during statement deserialization.", e);
-		}
-	}
-
-	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeObject(this.toString());
-		out.writeObject(dvConstraints);
-		// FIXME
-		// out.writeObject(hypotheses);
-		out.writeInt(hypotheses.size());
-		for (final TermExpression hypothesis: hypotheses)
-			out.writeObject(hypothesis);
-		// End FIXME
-		out.writeObject(consequent);
-		out.writeObject(mandatoryVariables);
 	}
 
 }
