@@ -337,9 +337,13 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		if (sValue.isVariable()) {
 			final Variable sVar = (Variable) sValue;
 			if (varMap.containsKey(sVar))
-				if (!((TermExpressionImpl) varMap.get(sVar)).matches(targetImpl))
+				if (!((TermExpressionImpl) varMap.get(sVar)).matches(targetImpl)) {
+					logger.error("Invalid change of variable assignment.");
+					logger.error("Variable:            " + sVar);
+					logger.error("Previous assignment: " + varMap.get(sVar));
+					logger.error("Invalid assignment:  " + targetImpl);
 					throw new UnifyException("Invalid change of variable assignment " + varMap.get(sVar), this, targetImpl);
-				else
+				} else
 					return;
 			varMap.put(sVar, target);
 			return;

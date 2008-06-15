@@ -307,7 +307,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 			}
 			final TermExpressionImpl consequent = statement.getConsequent()
 				.adapt(moduleData, kindNameMap, termNameMap, varMap);
-			moduleData.defineStatement(statement.toString(), rawDV, hypotheses, consequent);
+			moduleData.defineStatement(prefix + statement.toString(), rawDV, hypotheses, consequent);
 		}
 		unsetParameters();
 	}
@@ -506,8 +506,8 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 		final DataFactoryImpl df = DataFactoryImpl.getInstance();
 		if (paramCount != parameters.size()) {
 			logger.error("Wrong number of parameters while in interface " + parameter.toString());
-			logger.error("Expected number of parameters: " + parameters.size());
-			logger.error("Received number of parameters: " + paramCount);
+			logger.error("Expected number of parameters: " + parameters.size() + " (" + parameters.keySet() + ")");
+			logger.error("Received number of parameters: " + paramCount + " (" + parameterList + ")");
 			throw new DataException("Wrong number of parameters", parameter.toString());
 		}
 		final Map<String, ParameterImpl> result = new HashMap();
@@ -520,7 +520,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 				logger.info("Checking whether parameter " + argument + " satisfies " + parameter);
 				try {
 					final InterfaceDataImpl ifdata = df.getInterfaceData(ifParam.getLocator());
-					ifdata.exportFrom(moduleData, argument);
+					ifdata.exportFrom(moduleData, ifParam);
 				} catch (DataException e) {
 					logger.error("Parameter " + argument + " does not satisfy " + ifParam);
 					throw new DataException("Parameter satisfaction error", argument.toString(), e);

@@ -69,9 +69,9 @@ public interface Data {
 	 * The specified variable list serves as the list of parameters for the term.
 	 * In a {@link TermExpression}, the term so defined can be replaces by the specified definiens,
 	 * with proper substitution of variables.
-	 * The variables must have been previously defined by {@link #defineVariable()} and obtained by
-	 * {@link #getVariable()}.
-	 * The definiens must have been obtained by {@link DataFactory#scanTermExpression()} with this
+	 * The variables must have been previously defined by {@link #defineVariable} and obtained by
+	 * {@link #getVariable}.
+	 * The definiens must have been obtained by {@link DataFactory#scanTermExpression} with this
 	 * object as the data parameter.
 	 *
 	 * @param name name of the term.

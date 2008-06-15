@@ -39,7 +39,7 @@ import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
 /**
- * Command introducing a new {@link jhilbert.data.Definition}.
+ * Command introducing a new Definition.
  * <p>
  * The format of this command is:
  * <br>

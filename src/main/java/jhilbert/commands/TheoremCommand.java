@@ -53,7 +53,7 @@ import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
 /**
- * Command introducing a new {@link jhilbert.data.Theorem}.
+ * Command introducing a new Theorem.
  * <p>
  * The hypotheses for a theorem have the following form:
  * <br>
@@ -62,9 +62,12 @@ import org.apache.log4j.Logger;
  * A proof is a LISP list each item of which is either
  * <ul>
  * <li>a {@link jhilbert.data.Symbol}, or
- * <li>a {@link jhilbert.data.Hypothesis}, or
- * <li>an {@link jhilbert.data.AbstractComplexTerm}.
+ * <li>a hypothesis, or
+ * <li>an expression.
  * </ul>
+ *
+ * @see jhilbert.data.Statement
+ * @see jhilbert.data.TermExpression
  */
 public final class TheoremCommand extends AbstractStatementCommand {
 

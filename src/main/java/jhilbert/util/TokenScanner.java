@@ -33,7 +33,7 @@ import jhilbert.util.Scanner;
  * Class to carve up a stream of {@link Char} values into {@link Token}s.
  * Whitespace may be used to separate tokens, but is otherwise ignored.
  *
- * @see Token.TokenClass
+ * @see jhilbert.data.Token.TokenClass
  */
 public class TokenScanner extends Scanner<Token> {
 

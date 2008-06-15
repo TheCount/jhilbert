@@ -52,7 +52,7 @@ public class CharScanner extends Scanner<Char> {
 	/**
 	 * Creates a new Char token.
 	 * If a hashmark is encountered, this and all subsequent characters are ignored, until a line separator occurs.
-	 * Also sets the context of this scanner to a String representation of the {@link Char.CharClass}, followed by
+	 * Also sets the context of this scanner to a String representation of the {@link jhilbert.data.Char.CharClass}, followed by
 	 * a string representation of the character.
 	 *
 	 * @return a new Char token, or <code>null</code> if the input source is exhausted.

@@ -80,7 +80,7 @@ public abstract class DataFactory {
 	 * Scans a new TermExpression from the specified token scanner based on the specified data.
 	 *
 	 * @param scanner the TokenScanner to scan the LISP expression.
-	 * @param data the data to obtain {@link Variable}s and {@link ComplexTerm}s.
+	 * @param data the data to obtain {@link Variable}s and complex {@link Term}s.
 	 *
 	 * @throws DataException if a problem with the scanner occurs, or if the scanned expression is invalid.
 	 */

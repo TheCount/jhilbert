@@ -51,7 +51,7 @@ public final class ParamCommand extends InterfaceCommand {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 *
-	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, Data)
+	 * @see InterfaceCommand#InterfaceCommand
 	 */
 	public ParamCommand(final TokenScanner tokenScanner, final InterfaceData data) throws SyntaxException {
 		super("param", tokenScanner, data);

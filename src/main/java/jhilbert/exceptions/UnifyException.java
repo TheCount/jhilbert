@@ -27,8 +27,6 @@ import jhilbert.exceptions.GeneralException;
 
 /**
  * Exception thrown when an expression unification fails.
- *
- * @see jhilbert.data.TermExpression#unify()
  */
 public class UnifyException extends GeneralException {
 
@@ -38,7 +36,7 @@ public class UnifyException extends GeneralException {
 	 * This information is then rendered into a suitable error message.
 	 *
 	 * @param message detail message.
-	 * @param source source of the unification (that is, the TermExpression or subexpression whereof whose {@link jhilbert.data.TermExpression#unify()} method was called).
+	 * @param source source of the unification (that is, the TermExpression which was to be unified with the specified target).
 	 * @param target target of the unification.
 	 * @param cause Throwable which caused this exception to be thrown (or <code>null</code> if there is no cause).
 	 */
@@ -52,7 +50,7 @@ public class UnifyException extends GeneralException {
 	 * This information is then rendered into a suitable error message.
 	 *
 	 * @param message detail message.
-	 * @param source source of the unification (that is, the TermExpression or subexpression whereof whose {@link jhilbert.data.TermExpression#unify()} method was called).
+	 * @param source source of the unification (that is, the TermExpression which was to be unified with the specified target).
 	 * @param target target of the unification.
 	 */
 	public UnifyException(final String message, final TermExpression source, final TermExpression target) {

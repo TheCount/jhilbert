@@ -58,7 +58,7 @@ public final class ImportCommand extends InterfaceCommand {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 *
-	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, Data)
+	 * @see InterfaceCommand#InterfaceCommand
 	 */
 	public ImportCommand(final TokenScanner tokenScanner, final ModuleData data) throws SyntaxException {
 		super("import", tokenScanner, data);

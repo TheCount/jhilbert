@@ -27,7 +27,7 @@ import jhilbert.data.Name;
 
 /**
  * A Term.
- * A term can either be a {@link Variable} or an {@link AbstractComplexTerm}.
+ * A term can either be a {@link Variable} or a complex term.
  */
 public interface Term extends Name {
 

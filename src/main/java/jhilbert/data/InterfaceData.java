@@ -44,7 +44,7 @@ public interface InterfaceData extends Data {
 	/**
 	 * Defines a new term with the specified name, result kind and input kinds.
 	 * The result kind and the input kinds must first have been defined with the
-	 * {@link #defineKind()} method and then obtained with the {@link #getKind()}
+	 * {@link #defineKind} method and then obtained with the {@link #getKind}
 	 * method. Otherwise, the behavior of this method and all subsequent operations
 	 * involving this object are undefined.
 	 *

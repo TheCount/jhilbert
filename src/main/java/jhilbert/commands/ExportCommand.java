@@ -38,9 +38,10 @@ import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
 /**
- * Command exporting a new {@link jhilbert.data.Interface}
+ * Command exporting a new Interface.
  *
  * @see InterfaceCommand
+ * @see jhilbert.data.InterfaceData
  */
 public final class ExportCommand extends InterfaceCommand {
 
@@ -58,7 +59,7 @@ public final class ExportCommand extends InterfaceCommand {
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 *
-	 * @see InterfaceCommand#InterfaceCommand(TokenScanner, ModuleData)
+	 * @see InterfaceCommand#InterfaceCommand
 	 */
 	public ExportCommand(final TokenScanner tokenScanner, final Data data) throws SyntaxException {
 		super("export", tokenScanner, data);

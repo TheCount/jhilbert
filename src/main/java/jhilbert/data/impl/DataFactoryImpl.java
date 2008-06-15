@@ -43,7 +43,7 @@ import jhilbert.util.TokenScanner;
 /**
  * Abstract implementation of {@link DataFactory}.
  * This implementation implements all methods except
- * {@link #loadInterface()}, whose implementation
+ * {@link #loadInterfaceData}, whose implementation
  * depends on the underlying data organization
  * (files, SQL db, etc.).
  */

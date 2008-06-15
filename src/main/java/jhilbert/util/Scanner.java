@@ -106,13 +106,13 @@ public abstract class Scanner<E> {
 	 * Obtains the next token.
 	 *
 	 * @return the token, or <code>null</code> if there are no more tokens.
-	 * 	This promise may be broken if {@link #putToken()} is called with tokens
+	 * 	This promise may be broken if {@link #putToken} is called with tokens
 	 * 	not returned by this method, or tokens returned by this method, but not
 	 * 	in the correct (reverse) order.
 	 *
 	 * @throws ScannerException if there is a problem returning the next token.
 	 *
-	 * @see #putToken()
+	 * @see #putToken
 	 */
 	public final E getToken() throws ScannerException {
 		if (tokenStack.empty())

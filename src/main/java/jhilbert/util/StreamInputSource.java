@@ -53,7 +53,7 @@ public abstract class StreamInputSource implements InputSource {
 	/**
 	 * Creates a new stream input source from an {@link InputStream}.
 	 *
-	 * @param inputStream input stream (must not be <code>null</code>).
+	 * @param in input stream (must not be <code>null</code>).
 	 * @param context context String to inform the user of the source of the <code>inputStream</code>, such as a file
 	 * 	name or a network host.
 	 *
