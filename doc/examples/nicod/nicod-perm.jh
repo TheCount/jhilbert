@@ -1,0 +1,14 @@
+# Proof of Nicod permutation
+
+import (NICOD-AX nicod/nicod-ax () ())
+import (NICOD-ID nicod/nicod-id (NICOD-AX) nicod-)
+
+var (wff p s)
+
+thm (nicod-perm () () (| (| s p) (- (| p s))) (
+	p nicod-id
+	p p p p s prop
+	rule
+))
+
+export (NICOD-PERM nicod/nicod-perm (NICOD-AX) nicod-)

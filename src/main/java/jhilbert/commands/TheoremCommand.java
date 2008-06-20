@@ -123,6 +123,12 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			Token token = tokenScanner.getToken();
 			while (token.tokenClass == Token.TokenClass.BEGIN_EXP) {
 				final String label = tokenScanner.getAtom();
+				if (hypothesisMap.containsKey(label)) {
+					logger.error("Hypothesis label " + label + " already in use.");
+					logger.error("Expression this label was previously used on: "
+						+ hypothesisMap.get(label));
+					throw new SyntaxException("Hypothesis label already in use", label);
+				}
 				TermExpression expr = df.scanTermExpression(tokenScanner, data);
 				tokenScanner.endExp();
 				hypotheses.add(expr);
@@ -336,8 +342,7 @@ public final class TheoremCommand extends AbstractStatementCommand {
 				logger.error("Distinct variable constraint violation during proof step " + label, e);
 				logger.error("First variable set:  " + varSet1);
 				logger.error("Second variable set: " + varSet2);
-				varSet1.removeAll(varSet2);
-				logger.error("Meet: " + varSet1);
+				logger.error("Current required DV: " + requiredDVConstraints);
 				throw new VerifyException("Distinct variable constraint violated", label, e);
 			}
 			if (logger.isTraceEnabled())

@@ -1,0 +1,8 @@
+# Nicod's propositional calculus
+# Permutation
+
+param (NICOD-AX nicod/nicod-ax () ())
+
+var (wff p s)
+
+stmt (perm () () (| (| s p) (- (| p s))))

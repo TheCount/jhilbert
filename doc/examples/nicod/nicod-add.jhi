@@ -1,0 +1,8 @@
+# Nicod's propositional calculus
+# Addition
+
+param (NICOD-AX nicod/nicod-ax () ())
+
+var (wff p s)
+
+stmt (add () () (| s (- (| p (| s s)))))

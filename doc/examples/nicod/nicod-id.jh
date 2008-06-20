@@ -1,0 +1,49 @@
+# Proof of nicod identity
+
+import (NICOD-AX nicod/nicod-ax () ())
+
+var (wff p q r s t u)
+
+def ((P p q r) (| p (| q r)))
+def ((Q p q s) (| (| s q) (| (| p s) (| p s))))
+def ((pi t) (| t (| t t)))
+def ((Q1 s t) (| (| s t) (- (| t s))))
+def ((T s t) (| (pi t) (| (pi t) (Q1 s t))))
+
+thm (step-a () () (| (pi t) (| (pi t) (Q1 s t))) (
+	t t t t s prop
+))
+
+thm (step-b () () (| (| s (pi t)) (- (| (pi t) s))) (
+	t s step-a
+	(pi t) (pi t) (Q1 s t) t s prop
+	rule
+))
+
+thm (step-c () () (| (| u (| (pi t) s)) (- (| (| s (pi t)) u))) (
+	s t step-b
+	(| s (pi t)) (| (pi t) s) (| (pi t) s) t u prop
+	rule
+))
+
+thm (step-d () () (| (| (Q p q s) (pi t)) (P p q r)) (
+	p q r t s prop
+	(P p q r) t (Q p q s) step-c
+	rule
+))
+
+thm (step-e () () (| (| u (P (| (Q1 s t) (pi t)) t (| t t))) (- (| (T s t) u))) (
+	(pi t) t (Q1 s t) step-c
+	(T s t) (P (| (Q1 s t) (pi t)) t (| t t)) (P (| (Q1 s t) (pi t)) t (| t t)) t u prop
+	rule
+))
+
+thm (nicod-id () () (| t (| t t)) (
+	t t step-a
+	(| (Q1 t t) (pi t)) t t t (| t t) step-d
+	(| (Q (| (Q1 t t) (pi t)) t t) (pi t)) t t step-e
+	rule
+	rule
+))
+
+export (NICOD-ID nicod/nicod-id (NICOD-AX) nicod-)

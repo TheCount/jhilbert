@@ -1,0 +1,29 @@
+# Proof of Nicod's addition
+
+import (NICOD-AX nicod/nicod-ax () ())
+import (NICOD-ID nicod/nicod-id (NICOD-AX) ())
+import (NICOD-PERM nicod/nicod-perm (NICOD-AX) ())
+
+var (wff p s)
+
+thm (step-a () () (| (- (| p (| s s))) (| (| s s) p)) (
+	(| s s) p perm
+	(| (| s s) p) (- (| p (| s s))) perm
+	rule
+))
+
+thm (step-b () () (| (- (| p (| s s))) s) (
+	s id
+	p s step-a
+	(- (| p (| s s))) (| s s) p s s prop
+	rule
+	rule
+))
+
+thm (nicod-add () () (| s (- (| p (| s s)))) (
+	p s step-b
+	(- (| p (| s s))) s perm
+	rule
+))
+
+export (NICOD-ADD nicod/nicod-add (NICOD-AX) nicod-)

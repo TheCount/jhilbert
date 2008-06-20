@@ -1,6 +1,6 @@
-* Create a class for kinds, so prefixing is not such a PITA
+* Make kindbind commands in interfaces work correctly
+* jhilbert.data.impl is a mess
 * specification and proof of soundness
-* defs in interface files
 * unit tests
 * integration tests
 * client/server structure

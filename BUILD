@@ -4,7 +4,7 @@ Prerequisites
 =============
 You'll need the Apache Maven 2 project builder (version 2.0.7 works), see
 http://maven.apache.org/. You'll also need a Java Development Kit (JDK)
-compatible with Maven which supports Java Generics (Sun JDK 1.5.0_14 work).
+compatible with Maven which supports Java Generics (Sun JDK 1.5.0_14 works).
 
 Building
 ========
@@ -16,4 +16,4 @@ Note that maven will pull in many dependencies automatically from the internet
 when you run it for the first time. You can also generate site documentation
 in target/site/ by running
 	mvn site
-but it's not exactly in a presentable state (as of March 2008).
+The site documentation is still *very* sparse (as of June 2008).
