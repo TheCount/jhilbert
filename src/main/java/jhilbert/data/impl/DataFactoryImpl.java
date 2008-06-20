@@ -61,7 +61,7 @@ public abstract class DataFactoryImpl extends DataFactory {
 	 */
 	private static final LRUCache<String, InterfaceDataImpl> interfaceCache = new LRUCache(10);
 
-	public static final @Override DataFactoryImpl getInstance() {
+	public static final DataFactoryImpl getInstance() {
 		return instance;
 	}
 
