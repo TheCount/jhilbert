@@ -31,11 +31,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import jhilbert.data.DataException;
 import jhilbert.data.DVConstraints;
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
-import jhilbert.exceptions.DataException;
 import org.apache.log4j.Logger;
 
 /**

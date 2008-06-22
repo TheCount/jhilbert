@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data;
+package jhilbert.util;
 
 /**
  * A token as they are encountered while scanning a LISP symbolic expression.

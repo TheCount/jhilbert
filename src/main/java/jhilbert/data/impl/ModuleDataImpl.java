@@ -25,12 +25,12 @@ package jhilbert.data.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
 import jhilbert.data.ModuleData;
 import jhilbert.data.Parameter;
 import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
-import jhilbert.exceptions.DataException;
 import org.apache.log4j.Logger;
 
 /**

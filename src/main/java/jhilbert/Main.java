@@ -41,7 +41,7 @@ public final class Main
 	/**
 	 * Version.
 	 */
-	private static final int VERSION = 2;
+	public static final int VERSION = 3;
 
 	/**
 	 * Program entry point.

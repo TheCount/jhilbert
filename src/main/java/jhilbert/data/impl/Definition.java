@@ -34,10 +34,8 @@ import jhilbert.data.Kind;
 import jhilbert.data.Term;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
-import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.DummyVariable;
 import jhilbert.data.impl.UnnamedVariable;
-import jhilbert.exceptions.DataException;
 import org.apache.log4j.Logger;
 
 /**
@@ -49,7 +47,7 @@ final class Definition extends ComplexTerm {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Logger for this class.

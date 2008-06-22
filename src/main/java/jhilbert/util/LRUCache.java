@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data.impl;
+package jhilbert.util;
 
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -33,7 +33,7 @@ import java.util.LinkedHashMap;
  * @param K map key type.
  * @param V map value type.
  */
-class LRUCache<K, V> extends LinkedHashMap<K, V> {
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
 
 	/**
 	 * Maximal number of entries.
@@ -47,7 +47,7 @@ class LRUCache<K, V> extends LinkedHashMap<K, V> {
 	 *
 	 * @throws IllegalArgumentException if number of entries is negative.
 	 */
-	LRUCache(final int numEntries) throws IllegalArgumentException {
+	public LRUCache(final int numEntries) throws IllegalArgumentException {
 		super(4 * (numEntries + 1) / 3 + 1, 0.75f, true);
 		if (numEntries < 0)
 			throw new IllegalArgumentException("Negative number of entries.");

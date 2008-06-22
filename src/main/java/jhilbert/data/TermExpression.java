@@ -26,8 +26,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import jhilbert.data.Kind;
+import jhilbert.data.UnifyException;
 import jhilbert.data.Variable;
-import jhilbert.exceptions.UnifyException;
 
 /**
  * A term expression.

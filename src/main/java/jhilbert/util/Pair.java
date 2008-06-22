@@ -20,10 +20,9 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data.impl;
+package jhilbert.util;
 
 import java.io.Serializable;
-import jhilbert.data.impl.DataImpl;
 
 /**
  * A pair (2-tuple) of values.
@@ -31,15 +30,13 @@ import jhilbert.data.impl.DataImpl;
  *
  * @param E1 type of first entry.
  * @param E2 type of second entry.
- *
- * FIXME: move this to util?
  */
-class Pair<E1, E2> implements Serializable {
+public class Pair<E1, E2> implements Serializable {
 
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * First value.

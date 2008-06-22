@@ -30,15 +30,13 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import jhilbert.commands.Command;
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.DVConstraints;
 import jhilbert.data.TermExpression;
-import jhilbert.data.Token;
 import jhilbert.data.Variable;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.ScannerException;
-import jhilbert.exceptions.SyntaxException;
-import jhilbert.exceptions.VerifyException;
+import jhilbert.util.ScannerException;
+import jhilbert.util.Token;
 import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 

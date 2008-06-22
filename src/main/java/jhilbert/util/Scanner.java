@@ -24,9 +24,9 @@ package jhilbert.util;
 
 import java.io.InputStream;
 import java.util.Stack;
-import jhilbert.exceptions.InputException;
-import jhilbert.exceptions.ScannerException;
+import jhilbert.util.InputException;
 import jhilbert.util.InputSource;
+import jhilbert.util.ScannerException;
 
 /**
  * Scanner class.

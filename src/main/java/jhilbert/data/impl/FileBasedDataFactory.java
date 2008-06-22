@@ -34,14 +34,14 @@ import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
 import jhilbert.commands.Command;
+import jhilbert.commands.VerifyException;
+import jhilbert.data.DataException;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.impl.DataFactoryImpl;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.InputException;
-import jhilbert.exceptions.ScannerException;
-import jhilbert.exceptions.VerifyException;
 import jhilbert.util.CommandScanner;
 import jhilbert.util.FileInputSource;
+import jhilbert.util.InputException;
+import jhilbert.util.ScannerException;
 import org.apache.log4j.Logger;
 
 /**

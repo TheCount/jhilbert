@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.Parameter;
@@ -52,8 +53,7 @@ import jhilbert.data.impl.DataFactoryImpl;
 import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.KindImpl;
 import jhilbert.data.impl.ParameterizedName;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.InputException;
+import jhilbert.util.InputException;
 import org.apache.log4j.Logger;
 
 /**
@@ -536,7 +536,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 
 	public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
 		final int version = in.readInt();
-		if (version != DataImpl.FORMAT_VERSION)
+		if (version != jhilbert.Main.VERSION)
 			throw new ClassNotFoundException("Obsolete library format version " + version);
 		try {
 			undefinedKindNames = (Map<String, ParameterizedName>) in.readObject();
@@ -552,7 +552,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 	}
 
 	public void writeExternal(final ObjectOutput out) throws IOException {
-		out.writeInt(DataImpl.FORMAT_VERSION);
+		out.writeInt(jhilbert.Main.VERSION);
 		out.writeObject(undefinedKindNames);
 		out.writeObject(kinds);
 		out.writeObject(undefinedTermNames);

@@ -25,7 +25,6 @@ package jhilbert.data.impl;
 import jhilbert.data.impl.NameImpl;
 import jhilbert.data.Kind;
 import jhilbert.data.Variable;
-import jhilbert.data.impl.DataImpl;
 
 /**
  * Default implementation of the {@link Variable} interface.
@@ -35,7 +34,7 @@ class VariableImpl extends NameImpl implements Variable {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Kind of this variable.

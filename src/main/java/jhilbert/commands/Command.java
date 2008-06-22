@@ -26,8 +26,8 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import jhilbert.commands.VerifyException;
 import jhilbert.data.Data;
-import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
 
 /**

@@ -20,7 +20,7 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.exceptions;
+package jhilbert.data;
 
 import jhilbert.exceptions.GeneralException;
 

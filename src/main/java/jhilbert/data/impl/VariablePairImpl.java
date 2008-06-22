@@ -24,8 +24,7 @@ package jhilbert.data.impl;
 
 import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
-import jhilbert.data.impl.DataImpl;
-import jhilbert.data.impl.Pair;
+import jhilbert.util.Pair;
 
 /**
  * A Pair of {@link Variable}s.
@@ -36,7 +35,7 @@ class VariablePairImpl extends Pair<Variable, Variable> implements VariablePair,
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Creates a new VariablePair.

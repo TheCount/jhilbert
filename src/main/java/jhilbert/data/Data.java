@@ -25,12 +25,12 @@ package jhilbert.data;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.SortedSet;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
 import jhilbert.data.Parameter;
 import jhilbert.data.Statement;
 import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
-import jhilbert.exceptions.DataException;
 
 /**
  * Interface for collecting data from JHilbert streams.

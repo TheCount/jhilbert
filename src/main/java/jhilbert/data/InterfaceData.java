@@ -24,8 +24,8 @@ package jhilbert.data;
 
 import java.util.List;
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
-import jhilbert.exceptions.DataException;
 
 /**
  * Data to represent the content of an interface.

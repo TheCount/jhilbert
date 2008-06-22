@@ -30,18 +30,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
 import jhilbert.data.Term;
 import jhilbert.data.TermExpression;
-import jhilbert.data.Token;
+import jhilbert.data.UnifyException;
 import jhilbert.data.Variable;
-import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.DummyVariable;
-import jhilbert.data.impl.TreeNode;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.ScannerException;
-import jhilbert.exceptions.UnifyException;
+import jhilbert.util.ScannerException;
+import jhilbert.util.Token;
 import jhilbert.util.TokenScanner;
+import jhilbert.util.TreeNode;
 import org.apache.log4j.Logger;
 
 /**
@@ -61,7 +60,7 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Logger for this class.

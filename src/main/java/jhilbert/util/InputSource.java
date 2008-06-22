@@ -22,7 +22,7 @@
 
 package jhilbert.util;
 
-import jhilbert.exceptions.InputException;
+import jhilbert.util.InputException;
 
 /**
  * An input source, such as one provided by an InputStream.

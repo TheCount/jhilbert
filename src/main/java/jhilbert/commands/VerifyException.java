@@ -20,33 +20,35 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.exceptions;
+package jhilbert.commands;
 
 import jhilbert.exceptions.GeneralException;
 
 /**
- * Syntax error while scanning a LISP symbolic expression.
+ * Execption occurring during {@link jhilbert.commands.Command} execution.
+ *
+ * @see jhilbert.commands.Command#execute()
  */
-public final class SyntaxException extends GeneralException {
+public final class VerifyException extends GeneralException {
 
 	/**
-	 * Creates a new SyntaxException with specified detail message, context, and cause.
+	 * Creates a new VerifyException with specified detail message, context, and cause.
 	 *
-	 * @param message the detail message.
+	 * @param message detail message.
 	 * @param context context String.
 	 * @param cause Throwable which caused this exception.
 	 */
-	public SyntaxException(final String message, final String context, final Throwable cause) {
+	public VerifyException(final String message, final String context, final Throwable cause) {
 		super(message, context, cause);
 	}
 
 	/**
-	 * Creates a new SyntaxException with specified detail message and context.
+	 * Creates a new VerifyException with specified detail message and context.
 	 *
-	 * @param message the detail message.
+	 * @param message detail message.
 	 * @param context context String.
 	 */
-	public SyntaxException(final String message, final String context) {
+	public VerifyException(final String message, final String context) {
 		super(message, context);
 	}
 

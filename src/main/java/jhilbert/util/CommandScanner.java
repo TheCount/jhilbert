@@ -31,17 +31,17 @@ import jhilbert.commands.KindCommand;
 import jhilbert.commands.KindbindCommand;
 import jhilbert.commands.ParamCommand;
 import jhilbert.commands.StatementCommand;
+import jhilbert.commands.SyntaxException;
 import jhilbert.commands.TermCommand;
 import jhilbert.commands.TheoremCommand;
 import jhilbert.commands.VariableCommand;
 import jhilbert.data.Data;
 import jhilbert.data.InterfaceData;
 import jhilbert.data.ModuleData;
-import jhilbert.data.Token;
-import jhilbert.exceptions.ScannerException;
-import jhilbert.exceptions.SyntaxException;
 import jhilbert.util.InputSource;
 import jhilbert.util.Scanner;
+import jhilbert.util.ScannerException;
+import jhilbert.util.Token;
 import jhilbert.util.TokenScanner;
 
 /**

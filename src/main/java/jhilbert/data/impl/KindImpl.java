@@ -23,7 +23,6 @@
 package jhilbert.data.impl;
 
 import jhilbert.data.Kind;
-import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.NameImpl;
 
 /**
@@ -34,7 +33,7 @@ final class KindImpl extends NameImpl implements Kind {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Creates a new kind with the specified name.

@@ -23,10 +23,8 @@
 package jhilbert.commands;
 
 import jhilbert.commands.InterfaceCommand;
+import jhilbert.commands.SyntaxException;
 import jhilbert.data.InterfaceData;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.SyntaxException;
-import jhilbert.exceptions.VerifyException;
 import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 

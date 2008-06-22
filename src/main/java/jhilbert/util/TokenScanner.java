@@ -22,12 +22,12 @@
 
 package jhilbert.util;
 
-import jhilbert.data.Char;
-import jhilbert.data.Token;
-import jhilbert.exceptions.ScannerException;
+import jhilbert.util.Char;
 import jhilbert.util.CharScanner;
 import jhilbert.util.InputSource;
 import jhilbert.util.Scanner;
+import jhilbert.util.ScannerException;
+import jhilbert.util.Token;
 
 /**
  * Class to carve up a stream of {@link Char} values into {@link Token}s.

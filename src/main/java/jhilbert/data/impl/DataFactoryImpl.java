@@ -23,6 +23,7 @@
 package jhilbert.data.impl;
 
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.DVConstraints;
 import jhilbert.data.InterfaceData;
@@ -32,12 +33,11 @@ import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
 import jhilbert.data.impl.FileBasedDataFactory;
 import jhilbert.data.impl.InterfaceDataImpl;
-import jhilbert.data.impl.LRUCache;
 import jhilbert.data.impl.ModuleDataImpl;
 import jhilbert.data.impl.ParameterImpl;
 import jhilbert.data.impl.TermExpressionImpl;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.InputException;
+import jhilbert.util.InputException;
+import jhilbert.util.LRUCache;
 import jhilbert.util.TokenScanner;
 
 /**

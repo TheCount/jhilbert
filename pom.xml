@@ -26,7 +26,7 @@
 	<groupId>jhilbert</groupId>
 	<artifactId>jhilbert</artifactId>
 	<packaging>bundle</packaging>
-	<version>2</version>
+	<version>3</version>
 	<name>jhilbert</name>
 	<url>http://maven.apache.org</url>
 	<build>

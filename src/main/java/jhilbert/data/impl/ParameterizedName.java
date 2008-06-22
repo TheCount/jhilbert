@@ -23,7 +23,6 @@
 package jhilbert.data.impl;
 
 import java.io.Serializable;
-import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.ParameterImpl;
 
 /**
@@ -34,7 +33,7 @@ class ParameterizedName implements Serializable {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * The name.

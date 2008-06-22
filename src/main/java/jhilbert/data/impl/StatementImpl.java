@@ -37,10 +37,7 @@ import jhilbert.data.Statement;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
-import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.UnnamedVariable;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.InputException;
 import org.apache.log4j.Logger;
 
 /**
@@ -51,7 +48,7 @@ final class StatementImpl extends NameImpl implements Statement {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Logger for this class.

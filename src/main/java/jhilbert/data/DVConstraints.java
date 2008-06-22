@@ -25,9 +25,9 @@ package jhilbert.data;
 import java.util.Collection;
 import java.util.Set;
 import java.util.SortedSet;
+import jhilbert.data.DataException;
 import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
-import jhilbert.exceptions.DataException;
 
 /**
  * Interface for disjoint variable constraints.

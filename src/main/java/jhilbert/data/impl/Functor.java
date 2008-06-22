@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import jhilbert.data.Kind;
 import jhilbert.data.impl.ComplexTerm;
-import jhilbert.data.impl.DataImpl;
-import jhilbert.exceptions.DataException;
 
 /**
  * A term which combines zero or more input terms to a new term.
@@ -38,7 +36,7 @@ final class Functor extends ComplexTerm {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Place count.

@@ -24,7 +24,6 @@ package jhilbert.data.impl;
 
 import java.io.Serializable;
 import jhilbert.data.Name;
-import jhilbert.data.impl.DataImpl;
 
 /**
  * Name to be used as unique identifier in a namespace.
@@ -34,7 +33,7 @@ abstract class NameImpl implements Name, Serializable {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Name.

@@ -25,7 +25,7 @@ package jhilbert.util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import jhilbert.exceptions.InputException;
+import jhilbert.util.InputException;
 import jhilbert.util.StreamInputSource;
 
 /**

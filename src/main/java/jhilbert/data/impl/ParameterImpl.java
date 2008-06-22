@@ -28,9 +28,7 @@ import java.util.List;
 import java.util.Map;
 import jhilbert.data.Data;
 import jhilbert.data.Parameter;
-import jhilbert.data.impl.DataImpl;
 import jhilbert.data.impl.NameImpl;
-import jhilbert.exceptions.DataException;
 
 /**
  * Parameter data to denote an interface and the namespace prefix with which its data should be loaded.
@@ -40,13 +38,13 @@ class ParameterImpl extends NameImpl implements Parameter {
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * A special parameter for the "main" module.
 	 */
 	public static final ParameterImpl MAIN_PARAMETER
-		= new ParameterImpl("(main)", "(invalid)", Collections.<Parameter>emptyList(), "");
+		= new ParameterImpl("(main)", "(none)", Collections.<Parameter>emptyList(), "");
 
 	/**
 	 * Locator.

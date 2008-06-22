@@ -27,12 +27,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
 import jhilbert.data.Term;
 import jhilbert.data.impl.Definition;
 import jhilbert.data.impl.Functor;
 import jhilbert.data.impl.NameImpl;
-import jhilbert.exceptions.DataException;
 import org.apache.log4j.Logger;
 
 /**

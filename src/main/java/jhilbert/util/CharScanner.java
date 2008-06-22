@@ -22,11 +22,11 @@
 
 package jhilbert.util;
 
-import jhilbert.data.Char;
-import jhilbert.exceptions.InputException;
-import jhilbert.exceptions.ScannerException;
+import jhilbert.util.Char;
+import jhilbert.util.InputException;
 import jhilbert.util.InputSource;
 import jhilbert.util.Scanner;
+import jhilbert.util.ScannerException;
 
 /**
  * Scanner for characters.

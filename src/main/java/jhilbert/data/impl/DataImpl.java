@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
 import jhilbert.data.Parameter;
 import jhilbert.data.Statement;
@@ -36,7 +37,6 @@ import jhilbert.data.Symbol;
 import jhilbert.data.Term;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
-import jhilbert.exceptions.DataException;
 import org.apache.log4j.Logger;
 
 /**
@@ -50,11 +50,6 @@ abstract class DataImpl implements Data {
 	 * Logger for this class.
 	 */
 	private static final Logger logger = Logger.getLogger(DataImpl.class);
-
-	/**
-	 * Current format version for interface files.
-	 */
-	static final int FORMAT_VERSION = 1;
 
 	/**
 	 * Terms.

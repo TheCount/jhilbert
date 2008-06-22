@@ -20,12 +20,11 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.data.impl;
+package jhilbert.util;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import jhilbert.data.impl.DataImpl;
 
 /**
  * A node in a tree data structure.
@@ -39,12 +38,12 @@ import jhilbert.data.impl.DataImpl;
  * @param E value type.
  * @param T child type.
  */
-class TreeNode<E, T extends TreeNode<E,T>> implements Serializable {
+public class TreeNode<E, T extends TreeNode<E,T>> implements Serializable {
 
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = DataImpl.FORMAT_VERSION;
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Value of this node.

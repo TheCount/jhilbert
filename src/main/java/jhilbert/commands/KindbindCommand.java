@@ -23,12 +23,12 @@
 package jhilbert.commands;
 
 import jhilbert.commands.Command;
+import jhilbert.commands.SyntaxException;
+import jhilbert.commands.VerifyException;
 import jhilbert.data.Data;
+import jhilbert.data.DataException;
 import jhilbert.data.Kind;
-import jhilbert.exceptions.DataException;
-import jhilbert.exceptions.ScannerException;
-import jhilbert.exceptions.SyntaxException;
-import jhilbert.exceptions.VerifyException;
+import jhilbert.util.ScannerException;
 import jhilbert.util.TokenScanner;
 import org.apache.log4j.Logger;
 
