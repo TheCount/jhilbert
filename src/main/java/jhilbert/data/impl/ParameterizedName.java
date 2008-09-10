@@ -23,64 +23,69 @@
 package jhilbert.data.impl;
 
 import java.io.Serializable;
+import jhilbert.data.Name;
 import jhilbert.data.impl.ParameterImpl;
 
 /**
  * A name accompanied with parameter data.
+ * Used for names imported through the param command.
+ * This abstract class should be overridden whenever parameterization is needed for a class implementing {@link Name}.
  */
-class ParameterizedName implements Serializable {
+abstract class ParameterizedName implements Name {
 
 	/**
 	 * Serialization ID.
 	 */
-	private static final long serialVersionUID = jhilbert.Main.VERSION;
+	// FIXME
+	// private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
-	 * The name.
+	 * Parameter.
 	 */
-	private String name;
-
-	/**
-	 * Interface parameter first introducing the name.
-	 */
-	private ParameterImpl interfaceParameter;
-
-	/**
-	 * Module parameter provided during export or import of the interface.
-	 */
-	private transient ParameterImpl moduleParameter;
+	private ParameterImpl parameter;
 
 	/**
 	 * Creates a new parameterized name.
 	 *
 	 * @param parameter interface parameter providing the name (must not be <code>null</code>).
-	 * @param name the name (must not be <code>null</code>).
 	 */
-	ParameterizedName(final ParameterImpl parameter, final String name) {
+	protected ParameterizedName(final ParameterImpl parameter) {
 		assert (parameter != null): "Supplied parameter is null.";
-		assert (name != null): "Supplied name is null.";
-		interfaceParameter = parameter;
-		moduleParameter = null;
-		this.name = name;
+		this.parameter = parameter;
 	}
 
 	/**
 	 * Creates an uninitalized parameterized name.
 	 * Used by serialization.
 	 */
-	public ParameterizedName() {
-		name = null;
-		interfaceParameter = null;
-		moduleParameter = null;
+	// FIXME
+	//public ParameterizedName() {
+	//	name = null;
+	//	interfaceParameter = null;
+	//	moduleParameter = null;
+	//}
+
+	/**
+	 * Returns the full name.
+	 *
+	 * @return the full name.
+	 */
+	public final String getName() {
+		return parameter.getPrefix() + this.getOriginalName();
 	}
 
 	/**
-	 * Returns the name.
-	 *
-	 * @return the name.
+	 * Returns the original name.
 	 */
-	String getName() {
-		return name;
+	public abstract String getOriginalName();
+
+	/**
+	 * Returns the parameter.
+	 *
+	 * @return the parameter.
+	 */
+	public final ParameterImpl getParameter() {
+		return parameter;
 	}
 
 	/**
@@ -88,18 +93,19 @@ class ParameterizedName implements Serializable {
 	 *
 	 * @return name of the interface parameter.
 	 */
-	String getInterfaceName() {
-		return interfaceParameter.toString();
-	}
+	// FIXME
+	// String getInterfaceName() {
+	//	return interfaceParameter.getName();
+	//}
 
 	/**
 	 * Returns the prefix of the interface parameter.
 	 *
 	 * @return prefix of the interface parameter.
 	 */
-	String getInterfacePrefix() {
-		return interfaceParameter.getPrefix();
-	}
+	//String getInterfacePrefix() {
+	//	return interfaceParameter.getPrefix();
+	//}
 
 	/**
 	 * Returns the prefix of the module parameter.
@@ -108,40 +114,52 @@ class ParameterizedName implements Serializable {
 	 *
 	 * @return the prefix of the module parameter.
 	 */
-	String getModulePrefix() {
-		assert (moduleParameter != null): "Request for module prefix before module parameter initialization.";
-		return moduleParameter.getPrefix();
-	}
+	// FIXME
+	//String getModulePrefix() {
+	//	assert (moduleParameter != null): "Request for module prefix before module parameter initialization.";
+	//	return moduleParameter.getPrefix();
+	//}
 
 	/**
 	 * Sets the module parameter.
 	 *
 	 * @param parameter the module parameter. A value of <code>null</code> unsets the module parameter.
 	 */
-	void setModuleParameter(final ParameterImpl parameter) {
-		moduleParameter = parameter;
-	}
+	// FIXME
+	//void setModuleParameter(final ParameterImpl parameter) {
+	//	moduleParameter = parameter;
+	//}
 
 	/**
 	 * Sets the module parameter to the interface parameter.
 	 */
-	void setModuleParameter() {
-		moduleParameter = interfaceParameter;
-	}
+	// FIXME
+	//void setModuleParameter() {
+	//	moduleParameter = interfaceParameter;
+	//}
 
 	public @Override int hashCode() {
-		return interfaceParameter.toString().hashCode() ^ name.hashCode();
+		return interfaceParameter.hashCode() ^ name.hashCode();
 	}
 
-	public @Override boolean equals(final Object o) {
-		try {
-			final ParameterizedName pn = (ParameterizedName) o;
-			return name.equals(pn.name)
-				&& interfaceParameter.toString().equals(pn.interfaceParameter.toString())
-				&& interfaceParameter.getPrefix().equals(pn.interfaceParameter.getPrefix());
-		} catch (ClassCastException e) {
-			return false;
-		}
+	// FIXME
+	//public @Override boolean equals(final Object o) {
+	//	try {
+	//		final ParameterizedName pn = (ParameterizedName) o;
+	//		return name.equals(pn.name)
+	//			&& interfaceParameter.getName().equals(pn.interfaceParameter.getName())
+	//			&& interfaceParameter.getPrefix().equals(pn.interfaceParameter.getPrefix());
+	//	} catch (ClassCastException e) {
+	//		return false;
+	//	}
+	//}
+	
+	public int compareTo(final Name n) {
+		return getName().compareTo(n.getName());
+	}
+
+	public @Override String toString() {
+		return getOriginalName() + " parameterized by " + parameter;
 	}
 
 }

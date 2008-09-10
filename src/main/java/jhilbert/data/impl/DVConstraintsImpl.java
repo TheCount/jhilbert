@@ -202,12 +202,12 @@ class DVConstraintsImpl extends HashSet<VariablePair> implements DVConstraints {
 			assert ((firstVar instanceof UnnamedVariable) && (secondVar instanceof UnnamedVariable)):
 				"disjoint variables not anonymized.";
 			if (!varMap.containsKey(firstVar)) {
-				final Kind kind = data.getKind(kindNameMap.get(firstVar.getKind().toString()));
+				final Kind kind = data.getKind(kindNameMap.get(firstVar.getKind().getName()));
 				assert (kind != null): "Kind missing from data.";
 				varMap.put(firstVar, new UnnamedVariable(kind));
 			}
 			if (!varMap.containsKey(secondVar)) {
-				final Kind kind = data.getKind(kindNameMap.get(secondVar.getKind().toString()));
+				final Kind kind = data.getKind(kindNameMap.get(secondVar.getKind().getName()));
 				assert (kind != null): "Kind missing from data.";
 				varMap.put(secondVar, new UnnamedVariable(kind));
 			}

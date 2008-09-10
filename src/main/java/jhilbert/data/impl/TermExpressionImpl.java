@@ -37,6 +37,7 @@ import jhilbert.data.TermExpression;
 import jhilbert.data.UnifyException;
 import jhilbert.data.Variable;
 import jhilbert.data.impl.DummyVariable;
+import jhilbert.data.impl.IComplexTerm;
 import jhilbert.util.ScannerException;
 import jhilbert.util.Token;
 import jhilbert.util.TokenScanner;
@@ -73,7 +74,7 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 	 * the names being retrieved from the specified ModuleData.
 	 *
 	 * @param scanner the TokenScanner to scan the LISP expression.
-	 * @param data the data to obtain {@link Variable}s and {@link AbstractComplexTerm}s.
+	 * @param data the data to obtain {@link Variable}s and {@link ComplexTerm}s.
 	 *
 	 * @throws DataException if a problem with the scanner occurs, or if the scanned expression is invalid.
 	 */
@@ -97,7 +98,7 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 					context = new StringBuilder('(');
 					atom = scanner.getAtom();
 					context.append(atom);
-					ComplexTerm term = data.getTerm(atom);
+					IComplexTerm term = data.getTerm(atom);
 					if (term == null) {
 						logger.error("Term " + atom + " not found.");
 						throw new DataException("Term not found", atom);
@@ -112,17 +113,24 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 						final TermExpressionImpl termExpression
 							= new TermExpressionImpl(scanner, data);
 						context.append(termExpression.toString());
-						// mutual kind assurance
-						final Term paramTerm = termExpression.getValue();
-						term.ensureInputKind(placeCount, paramTerm.getKind());
-						if (!paramTerm.isVariable())
-							((ComplexTerm) paramTerm)
-								.ensureKind(term.getInputKind(placeCount));
+						if (!termExpression.getKind().equals(term.getInputKind(placeCount))) {
+							logger.error("Kind mismatch while scanning term expression.");
+							logger.error("Scanned thus far: " + context);
+							logger.error("Term: " + term);
+							logger.error("Required kind: " + term.getInputKind(placeCount));
+							logger.error("Found kind: " + termExpression.getKind());
+							throw new DataException("Kind mismatch while scanning term expression", term.toString());
+						}
 						addChild(termExpression);
 						++placeCount;
 					}
 					context.append(')');
-					term.ensurePlaceCount(placeCount);
+					if (term.placeCount() != placeCount) {
+						logger.error("Wrong number of arguments for term " + term);
+						logger.error("Scanned thus far: " + context);
+						logger.error("Expected number of args: " + term.placeCount());
+						logger.error("Received number of args: " + placeCount);
+					}
 					if (logger.isTraceEnabled())
 						logger.trace("Complex term " + term + " has " + placeCount + " places");
 					return;
@@ -155,7 +163,7 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 	}
 
 	/**
-	 * Creates a TermExpression consisting of a single {@link AbstractComplexTerm}.
+	 * Creates a TermExpression consisting of a single {@link ComplexTerm}.
 	 * <p>
 	 * <strong>Warning:</strong>
 	 * If the specified term has non-zero place count, the correct number of children
@@ -201,7 +209,11 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		}
 	}
 
-	public TermExpressionImpl subst(final Map<Variable, ? extends TermExpression> varAssignments) {
+	public TermExpressionImpl subst(final Map<Variable, TermExpression> varAssignments) {
+		return substImpl(varAssignments);
+	}
+
+	TermExpressionImpl substImpl(final Map<Variable, ? extends TermExpression> varAssignments) {
 		assert (varAssignments != null): "Supplied variable assignments are null.";
 		final Term value = getValue();
 		if (value.isVariable()) {
@@ -211,9 +223,9 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			else
 				return this;
 		}
-		final TermExpressionImpl result = new TermExpressionImpl((ComplexTerm) value);
+		final TermExpressionImpl result = new TermExpressionImpl((Term) value);
 		for (TermExpressionImpl child: getChildren())
-			result.addChild(child.subst(varAssignments));
+			result.addChild(child.substImpl(varAssignments));
 		return result;
 	}
 
@@ -246,8 +258,8 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 					return false;
 			return true;
 		}
-		final ComplexTerm sTerm = (ComplexTerm) sValue;
-		final ComplexTerm tTerm = (ComplexTerm) tValue;
+		final IComplexTerm sTerm = (IComplexTerm) sValue;
+		final IComplexTerm tTerm = (IComplexTerm) tValue;
 		final int sDepth = sTerm.definitionDepth();
 		final int tDepth = tTerm.definitionDepth();
 		if ((sDepth == 0) && (tDepth == 0))
@@ -304,8 +316,8 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 				}
 			return true;
 		}
-		final ComplexTerm sTerm = (ComplexTerm) sValue;
-		final ComplexTerm tTerm = (ComplexTerm) tValue;
+		final IComplexTerm sTerm = (IComplexTerm) sValue;
+		final IComplexTerm tTerm = (IComplexTerm) tValue;
 		final int sDepth = sTerm.definitionDepth();
 		final int tDepth = tTerm.definitionDepth();
 		if (logger.isTraceEnabled()) {
@@ -327,7 +339,7 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			return ((Definition) sTerm).unfold(getChildren()).dummyMatches(target, blacklist, varMap);
 	}
 
-	public <E extends TermExpression> void unify(final E target, final Map<Variable, E> varMap) throws UnifyException {
+	public void unify(final TermExpression target, final Map<Variable, TermExpression> varMap) throws UnifyException {
 		assert (target != null): "Supplied target is null.";
 		assert (target instanceof TermExpressionImpl): "Target not from this implementation.";
 		assert (varMap != null): "Supplied variable map is null.";
@@ -358,14 +370,14 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			if (sValue.equals(tValue)) {
 				final int childCount = childCount();
 				for (int i = 0; i != childCount; ++i)
-					getChild(i).unify((E) targetImpl.getChild(i), varMap);
+					getChild(i).unify(targetImpl.getChild(i), varMap);
 				return;
 			}
 		} catch (UnifyException e) {
 			throw new UnifyException("Unification error in subterm", this, targetImpl, e);
 		}
-		final ComplexTerm sTerm = (ComplexTerm) sValue;
-		final ComplexTerm tTerm = (ComplexTerm) tValue;
+		final IComplexTerm sTerm = (IComplexTerm) sValue;
+		final IComplexTerm tTerm = (IComplexTerm) tValue;
 		final int sDepth = sTerm.definitionDepth();
 		final int tDepth = tTerm.definitionDepth();
 		if ((sDepth == 0) && (tDepth == 0)) {
@@ -376,9 +388,9 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		}
 		try {
 			if (sDepth == tDepth)
-				((Definition) sTerm).unfold(getChildren()).unify((E) ((Definition) tTerm).unfold(targetImpl.getChildren()), varMap);
+				((Definition) sTerm).unfold(getChildren()).unify(((Definition) tTerm).unfold(targetImpl.getChildren()), varMap);
 			if (sDepth < tDepth)
-				unify((E) ((Definition) tTerm).unfold(targetImpl.getChildren()), varMap);
+				unify(((Definition) tTerm).unfold(targetImpl.getChildren()), varMap);
 			else
 				((Definition) sTerm).unfold(getChildren()).unify(target, varMap);
 		} catch (UnifyException e) {
@@ -463,7 +475,7 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 		if (value.isVariable()) {
 			final Variable variable = (Variable) value;
 			if (!varMap.containsKey(variable)) {
-				final Kind kind = data.getKind(kindNameMap.get(variable.getKind().toString()));
+				final Kind kind = data.getKind(kindNameMap.get(variable.getKind().getName()));
 				assert (kind != null): "Kind data missing during expression adaption.";
 				if (variable instanceof DummyVariable)
 					varMap.put(variable, new DummyVariable(kind));
@@ -475,7 +487,7 @@ final class TermExpressionImpl extends TreeNode<Term, TermExpressionImpl> implem
 			return new TermExpressionImpl(varMap.get(variable));
 		}
 		// value is a complex term
-		final ComplexTerm term = data.getTerm(termNameMap.get(value.toString()));
+		final IComplexTerm term = data.getTerm(termNameMap.get(value.getName()));
 		final TermExpressionImpl result = new TermExpressionImpl(term);
 		final int placeCount = term.placeCount();
 		try {

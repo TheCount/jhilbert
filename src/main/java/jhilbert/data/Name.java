@@ -28,10 +28,10 @@ package jhilbert.data;
 public interface Name extends Comparable<Name> {
 
 	/**
-	 * Returns this Name as a String.
+	 * Returns this name as a String.
 	 *
-	 * @return this Name as a String.
+	 * @return this name as a String.
 	 */
-	public String toString();
+	public String getName();
 
 }

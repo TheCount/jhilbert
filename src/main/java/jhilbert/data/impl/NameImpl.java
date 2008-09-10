@@ -63,7 +63,11 @@ abstract class NameImpl implements Name, Serializable {
 	 *
 	 * @return name as a String.
 	 */
-	public final String toString() {
+	public String toString() {
+		return name;
+	}
+
+	public final String getName() {
 		return name;
 	}
 
@@ -72,25 +76,17 @@ abstract class NameImpl implements Name, Serializable {
 	 *
 	 * @param name the name.
 	 */
-	protected final void setName(final String name) {
-		this.name = name;
-	}
+	// FIXME
+	//protected final void setName(final String name) {
+	//	this.name = name;
+	//}
 
 	public int hashCode() {
 		return name.hashCode();
 	}
 
-	public boolean equals(final Name n) {
-		assert (n != null): "Supplied name is null.";
-		return name.equals(n.toString());
-	}
-
-	public final boolean equals(final String s) {
-		return name.equals(s);
-	}
-
 	public int compareTo(final Name n) {
-		return name.compareTo(n.toString());
+		return name.compareTo(n.getName());
 	}
 
 }

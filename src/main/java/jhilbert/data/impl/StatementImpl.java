@@ -92,7 +92,7 @@ final class StatementImpl extends NameImpl implements Statement {
 		assert (consequent != null): "Supplied conclusion is null.";
 		assert (consequent instanceof TermExpressionImpl): "Consequent not from this implementation.";
 		// unname variables of raw DV
-		final Map<Variable, TermExpression> varMap = new HashMap();
+		final Map<Variable, TermExpressionImpl> varMap = new HashMap();
 		final List<SortedSet<Variable>> unnamedDV = new ArrayList(rawDV.size());
 		for (final SortedSet<Variable> rawDVGroup: rawDV) {
 			final SortedSet<Variable> unnamedDVGroup = new TreeSet();
@@ -132,9 +132,11 @@ final class StatementImpl extends NameImpl implements Statement {
 		}
 		// calculate hypotheses and consequent
 		this.hypotheses = new ArrayList(hypotheses.size());
-		for (final TermExpression hypothesis: hypotheses)
-			this.hypotheses.add(hypothesis.subst(varMap));
-		this.consequent = (TermExpressionImpl) consequent.subst(varMap);
+		for (final TermExpression hypothesis: hypotheses)  {
+			assert (hypothesis instanceof TermExpressionImpl): "Hypothesis not from this implementation.";
+			this.hypotheses.add(((TermExpressionImpl) hypothesis).substImpl(varMap));
+		}
+		this.consequent = ((TermExpressionImpl) consequent).substImpl(varMap);
 		// calculate mandatory variables
 		allVars.removeAll(allHypVars);
 		this.mandatoryVariables = new ArrayList(allVars); // NB: order is important here, make sure not to break anything

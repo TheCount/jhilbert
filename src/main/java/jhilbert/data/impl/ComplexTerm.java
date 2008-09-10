@@ -102,20 +102,21 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 * @throws DataException if the resulting kind of this term is known and the specified kind is not
 	 * 	<code>null</code>, yet they are not equal.
 	 */
-	public final void ensureKind(final Kind kind) throws DataException {
-		if (this.kind == null) {
-			this.kind = kind;
-			return;
-		}
-		if (kind == null)
-			return;
-		if (!this.kind.equals(kind)) {
-			logger.error("Result kind mismatch in term " + this.toString());
-			logger.error("Required result kind: " + kind);
-			logger.error("Actual result kind: " + this.kind);
-			throw new DataException("Result kind mismatch.", this.toString());
-		}
-	}
+	// FIXME
+	//public final void ensureKind(final Kind kind) throws DataException {
+	//	if (this.kind == null) {
+	//		this.kind = kind;
+	//		return;
+	//	}
+	//	if (kind == null)
+	//		return;
+	//	if (!this.kind.equals(kind)) {
+	//		logger.error("Result kind mismatch in term " + this.toString());
+	//		logger.error("Required result kind: " + kind);
+	//		logger.error("Actual result kind: " + this.kind);
+	//		throw new DataException("Result kind mismatch.", this.toString());
+	//	}
+	//}
 
 	/**
 	 * Returns the definition depth of this term.
@@ -139,7 +140,8 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @param count number of places this term should have.
 	 */
-	protected abstract void setPlaceCount(int count);
+	// FIXME
+	// protected abstract void setPlaceCount(int count);
 
 	/**
 	 * Ensures the specified place count equals the place count of this term.
@@ -157,22 +159,23 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 * @see #placeCount()
 	 * @see #ensureInputKind()
 	 */
-	public final void ensurePlaceCount(final int placeCount) throws DataException {
-		if (placeCount == -1)
-			return;
-		assert (placeCount >= 0): "Supplied place count is out of bounds.";
-		final int thisPlaceCount = placeCount();
-		if (thisPlaceCount == -1) {
-			setPlaceCount(placeCount);
-			return;
-		}
-		if (thisPlaceCount == placeCount)
-			return;
-		logger.error("Place count mismatch in term " + this.toString());
-		logger.error("Required place count: " + placeCount);
-		logger.error("Actual place count: " + thisPlaceCount);
-		throw new DataException("Place count mismatch", this.toString());
-	}
+	// FIXME
+	//public final void ensurePlaceCount(final int placeCount) throws DataException {
+	//	if (placeCount == -1)
+	//		return;
+	//	assert (placeCount >= 0): "Supplied place count is out of bounds.";
+	//	final int thisPlaceCount = placeCount();
+	//	if (thisPlaceCount == -1) {
+	//		setPlaceCount(placeCount);
+	//		return;
+	//	}
+	//	if (thisPlaceCount == placeCount)
+	//		return;
+	//	logger.error("Place count mismatch in term " + this.toString());
+	//	logger.error("Required place count: " + placeCount);
+	//	logger.error("Actual place count: " + thisPlaceCount);
+	//	throw new DataException("Place count mismatch", this.toString());
+	//}
 
 	/**
 	 * Returns the kind of the i-th input term.
@@ -189,7 +192,8 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 * @param i input term number (starting from zero).
 	 * @param kind the kind.
 	 */
-	protected abstract void setInputKind(int i, Kind kind);
+	// FIXME
+	// protected abstract void setInputKind(int i, Kind kind);
 
 	/**
 	 * Ensures the input kind of the place with the specified number equals the specified input kind.
@@ -202,22 +206,23 @@ abstract class ComplexTerm extends NameImpl implements Term {
 	 *
 	 * @see #ensureKind()
 	 */
-	public final void ensureInputKind(final int i, final Kind kind) throws DataException {
-		final Kind thisInputKind = getInputKind(i);
-		if (thisInputKind == null) {
-			setInputKind(i, kind);
-			return;
-		}
-		if (kind == null)
-			return;
-		if (!thisInputKind.equals(kind)) {
-			logger.error("Input kind mismatch in term " + this.toString());
-			logger.error("Input kind place: " + (i + 1));
-			logger.error("Required input kind: " + kind);
-			logger.error("Actual input kind: " + thisInputKind);
-			throw new DataException("Input kind mismatch", this.toString());
-		}
-	}
+	// FIXME
+	//public final void ensureInputKind(final int i, final Kind kind) throws DataException {
+	//	final Kind thisInputKind = getInputKind(i);
+	//	if (thisInputKind == null) {
+	//		setInputKind(i, kind);
+	//		return;
+	//	}
+	//	if (kind == null)
+	//		return;
+	//	if (!thisInputKind.equals(kind)) {
+	//		logger.error("Input kind mismatch in term " + this.toString());
+	//		logger.error("Input kind place: " + (i + 1));
+	//		logger.error("Required input kind: " + kind);
+	//		logger.error("Actual input kind: " + thisInputKind);
+	//		throw new DataException("Input kind mismatch", this.toString());
+	//	}
+	//}
 
 	public final boolean isVariable() {
 		return false;

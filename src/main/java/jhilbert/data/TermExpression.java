@@ -42,11 +42,6 @@ public interface TermExpression {
 	public Kind getKind();
 
 	/**
-	 * Returns the node value of this term expression.
-	 */
-	public Term getValue();
-
-	/**
 	 * Returns the variables occurring in this TermExpression, in order of first occurrence
 	 * when the term is read from left to right.
 	 *
@@ -62,7 +57,7 @@ public interface TermExpression {
 	 *
 	 * @return TermExpression with the specified variable assignments applied.
 	 */
-	public TermExpression subst(final Map<Variable, ? extends TermExpression> varAssignments);
+	public TermExpression subst(final Map<Variable, TermExpression> varAssignments);
 
 	/**
 	 * Matches the target against this TermExpression.
@@ -89,6 +84,6 @@ public interface TermExpression {
 	 *
 	 * @throws UnifyException if unification to the specified target is not possible.
 	 */
-	public <E extends TermExpression> void unify(final E target, final Map<Variable, E> varMap) throws UnifyException;
+	public void unify(final TermExpression target, final Map<Variable, TermExpression> varMap) throws UnifyException;
 
 }

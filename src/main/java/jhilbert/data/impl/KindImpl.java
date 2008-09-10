@@ -24,6 +24,7 @@ package jhilbert.data.impl;
 
 import jhilbert.data.Kind;
 import jhilbert.data.impl.NameImpl;
+import jhilbert.util.IdentityHashSet;
 
 /**
  * Implementation of {@link Kind}.
@@ -36,12 +37,48 @@ final class KindImpl extends NameImpl implements Kind {
 	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
+	 * Bound kind ID.
+	 */
+	private static int boundKindID = 0;
+
+	/**
+	 * Bound kinds set.
+	 */
+	private Set<Kind> boundKinds;
+
+	/**
 	 * Creates a new kind with the specified name.
 	 *
 	 * @param name name of the new kind.
 	 */
 	KindImpl(final String name) {
 		super(name);
+		boundKinds = new IdentityHashSet();
+		boundKinds.add(this);
+	}
+
+	/**
+	 * Creates a new bound kind.
+	 * The two specified kinds become undistinguishable during an equals comparison.
+	 * It is permissible, though pointless, that the two kinds are identical.
+	 *
+	 * @param kind1 first kind (must not be <code>null</code>).
+	 * @param kind2 second kind (must not be <code>null</code>).
+	 */
+	KindImpl(final KindImpl kind1, final KindImpl kind2) {
+		super("(bound kind " + (boundKindID++) + ")");
+		assert (kind1 != null): "Supplied first kind is null.";
+		assert (kind2 != null): "Supplied second kind is null.";
+		boundKinds = new IdentityHashSet();
+		if (kind1.boundKinds != null)
+			boundKinds.addAll(kind1.boundKinds);
+		if (kind2.boundKinds != null)
+			boundKinds.addAll(kind2.boundKinds);
+		kind1.boundKinds = boundKinds;
+		kind2.boundKinds = boundKinds;
+		boundKinds.add(kind1);
+		boundKinds.add(kind2);
+		boundKinds.add(this);
 	}
 
 	/**
@@ -50,6 +87,11 @@ final class KindImpl extends NameImpl implements Kind {
 	 */
 	public KindImpl() {
 		super();
+		boundKinds = null;
+	}
+
+	public @Override boolean equals(final Object o) {
+		return boundKinds.contains(o);
 	}
 
 }

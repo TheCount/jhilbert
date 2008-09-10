@@ -306,7 +306,7 @@ public final class TheoremCommand extends AbstractStatementCommand {
 			final TermExpression expr = mandatoryStack.get(i);
 			final Kind varKind = var.getKind();
 			final Kind exprKind = expr.getKind();
-			if (!varKind.toString().equals(exprKind.toString())) {
+			if (!varKind.equals(exprKind)) {
 				logger.error("Kind mismatch in proof statement " + label);
 				logger.error("Affected expression: " + expr);
 				logger.error("Kind of expression: " + exprKind);

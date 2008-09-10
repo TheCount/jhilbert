@@ -37,6 +37,7 @@ import jhilbert.data.Symbol;
 import jhilbert.data.Term;
 import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
+import jhilbert.util.GrowList;
 import org.apache.log4j.Logger;
 
 /**
@@ -64,14 +65,14 @@ abstract class DataImpl implements Data {
 	/**
 	 * Parameters (insertion-ordered).
 	 */
-	protected LinkedHashMap<String, ParameterImpl> parameters;
+	protected GrowList<String, ParameterImpl> parameters;
 
 	/**
 	 * Initializes common data with empty collections.
 	 */
 	protected DataImpl() {
 		symbols = new HashMap();
-		parameters = new LinkedHashMap();
+		parameters = new GrowList();
 	}
 
 	public abstract Kind getKind(String name) throws DataException;

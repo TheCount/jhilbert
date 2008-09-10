@@ -144,7 +144,7 @@ final class Definition extends ComplexTerm {
 		final Map<Variable, TermExpressionImpl> varAssignments = new HashMap();
 		for (int i = 0; i != size; ++i)
 			varAssignments.put(varList.get(i), exprList.get(i));
-		return definiens.subst(varAssignments);
+		return definiens.substImpl(varAssignments);
 	}
 
 	public @Override int placeCount() {

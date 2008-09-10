@@ -51,9 +51,12 @@ import jhilbert.data.Variable;
 import jhilbert.data.VariablePair;
 import jhilbert.data.impl.DataFactoryImpl;
 import jhilbert.data.impl.DataImpl;
+import jhilbert.data.impl.IComplexTerm;
 import jhilbert.data.impl.KindImpl;
-import jhilbert.data.impl.ParameterizedName;
+import jhilbert.data.impl.ParameterizedKind;
+import jhilbert.data.impl.ParameterizedTerm;
 import jhilbert.util.InputException;
+import jhilbert.util.Pair;
 import org.apache.log4j.Logger;
 
 /**
@@ -72,9 +75,14 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 	private static final Logger logger = Logger.getLogger(InterfaceDataImpl.class);
 
 	/**
-	 * Undefined kinds names.
+	 * Undefined kinds.
 	 */
-	private Map<String, ParameterizedName> undefinedKindNames;
+	private transient Map<String, ParameterizedKind> undefinedKinds;
+
+	/**
+	 * Kind bindings.
+	 */
+	private Set<Pair<String, String>> kindBindings;
 
 	/**
 	 * Kinds.
@@ -84,7 +92,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 	/**
 	 * Undefined term names.
 	 */
-	private Map<String, ParameterizedName> undefinedTermNames;
+	private transient Map<String, ParameterizedTerm> undefinedTerms;
 
 	/**
 	 * Creates new empty interface data.
@@ -93,49 +101,29 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 		super();
 		undefinedKindNames = new HashMap();
 		kinds = new LinkedHashMap(); // for sound insertion order
-		undefinedTermNames = new HashMap();
+		kindBindings = new HashMap();
+		undefinedTerms = new HashMap();
 		terms = new LinkedHashMap(); // for sound insertion order
 	}
 
-	public @Override KindImpl getKind(final String name) throws DataException {
+	public @Override Kind getKind(final String name) throws DataException {
 		assert (name != null): "Supplied kind name is null.";
-		KindImpl result = kinds.get(name);
-		if (result == null) {
-			// search kind
-			final DataFactoryImpl df = DataFactoryImpl.getInstance();
-			for (final Map.Entry<String, ParameterImpl> paramMapping: parameters.entrySet()) {
-				final ParameterImpl parameter = paramMapping.getValue();
-				final String prefix = parameter.getPrefix();
-				if (name.startsWith(prefix))
-					try {
-						final String bareName = name.substring(prefix.length());
-						final InterfaceDataImpl data = df.getInterfaceData(parameter.getLocator());
-						if (data.undefinedKindNames.containsKey(bareName))
-							continue;
-						if (data.kinds.containsKey(bareName)) {
-							undefinedKindNames.put(name,
-								new ParameterizedName(parameter, bareName));
-							result = new KindImpl(name);
-							kinds.put(name, result);
-							return result;
-						}
-					} catch (InputException e) {
-						logger.error("Unable to obtain interface " + parameter);
-						throw new DataException("Unable to obtain interface",
-							parameter.toString(), e);
-					}
-			}
-			// nothing found, eh?
-			return null;
-		}
+		final Kind result = undefinedKinds.get(name);
+		if (result == null)
+			return kinds.get(name);
 		return result;
 	}
 
 	public void defineKind(final String name) throws DataException {
 		assert (name != null): "Supplied kind name is null.";
+		if (undefinedKinds.containsKey(name)) {
+			logger.error("Definition of kind " + name + " clobbers kind " + undefinedKinds.get(name).getOriginalName() + " from parameter "
+				+ undefinedKinds.get(name).getParameter());
+			throw new DataException("Kind already exists", name);
+		}
 		if (kinds.containsKey(name)) {
-			logger.error("Kind " + name + " already defined or referenced.");
-			throw new DataException("Kind already defined or referenced", name);
+			logger.error("Kind " + name + " already defined.");
+			throw new DataException("Kind already defined", name);
 		}
 		kinds.put(name, new KindImpl(name));
 	}
@@ -143,51 +131,23 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 	public @Override void bindKind(final Kind oldKind, final String newKindName) throws DataException {
 		assert (oldKind != null): "Supplied existing kind is null.";
 		assert (newKindName != null): "Supplied name of new kind is null.";
-		final String oldKindName = oldKind.toString();
+		final String oldKindName = oldKind.getName();
 		if (oldKindName.equals(newKindName)) {
 			logger.error("Binding kind " + newKindName + ": old and new kind are identical.");
 			throw new DataException("Old and new kind are identical while binding kind.", newKindName);
 		}
-		if (kinds.containsKey(newKindName)) {
-			logger.error("Binding kind: " + newKindName + " already defined or referenced.");
-			throw new DataException("Kind already defined or referenced while binding kind.", newKindName);
+		if (!(undefinedKinds.containsKey(oldKindName) && undefinedKinds.containsKey(newKindName))) {
+			logger.error("Kinds " + oldKindName + " and " + newKindName + " must both come from a parameter.");
+			throw new DataException("Kind not found in parameters", oldkindName + " or " + newKindName);
 		}
-		kinds.put(newKindName, getKind(oldKindName));
+		kindBindings.add(new Pair(oldKindName, newKindName));
 	}
 
-	public @Override ComplexTerm getTerm(final String name) throws DataException {
+	public @Override IComplexTerm getTerm(final String name) throws DataException {
 		assert (name != null): "Supplied term name is null.";
-		ComplexTerm result = terms.get(name);
-		if (result == null) {
-			// search term
-			final DataFactoryImpl df = DataFactoryImpl.getInstance();
-			for (final Map.Entry<String, ParameterImpl> paramMapping: parameters.entrySet()) {
-				final ParameterImpl parameter = paramMapping.getValue();
-				final String prefix = parameter.getPrefix();
-				if (name.startsWith(prefix))
-					try {
-						final String bareName = name.substring(prefix.length());
-						final InterfaceDataImpl data = df.getInterfaceData(parameter.getLocator());
-						if (data.undefinedTermNames.containsKey(bareName))
-							continue;
-						if (data.terms.containsKey(bareName)) {
-							undefinedTermNames.put(name,
-								new ParameterizedName(parameter, bareName));
-							result = new Functor(name);
-							terms.put(name, result);
-							return result;
-						}
-					} catch (InputException e) {
-						logger.error("Unable to obtain interface " + parameter);
-						throw new DataException("Unable to obtain interface",
-							parameter.toString(), e);
-					}
-			}
-			// nothing found? Then it's straight from the module
-			undefinedTermNames.put(name, new ParameterizedName(ParameterImpl.MAIN_PARAMETER, name));
-			result = new Functor(name);
-			terms.put(name, result);
-		}
+		final IComplexTerm result = undefinedTerms.get(name);
+		if (result == null)
+			return terms.get(name);
 		return result;
 	}
 
@@ -196,11 +156,27 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 		assert (name != null): "Supplied term name is null.";
 		assert (resultKind != null): "Supplied result kind is null.";
 		assert (inputKindList != null): "Supplied list of input kinds is null.";
+		if (undefinedTerms.containsKey(name)) {
+			logger.error("Definition of term " + name + " clobbers term " + undefinedTerms.get(name).getOriginalName() + " from parameter "
+				+ undefinedTerms.get(name).getParameter().getName());
+			throw new DataException("Term already exists", name);
+		}
 		if (terms.containsKey(name)) {
-			logger.error("Term " + name + " already defined or referenced.");
-			throw new DataException("Term already defined or referenced.", name);
+			logger.error("Term " + name + " already defined.");
+			throw new DataException("Term already defined.", name);
 		}
 		terms.put(name, new Functor(name, resultKind, inputKindList));
+	}
+
+	/**
+	 * Obtains the index of the specified parameter.
+	 *
+	 * @param name parameter name.
+	 *
+	 * @return index of the specified parameter, or <code>-1</code> if no such parameter exists.
+	 */
+	public int getParameterIndex(final String name) {
+		return parameters.indexOfKey(name);
 	}
 
 	/**
@@ -226,7 +202,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 		final Map<String, String> aliasMap = new LinkedHashMap();
 		for (final Map.Entry<String, KindImpl> kindMapping: kinds.entrySet()) {
 			final String key = kindMapping.getKey();
-			final String value = kindMapping.getValue().toString();
+			final String value = kindMapping.getValue().getName();
 			if (undefinedKindNames.containsKey(key)) {
 				final ParameterizedName pn = undefinedKindNames.get(key);
 				final String fullName = pn.getModulePrefix() + pn.getName();
@@ -263,14 +239,14 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 				termNameMap.put(key, fullName);
 			} else if (value instanceof Functor) {
 				final Functor functor = (Functor) value;
-				final Kind resultKind = moduleData.getKind(kindNameMap.get(functor.getKind().toString()));
+				final Kind resultKind = moduleData.getKind(kindNameMap.get(functor.getKind().getName()));
 				assert (resultKind != null): "Result kind null during Functor import.";
 				final int placeCount = functor.placeCount();
 				assert (placeCount >= 0): "Place count negative during Functor import.";
 				final List<Kind> inputKinds = new ArrayList(placeCount);
 				for (int i = 0; i != placeCount; ++i) {
 					final Kind inputKind = moduleData.getKind(kindNameMap
-						.get(functor.getInputKind(i).toString()));
+						.get(functor.getInputKind(i).getName()));
 					assert (inputKind != null): "Input kind null during Functor import.";
 					inputKinds.add(inputKind);
 				}
@@ -307,7 +283,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 			}
 			final TermExpressionImpl consequent = statement.getConsequent()
 				.adapt(moduleData, kindNameMap, termNameMap, varMap);
-			moduleData.defineStatement(prefix + statement.toString(), rawDV, hypotheses, consequent);
+			moduleData.defineStatement(prefix + statement.getName(), rawDV, hypotheses, consequent);
 		}
 		unsetParameters();
 	}
@@ -345,7 +321,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 		}
 		// terms
 		for (final ComplexTerm term: terms.values()) {
-			final String key = term.toString();
+			final String key = term.getName();
 			String moduleName = key;
 			if (undefinedTermNames.containsKey(moduleName)) {
 				final ParameterizedName pn = undefinedTermNames.get(moduleName);
@@ -361,15 +337,15 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 			final Kind resultKind = term.getKind();
 			if (resultKind != null) {
 				if (!moduleTerm.getKind()
-						.equals(moduleData.getKind(kindNameMap.get(resultKind.toString())))) {
+						.equals(moduleData.getKind(kindNameMap.get(resultKind.getName())))) {
 					logger.error("Result kind mismatch during export of term " + term);
 					logger.error("Needed result kind: "
-						+ moduleData.getKind(kindNameMap.get(resultKind.toString())));
+						+ moduleData.getKind(kindNameMap.get(resultKind.getName())));
 					logger.error("Found result kind:  " + moduleTerm.getKind());
 					throw new DataException("Result kind mismatch during term export", term.toString());
 				}
 			} else
-				assert (undefinedTermNames.containsKey(term.toString())): "Unknown result kind for known term.";
+				assert (undefinedTermNames.containsKey(term.getName())): "Unknown result kind for known term.";
 			// place count
 			final int placeCount = term.placeCount();
 			assert (placeCount >= 0): "Negative place count in term during export.";
@@ -385,11 +361,11 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 				if (inputKind != null) {
 					if (!moduleTerm.getInputKind(i)
 							.equals(moduleData
-							.getKind(kindNameMap.get(inputKind.toString())))) {
+							.getKind(kindNameMap.get(inputKind.getName())))) {
 						logger.error("Input kind mismatch during export of term " + term);
 						logger.error("Position: " + (i+1));
 						logger.error("Needed input kind: "
-							+ moduleData.getKind(kindNameMap.get(inputKind.toString())));
+							+ moduleData.getKind(kindNameMap.get(inputKind.getName())));
 						logger.error("Found input kind:  " + moduleTerm.getInputKind(i));
 						throw new DataException("Input kind mismatch during term export", term.toString());
 					}
@@ -404,7 +380,7 @@ final class InterfaceDataImpl extends DataImpl implements InterfaceData, Externa
 				continue;
 			assert (symbol instanceof StatementImpl): "Statement not from this implementation.";
 			final StatementImpl statement = (StatementImpl) symbol;
-			final StatementImpl moduleStatement = moduleData.getStatement(prefix + statement.toString());
+			final StatementImpl moduleStatement = moduleData.getStatement(prefix + statement.getName());
 			if (moduleStatement == null) {
 				logger.error("Statement " + statement + " unknown during export.");
 				throw new DataException("Statement unknown during export", statement.toString());

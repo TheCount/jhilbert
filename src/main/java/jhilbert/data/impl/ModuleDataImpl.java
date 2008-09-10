@@ -31,6 +31,7 @@ import jhilbert.data.ModuleData;
 import jhilbert.data.Parameter;
 import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
+import jhilbert.data.impl.KindImpl;
 import org.apache.log4j.Logger;
 
 /**
@@ -80,16 +81,42 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 	public void bindKind(final Kind oldKind, final String newKindName) throws DataException {
 		assert (oldKind != null): "Supplied old kind is null.";
 		assert (newKindName != null): "Supplied new kind name is null.";
-		final String oldKindName = oldKind.toString();
+		final String oldKindName = oldKind.getName();
 		if (!kinds.containsKey(oldKindName)) {
-			logger.error("Old kind not found: " + oldKindName);
+			logger.error("Unable to bind kind: old kind not found: " + oldKindName);
 			throw new DataException("Kind not found", oldKindName);
 		}
 		if (kinds.containsKey(newKindName)) {
-			logger.error("New kind already exists: " + newKindName);
+			logger.error("Unable to bind kind: new kind already exists: " + newKindName);
 			throw new DataException("Kind already exists", newKindName);
 		}
 		kinds.put(newKindName, kinds.get(oldKindName));
+	}
+
+	/**
+	 * Binds two previously imported or exported kinds together.
+	 * This method is used during import or export.
+	 *
+	 * @param kind1Name name of the first kind to bind together (must not be <code>null</code>).
+	 * @param kind2Name name of the second kind to bind together (must not be <code>null</code>, must not be equal to <code>kind1Name</code>).
+	 *
+	 * @throws DataException if no kinds with <code>kind1Name</code> and <code>kind2Name</code> exist.
+	 */
+	void bindKind(final String kind1Name, final String kind2Name) throws DataException {
+		assert (kind1Name != null): "Supplied first kind name is null.";
+		assert (kind2Name != null): "Supplied second kind name is null.";
+		assert (!kind1Name.equals(kind2Name)): "Supplied kind names are equal.";
+		if (!(kinds.containsKey(kind1Name))) {
+			logger.error("Unable to bind kind: kind " + kind1Name + " not found.");
+			throw new DataException("Kind not found", kind1Name);
+		}
+		if (!(kinds.containsKey(kind2Name))) {
+			logger.error("Unable to bind kind: kind " + kind2Name + " not found.");
+			throw new DataException("Kind not found", kind2Name);
+		}
+		final Kind newKind = new KindImpl(kinds.get(kind1Name), kinds.get(kind2Name));
+		kinds.put(kind1Name, newKind);
+		kinds.put(kind2Name, newKind);
 	}
 
 	/**
@@ -101,16 +128,17 @@ final class ModuleDataImpl extends DataImpl implements ModuleData {
 	 *
 	 * @throws DataException if a functor with the specified name already exists.
 	 */
-	void defineTerm(final String name, final Kind resultKind, final List<Kind> inputKindList) throws DataException {
-		assert (name != null): "Supplied name is null.";
-		assert (resultKind != null): "Supplied result kind is null.";
-		assert (inputKindList != null): "Supplied input kind list is null.";
-		if (terms.containsKey(name)) {
-			logger.error("A term with name " + name + " already exists.");
-			throw new DataException("Term already exists", name);
-		}
-		terms.put(name, new Functor(name, resultKind, inputKindList));
-	}
+	// FIXME
+	//void defineTerm(final String name, final Kind resultKind, final List<Kind> inputKindList) throws DataException {
+	//	assert (name != null): "Supplied name is null.";
+	//	assert (resultKind != null): "Supplied result kind is null.";
+	//	assert (inputKindList != null): "Supplied input kind list is null.";
+	//	if (terms.containsKey(name)) {
+	//		logger.error("A term with name " + name + " already exists.");
+	//		throw new DataException("Term already exists", name);
+	//	}
+	//	terms.put(name, new Functor(name, resultKind, inputKindList));
+	//}
 
 	public ComplexTerm getTerm(final String name) {
 		return terms.get(name);
