@@ -22,18 +22,18 @@
 
 package jhilbert.data;
 
-import jhilbert.data.Name;
-
 /**
- * A name from the Symbol namespace.
- * The symbol namespace contains variables and statements.
+ * A symbol ({@link Statement} or {@link Variable}).
  */
 public interface Symbol extends Name {
 
+	public Namespace<? extends Symbol> getNamespace();
+
 	/**
-	 * Checks whether this symbol is a variable.
+	 * Returns whether this <code>Symbol</code> is a {@link Variable}.
 	 *
-	 * @return <code>true</code> if this symbol is a {@link Variable}, <code>false</code> otherwise.
+	 * @return <code>true</code> if this <code>Symbol</code> is a
+	 * 	{@link Variable}, <code>false</code> otherwise.
 	 */
 	public boolean isVariable();
 

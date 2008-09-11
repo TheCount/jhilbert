@@ -22,18 +22,49 @@
 
 package jhilbert.data;
 
-import jhilbert.data.Name;
+import java.io.Serializable;
+
+import java.util.List;
 
 /**
- * A Parameter.
+ * An interface parameter.
  */
-public interface Parameter extends Name {
+public interface Parameter extends Serializable {
 
 	/**
-	 * Obtains the interface locator of this parameter.
+	 * Returns the name of this parameter.
 	 *
-	 * @return interface locator of this parameter.
+	 * @return name of this parameter.
+	 */
+	public String getName();
+
+	/**
+	 * Returns the locator for this parameter.
+	 * The locator can be used to obtain the corresponding module.
+	 *
+	 * @return locator of this parameter.
 	 */
 	public String getLocator();
+
+	/**
+	 * Returns the revision of this parameter.
+	 *
+	 * @return revision of this parameter.
+	 */
+	public long getRevision();
+
+	/**
+	 * Returns the parameter list of this parameter.
+	 *
+	 * @return parameter list of this parameter.
+	 */
+	public List<Parameter> getParameterList();
+
+	/**
+	 * Returns the namespace prefix for this parameter.
+	 *
+	 * @return namespace prefix for this parameter.
+	 */
+	public String getPrefix();
 
 }

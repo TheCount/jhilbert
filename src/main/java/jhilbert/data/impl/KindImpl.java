@@ -22,76 +22,79 @@
 
 package jhilbert.data.impl;
 
+import java.io.Serializable;
+
 import jhilbert.data.Kind;
-import jhilbert.data.impl.NameImpl;
-import jhilbert.util.IdentityHashSet;
 
 /**
- * Implementation of {@link Kind}.
+ * {@link Kind} implementation.
  */
-final class KindImpl extends NameImpl implements Kind {
+final class KindImpl extends AbstractName implements Kind, Serializable {
 
 	/**
-	 * Serialization ID.
+	 * Serialisation ID.
 	 */
 	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
-	 * Bound kind ID.
+	 * Original name.
 	 */
-	private static int boundKindID = 0;
+	private final KindImpl originalName;
 
 	/**
-	 * Bound kinds set.
+	 * Namespace.
 	 */
-	private Set<Kind> boundKinds;
+	private NamespaceImpl<KindImpl> namespace;
 
 	/**
-	 * Creates a new kind with the specified name.
-	 *
-	 * @param name name of the new kind.
-	 */
-	KindImpl(final String name) {
-		super(name);
-		boundKinds = new IdentityHashSet();
-		boundKinds.add(this);
-	}
-
-	/**
-	 * Creates a new bound kind.
-	 * The two specified kinds become undistinguishable during an equals comparison.
-	 * It is permissible, though pointless, that the two kinds are identical.
-	 *
-	 * @param kind1 first kind (must not be <code>null</code>).
-	 * @param kind2 second kind (must not be <code>null</code>).
-	 */
-	KindImpl(final KindImpl kind1, final KindImpl kind2) {
-		super("(bound kind " + (boundKindID++) + ")");
-		assert (kind1 != null): "Supplied first kind is null.";
-		assert (kind2 != null): "Supplied second kind is null.";
-		boundKinds = new IdentityHashSet();
-		if (kind1.boundKinds != null)
-			boundKinds.addAll(kind1.boundKinds);
-		if (kind2.boundKinds != null)
-			boundKinds.addAll(kind2.boundKinds);
-		kind1.boundKinds = boundKinds;
-		kind2.boundKinds = boundKinds;
-		boundKinds.add(kind1);
-		boundKinds.add(kind2);
-		boundKinds.add(this);
-	}
-
-	/**
-	 * Creates an uninitalized kind.
-	 * Used by serialization.
+	 * Default constructor, for serialisation use only!
 	 */
 	public KindImpl() {
 		super();
-		boundKinds = null;
+		originalName = null;
+		namespace = null;
 	}
 
-	public @Override boolean equals(final Object o) {
-		return boundKinds.contains(o);
+	/**
+	 * Creates a new <code>KindImpl</code> with the specified name.
+	 *
+	 * @param name kind name.
+	 */
+	KindImpl(final String name) {
+		this(name, null, -1);
+	}
+
+	/**
+	 * Creates a new <code>KindImpl</code> with the specified name and
+	 * original name.
+	 *
+	 * @param name kind name.
+	 * @param orig original name, which may be <code>null</code> if this
+	 * 	<code>KindImpl</code> is not derived from another one.
+	 * @param parameterIndex index of parameter of <code>orig</code>.
+	 */
+	KindImpl(final String name, final KindImpl orig, final int parameterIndex) {
+		super(name, parameterIndex);
+		originalName = orig;
+		namespace = null;
+	}
+
+	public final NamespaceImpl<KindImpl> getNamespace() {
+		return namespace;
+	}
+
+	public KindImpl getOriginalName() {
+		return originalName;
+	}
+
+	@Override void setNamespace(final NamespaceImpl<? extends AbstractName> namespace) {
+		assert (namespace != null): "Supplied namespace is null";
+		assert (this.namespace == null): "Attempt to alter namespace";
+		try {
+			this.namespace = (NamespaceImpl<KindImpl>) namespace;
+		} catch (ClassCastException e) {
+			throw new AssertionError("Wrong namespace");
+		}
 	}
 
 }

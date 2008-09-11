@@ -16,4 +16,4 @@ Note that maven will pull in many dependencies automatically from the internet
 when you run it for the first time. You can also generate site documentation
 in target/site/ by running
 	mvn site
-The site documentation is still *very* sparse (as of June 2008).
+The site documentation is still *very* sparse (as of September 2008).

@@ -23,9 +23,8 @@
 package jhilbert.data;
 
 import java.util.List;
-import jhilbert.data.DVConstraints;
-import jhilbert.data.Symbol;
-import jhilbert.data.TermExpression;
+
+import jhilbert.expressions.Expression;
 
 /**
  * A statement.
@@ -33,30 +32,26 @@ import jhilbert.data.TermExpression;
 public interface Statement extends Symbol {
 
 	/**
-	 * Returns the disjoint variable constraints of this statement.
+	 * Returns the {@link DVConstraints} of this <code>Statement</code>.
 	 *
-	 * @return the disjoint variable constraints of this statement.
+	 * @return disjoint variable constraints.
 	 */
 	public DVConstraints getDVConstraints();
 
 	/**
-	 * Returns the hypotheses of this statement.
+	 * Returns the hypotheses of this <code>Statement</code>.
 	 *
-	 * @return a list of hypotheses of this statement.
+	 * @return hypotheses of this statement.
 	 */
-	public List<TermExpression> getHypotheses();
+	public List<Expression> getHypotheses();
 
 	/**
 	 * Returns the consequent of this statement.
-	 *
-	 * @return the consequent of this statement.
 	 */
-	public TermExpression getConsequent();
+	public Expression getConsequent();
 
 	/**
 	 * Returns the mandatory variables of this statement.
-	 *
-	 * @return a list of mandatory variables of this statement.
 	 */
 	public List<Variable> getMandatoryVariables();
 

@@ -22,46 +22,47 @@
 
 package jhilbert.data.impl;
 
-import jhilbert.data.Kind;
-import jhilbert.data.Variable;
-import jhilbert.data.impl.VariableImpl;
+import java.io.Serializable;
 
 /**
  * Unnamed variable.
- * As soon as a {@link Definition} or a {@link Statement} is created,
- * the names of the variables occurring in their definition become
- * unimportant, as long as proper substitution is guaranteed.
- * This class provides objects with which the explicitly named
- * variables may be replaced with.
+ * This class creates variables not part of any namespace which are unequal to
+ * all other variables except themselves.
  */
-final class UnnamedVariable extends VariableImpl {
+final class UnnamedVariable extends VariableImpl implements Serializable {
 
 	/**
-	 * Serialization ID.
+	 * Serialisation ID.
 	 */
 	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
-	 * Internal ID of this unnamed variable.
+	 * Variable ID.
 	 */
 	private static int id = 0;
 
 	/**
-	 * Creates a new unnamed variable with the specified kind.
-	 *
-	 * @param kind kind of unnamed variable.
+	 * Default constructor, for serialisation use only!
 	 */
-	public UnnamedVariable(final Kind kind) {
+	public UnnamedVariable() {
+		super();
+	}
+
+	/**
+	 * Creates a new <code>UnnamedVariable</code> with the specified
+	 * {@link KindImpl}.
+	 * This variable actually has an internal name, which is different from
+	 * all others.
+	 *
+	 * @param kind kind of this unnamed variable.
+	 */
+	UnnamedVariable(final KindImpl kind) {
 		super("(?" + id + ")", kind);
 		++id;
 	}
 
-	/**
-	 * Creates an uninitialized unnamed variable.
-	 * Used by serialization.
-	 */
-	public UnnamedVariable() {
-		super();
+	@Override final void setNamespace(final NamespaceImpl<? extends AbstractName> namespace) {
+		throw new AssertionError("Attempt to set namespace for unnamed variable");
 	}
 
 }

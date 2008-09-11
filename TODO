@@ -1,6 +1,7 @@
-* Make kindbind commands in interfaces work correctly
-* jhilbert.data.impl is a mess
+* client/server structure
 * specification and proof of soundness
 * unit tests
 * integration tests
-* client/server structure
+* The ParameterLoader code is quite ugly.
+* The VerifierImpl code is slighly awkward
+* No proper separation of syntax and semantics

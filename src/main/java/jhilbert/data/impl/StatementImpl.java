@@ -22,31 +22,32 @@
 
 package jhilbert.data.impl;
 
+import java.io.Serializable;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import jhilbert.data.Data;
+
 import jhilbert.data.DVConstraints;
 import jhilbert.data.Statement;
-import jhilbert.data.TermExpression;
 import jhilbert.data.Variable;
-import jhilbert.data.VariablePair;
-import jhilbert.data.impl.UnnamedVariable;
+
+import jhilbert.expressions.Anonymiser;
+import jhilbert.expressions.Expression;
+import jhilbert.expressions.ExpressionFactory;
+
 import org.apache.log4j.Logger;
 
 /**
- * A statement.
+ * {@link Statement} implementation.
  */
-final class StatementImpl extends NameImpl implements Statement {
+final class StatementImpl extends SymbolImpl implements Statement, Serializable {
 
 	/**
-	 * Serialization ID.
+	 * Serialisation ID.
 	 */
 	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
@@ -56,95 +57,27 @@ final class StatementImpl extends NameImpl implements Statement {
 	private static final Logger logger = Logger.getLogger(StatementImpl.class);
 
 	/**
-	 * Disjoint variable constraints.
+	 * DV constraints.
 	 */
-	private DVConstraintsImpl dvConstraints;
+	private final DVConstraints dvConstraints;
 
 	/**
 	 * Hypotheses.
 	 */
-	private List<TermExpression> hypotheses;
+	private final List<Expression> hypotheses;
 
 	/**
 	 * Consequent.
 	 */
-	private TermExpressionImpl consequent;
+	private final Expression consequent;
 
 	/**
-	 * Mandatory variables (those occurring in the conclusion but not in the hypotheses).
+	 * Mandatory variables.
 	 */
-	private List<Variable> mandatoryVariables;
+	private final List<Variable> mandatoryVariables;
 
 	/**
-	 * Creates a new Statement.
-	 * The parameters must not be <code>null</code>.
-	 *
-	 * @param name name of the statement.
-	 * @param rawDV raw distinct variable constraints.
-	 * @param hypotheses list of hypotheses.
-	 * @param consequent the consequent.
-	 */
-	public StatementImpl(final String name, final List<SortedSet<Variable>> rawDV,
-			final List<TermExpression> hypotheses, final TermExpression consequent) {
-		super(name);
-		assert (rawDV != null): "Supplied distinct variable constraints are null.";
-		assert (hypotheses != null): "Supplied list of hypotheses is null.";
-		assert (consequent != null): "Supplied conclusion is null.";
-		assert (consequent instanceof TermExpressionImpl): "Consequent not from this implementation.";
-		// unname variables of raw DV
-		final Map<Variable, TermExpressionImpl> varMap = new HashMap();
-		final List<SortedSet<Variable>> unnamedDV = new ArrayList(rawDV.size());
-		for (final SortedSet<Variable> rawDVGroup: rawDV) {
-			final SortedSet<Variable> unnamedDVGroup = new TreeSet();
-			for (final Variable namedVar: rawDVGroup) {
-				if (!varMap.containsKey(namedVar))
-					varMap.put(namedVar,
-						new TermExpressionImpl(new UnnamedVariable(namedVar.getKind())));
-				unnamedDVGroup.add((Variable) varMap.get(namedVar).getValue());
-			}
-			unnamedDV.add(unnamedDVGroup);
-		}
-		// obtain hypothesis and consequent variables and enhance varMap for unnaming
-		final LinkedHashSet<Variable> allHypVars = new LinkedHashSet();
-		for (final TermExpression hypothesis: hypotheses)
-			for (final Variable namedVar: hypothesis.variables()) {
-				if (!varMap.containsKey(namedVar))
-					varMap.put(namedVar,
-						new TermExpressionImpl(new UnnamedVariable(namedVar.getKind())));
-				allHypVars.add((Variable) varMap.get(namedVar).getValue());
-			}
-		final LinkedHashSet<Variable> allVars = new LinkedHashSet(allHypVars); // NB: order ltr first appearance
-		for (final Variable namedVar: consequent.variables()) {
-			if (!varMap.containsKey(namedVar))
-				varMap.put(namedVar, new TermExpressionImpl(new UnnamedVariable(namedVar.getKind())));
-			allVars.add((Variable) varMap.get(namedVar).getValue());
-		}
-		// calculate unnamed restricted DV contraints
-		this.dvConstraints = new DVConstraintsImpl();
-		for (final SortedSet<Variable> varSet: unnamedDV)
-			dvConstraints.add(varSet);
-		final int oldDVSize = dvConstraints.size();
-		dvConstraints.restrict(allVars);
-		if (oldDVSize != dvConstraints.size()) {
-			logger.warn("Disjoint variable restrictions for variables not appearing in hypotheses or "
-				+ "consequent removed from statement " + name);
-			logger.debug("DV constraints now: " + dvConstraints);
-		}
-		// calculate hypotheses and consequent
-		this.hypotheses = new ArrayList(hypotheses.size());
-		for (final TermExpression hypothesis: hypotheses)  {
-			assert (hypothesis instanceof TermExpressionImpl): "Hypothesis not from this implementation.";
-			this.hypotheses.add(((TermExpressionImpl) hypothesis).substImpl(varMap));
-		}
-		this.consequent = ((TermExpressionImpl) consequent).substImpl(varMap);
-		// calculate mandatory variables
-		allVars.removeAll(allHypVars);
-		this.mandatoryVariables = new ArrayList(allVars); // NB: order is important here, make sure not to break anything
-	}
-
-	/**
-	 * Creates an uninitialized Statement.
-	 * Used by serialization.
+	 * Default constructor, for serialisation use only!
 	 */
 	public StatementImpl() {
 		super();
@@ -154,15 +87,74 @@ final class StatementImpl extends NameImpl implements Statement {
 		mandatoryVariables = null;
 	}
 
-	public DVConstraintsImpl getDVConstraints() {
+	/**
+	 * Creates a new <code>StatementImpl</code> with the specified name,
+	 * disjoint variable constraints, hypotheses and consequent.
+	 *
+	 * @param name name of new statement.
+	 * @param dv disjoint variable constraints.
+	 * @param hypotheses {@link List} of hypotheses.
+	 * @param consequent consequent of new statement.
+	 */
+	StatementImpl(final String name, final DVConstraints dv, final List<Expression> hypotheses, final Expression consequent) {
+		this(name, null, -1, dv, hypotheses, consequent);
+	}
+
+	/**
+	 * Creates a new <code>StatementImpl</code> derived from the specified
+	 * original statement with the specified name, disjoint variable
+	 * constraints, hypotheses and consequent.
+	 *
+	 * @param name name of new statement.
+	 * @param orig statement this statement is derived from.
+	 * @param parameterIndex index of parameter of <code>orig</code>.
+	 * @param dv disjoint variable constraints.
+	 * @param hypotheses {@link List} of hypotheses.
+	 * @param consequent consequent of new statement.
+	 */
+	StatementImpl(final String name, final StatementImpl orig, final int parameterIndex, final DVConstraints dv, final List<Expression> hypotheses,
+			final Expression consequent) {
+		super(name, orig, parameterIndex);
+		assert (dv != null): "Supplied DV constraints are null";
+		assert (hypotheses != null): "Supplied hypotheses are null";
+		assert (consequent != null): "Supplied consequent is null";
+		// variables appearing in the hypotheses
+		final Set<Variable> hypVars = new HashSet();
+		for (final Expression hyp: hypotheses)
+			hypVars.addAll(hyp.variables());
+		// variables appearing in the consequent
+		final LinkedHashSet<Variable> consVars = consequent.variables();
+		// all variables
+		final Set<Variable> allVars = new HashSet(hypVars);
+		allVars.addAll(consVars);
+		// named mandatory variables
+		final LinkedHashSet<Variable> namedMandVars = new LinkedHashSet(consVars);
+		namedMandVars.removeAll(hypVars);
+		// restrict DV constraints
+		dv.restrict(allVars);
+		// create an anonymiser for the variables and set fields
+		final Anonymiser anonymiser = ExpressionFactory.getInstance().createAnonymiser(allVars);
+		dvConstraints = anonymiser.anonymise(dv);
+		final List<Expression> unnamedHyps = new ArrayList(hypotheses.size());
+		for (final Expression hyp: hypotheses)
+			unnamedHyps.add(anonymiser.anonymise(hyp));
+		this.hypotheses = Collections.unmodifiableList(unnamedHyps);
+		this.consequent = anonymiser.anonymise(consequent);
+		final List<Variable> unnamedMandVars = new ArrayList(namedMandVars.size());
+		for (final Variable namedMandVar: namedMandVars)
+			unnamedMandVars.add(anonymiser.anonymise(namedMandVar));
+		this.mandatoryVariables = Collections.unmodifiableList(unnamedMandVars);
+	}
+
+	public DVConstraints getDVConstraints() {
 		return dvConstraints;
 	}
 
-	public List<TermExpression> getHypotheses() {
+	public List<Expression> getHypotheses() {
 		return hypotheses;
 	}
 
-	public TermExpressionImpl getConsequent() {
+	public Expression getConsequent() {
 		return consequent;
 	}
 
@@ -170,8 +162,12 @@ final class StatementImpl extends NameImpl implements Statement {
 		return mandatoryVariables;
 	}
 
-	public boolean isVariable() {
+	public final boolean isVariable() {
 		return false;
+	}
+
+	public @Override String toString() {
+		return getNameString() + "((" + dvConstraints + ", " + hypotheses + ") -> " + consequent + ")";
 	}
 
 }

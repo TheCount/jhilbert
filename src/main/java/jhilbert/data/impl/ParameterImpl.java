@@ -22,95 +22,154 @@
 
 package jhilbert.data.impl;
 
+import java.io.Serializable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import jhilbert.data.Data;
+
+import jhilbert.data.DataException;
+import jhilbert.data.Module;
 import jhilbert.data.Parameter;
-import jhilbert.data.impl.NameImpl;
+
+import jhilbert.scanners.ScannerException;
+import jhilbert.scanners.Token;
+import jhilbert.scanners.TokenScanner;
+
+import org.apache.log4j.Logger;
 
 /**
- * Parameter data to denote an interface and the namespace prefix with which its data should be loaded.
+ * {@link Parameter} implementation.
  */
-class ParameterImpl extends NameImpl implements Parameter {
+final class ParameterImpl implements Parameter, Serializable {
 
 	/**
-	 * Serialization ID.
+	 * Serialisation ID.
 	 */
 	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
-	 * A special parameter for the "main" module.
+	 * Logger for this class.
 	 */
-	public static final ParameterImpl MAIN_PARAMETER
-		= new ParameterImpl("(main)", "(none)", Collections.<Parameter>emptyList(), "");
+	private static final Logger logger = Logger.getLogger(ParameterImpl.class);
 
 	/**
-	 * Locator.
+	 * Parameter name.
 	 */
-	private String locator;
+	private final String name;
 
 	/**
-	 * List of parameters to this parameter.
+	 * Module locator.
 	 */
-	private List<Parameter> parameterList;
+	private final String locator;
+
+	/**
+	 * Parameter list.
+	 */
+	private final List<Parameter> parameterList;
 
 	/**
 	 * Namespace prefix.
 	 */
-	private String prefix;
+	private final String prefix;
 
 	/**
-	 * Creates a new parameter.
-	 *
-	 * @param name name of this parameter.
-	 * @param locator locator for the interface this parameter denotes.
-	 * @param parameterList list of parameters to be passed when loading the interface.
-	 * @param prefix namespace prefix for this interface parameter.
+	 * Default constructor, for serialisation use only!
 	 */
-	public ParameterImpl(final String name, final String locator, final List<Parameter> parameterList,
-			final String prefix) {
-		super(name);
-		assert (locator != null): "Supplied locator is null.";
-		assert (parameterList != null): "Supplied parameter list is null.";
-		assert (prefix != null): "Supplied prefix is null.";
+	ParameterImpl() {
+		name = null;
+		locator = null;
+		parameterList = null;
+		prefix = null;
+	}
+
+	/**
+	 * Creates a new <code>ParameterImpl</code> with the specified name,
+	 * locator, parameter list and prefix.
+	 *
+	 * @param name name of new parameter.
+	 * @param locator module locator of new parameter.
+	 * @param parameterList parameter list.
+	 * @param prefix namespace prefix.
+	 */
+	ParameterImpl(final String name, final String locator, final List<Parameter> parameterList, final String prefix) {
+		assert (name != null): "Supplied name is null";
+		assert (locator != null): "Supplied locator is null";
+		assert (parameterList != null): "Supplied parameter list is null";
+		assert (prefix != null): "Supplied prefix is null";
+		this.name = name;
 		this.locator = locator;
-		this.parameterList = parameterList;
+		this.parameterList = Collections.unmodifiableList(parameterList);
 		this.prefix = prefix;
 	}
 
 	/**
-	 * Creates an uninitialized Parameter.
-	 * Used by serialization.
+	 * Scans a new <code>ParameterImpl</code> from the specified token
+	 * scanner using data from the specified module.
+	 *
+	 * @param module data module.
+	 * @param tokenScanner {@link TokenScanner} to obtain parameter data.
+	 *
+	 * @throws DataException if a syntax error occurs.
 	 */
-	public ParameterImpl() {
-		super();
-		locator = null;
-		parameterList = null;
-		prefix = null;
+	ParameterImpl(final Module module, final TokenScanner tokenScanner) throws DataException {
+		assert (module != null): "Supplied module is null";
+		assert (tokenScanner != null): "Supplied tokenScanner is null";
+		try {
+			name = tokenScanner.getAtom();
+			locator = tokenScanner.getAtom();
+			final List<Parameter> parameterList = new ArrayList();
+			tokenScanner.beginExp();
+			Token token = tokenScanner.getToken();
+			while (token.getTokenClass() == Token.Class.ATOM) {
+				final Parameter parameter = module.getParameter(token.getTokenString());
+				if (parameter == null) {
+					logger.error("Parameter " + token.getTokenString() + " unknown");
+					logger.debug("Current scanner context: " + tokenScanner.getContextString());
+					throw new DataException("Parameter unknown");
+				}
+				parameterList.add(parameter);
+				token = tokenScanner.getToken();
+			}
+			if (token.getTokenClass() != Token.Class.END_EXP) {
+				logger.error("Expected end of parameter list");
+				logger.debug("Current scanner context: " + tokenScanner.getContextString());
+				throw new DataException("Expected end of parameter list");
+			}
+			this.parameterList = Collections.unmodifiableList(parameterList);
+			prefix = tokenScanner.getString();
+		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input while scanning parameter", e);
+			throw new DataException("Unexpected end of input while scanning parameter", e);
+		} catch (ScannerException e) {
+			logger.error("Scanner error while scanning parameter", e);
+			logger.debug("Scanner context: " + e.getScanner().getContextString());
+			throw new DataException("Scanner error while scanning parameter", e);
+		}
+	}
+
+	public String getName() {
+		return name;
 	}
 
 	public String getLocator() {
 		return locator;
 	}
 
-	/**
-	 * Obtains the parameter list to this parameter.
-	 *
-	 * @return unmodifiable parameter list to this parameter.
-	 */
+	public long getRevision() {
+		return -1; // FIXME: always returns -1 right now
+	}
+
 	public List<Parameter> getParameterList() {
 		return parameterList;
 	}
 
-	/**
-	 * Obtains the namespace prefix for this interface parameter.
-	 *
-	 * @return namespace prefix for this interface parameter.
-	 */
 	public String getPrefix() {
 		return prefix;
+	}
+
+	public @Override String toString() {
+		return name + '(' + locator + ')' + parameterList + '+' + prefix;
 	}
 
 }

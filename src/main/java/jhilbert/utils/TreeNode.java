@@ -1,0 +1,69 @@
+/*
+    JHilbert, a verifier for collaborative theorem proving
+    Copyright © 2008 Alexander Klauer
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    You may contact the author on these Wiki pages:
+    http://planetx.cc.vt.edu/AsteroidMeta//GrafZahl (preferred)
+    http://en.wikisource.org/wiki/User_talk:GrafZahl
+*/
+
+package jhilbert.utils;
+
+import java.util.Collection;
+
+/**
+ * A node in a tree-like data structure.
+ * Each <code>TreeNode</code> has a value and zero or more children, which
+ * are themselves compatible tree nodes.
+ *
+ * @param E value type.
+ */
+public interface TreeNode<E> {
+
+	/**
+	 * Returns the value of this <code>TreeNode</code>.
+	 *
+	 * @return value of this tree node.
+	 */
+	public E getValue();
+
+	/**
+	 * Returns an unmodifiable {@link Collection} of children of this tree
+	 * node.
+	 *
+	 * @return collection of children of this tree node.
+	 */
+	public Collection<? extends TreeNode<E>> getChildren();
+
+	/**
+	 * Adds a child to this <code>TreeNode</code>.
+	 *
+	 * @param child child to add.
+	 *
+	 * @throws ClassCastException if <code>child</code> cannot be cast to
+	 * 	the type of the implementing class.
+	 */
+	public void addChild(TreeNode<E> child) throws ClassCastException;
+
+	/**
+	 * Checks whether this <code>TreeNode</code> is a leaf node.
+	 *
+	 * @return <code>true</code> if this tree node has exactly zero
+	 * 	children, <code>false</code> otherwise.
+	 */
+	public boolean isLeaf();
+
+}

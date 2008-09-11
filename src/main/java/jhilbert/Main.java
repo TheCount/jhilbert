@@ -22,12 +22,18 @@
 
 package jhilbert;
 
+import java.io.FileInputStream;
+
+import java.util.HashMap;
+
 import jhilbert.commands.Command;
+
 import jhilbert.data.DataFactory;
-import jhilbert.data.ModuleData;
-import jhilbert.exceptions.GeneralException;
-import jhilbert.util.FileInputSource;
-import jhilbert.util.CommandScanner;
+import jhilbert.data.Module;
+
+import jhilbert.scanners.CommandScanner;
+import jhilbert.scanners.ScannerFactory;
+
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -35,8 +41,7 @@ import org.apache.log4j.Logger;
 /**
  * Main class.
  */
-public final class Main
-{
+public final class Main {
 
 	/**
 	 * Version.
@@ -50,7 +55,7 @@ public final class Main
 	 *
 	 * @throws Exception if anything out of the ordinary happens.
 	 */
-	public static void main(String[] args) throws Exception {
+	public static void main(String... args) throws Exception {
 		BasicConfigurator.configure();
 		final Logger logger = Logger.getRootLogger();
 		try {
@@ -67,22 +72,25 @@ public final class Main
 			}
 			if (inputFileName == null) {
 				printUsage();
-				System.exit(0);
+				System.exit(1);
 			}
-			logger.info("Scanning file " + inputFileName);
-			ModuleData md = DataFactory.getInstance().createModuleData();
-			CommandScanner cs = new CommandScanner(new FileInputSource(inputFileName), md, Command.MODULE_COMMANDS);
+			logger.info("Processing file " + inputFileName);
+			final Module mainModule = DataFactory.getInstance().createModule("");
+			final CommandScanner cs = ScannerFactory.getInstance()
+				.createCommandScanner(new FileInputStream(inputFileName), mainModule);
 			for (Command c = cs.getToken(); c != null; c = cs.getToken()) {
 				if (logger.isDebugEnabled())
-					logger.debug("Current context: " + cs.getContextString());
+					logger.debug("Current command: " + cs.getContextString());
 				c.execute();
 				cs.resetContext();
 			}
-		} catch (GeneralException e) {
-			logger.fatal("Exiting due to unrecoverable error:", e);
+			logger.info("File processes successfully");
+			return;
+		} catch (JHilbertException e) {
+			logger.fatal("Exiting due to unrecoverable error", e);
 			System.exit(1);
 		} catch (Exception e) {
-			logger.fatal("Caught unexpected exception:");
+			logger.fatal("Caught unexpected exception");
 			throw e;
 		}
 	}

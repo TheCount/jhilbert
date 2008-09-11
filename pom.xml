@@ -28,7 +28,7 @@
 	<packaging>bundle</packaging>
 	<version>3</version>
 	<name>jhilbert</name>
-	<url>http://maven.apache.org</url>
+	<url>http://planetx.cc.vt.edu/AsteroidMeta/JHilbert</url>
 	<build>
 		<plugins>
 			<plugin>
@@ -75,11 +75,36 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<licenses>
+		<license>
+			<name>GNU General Public License, Version 3</name>
+			<url>COPYING</url>
+		</license>
+	</licenses>
 	<reporting>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>javadoc</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>dependencies</report>
+							<report>license</report>
+						</reports>
+					</reportSet>
+				</reportSets>
 			</plugin>
 		</plugins>
 	</reporting>

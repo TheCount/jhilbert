@@ -22,32 +22,35 @@
 
 package jhilbert.data.impl;
 
+import java.io.Serializable;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+
 import jhilbert.data.DataException;
 import jhilbert.data.DVConstraints;
-import jhilbert.data.Kind;
+import jhilbert.data.Namespace;
+import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
-import jhilbert.data.VariablePair;
+
+import jhilbert.scanners.ScannerException;
+import jhilbert.scanners.Token;
+import jhilbert.scanners.TokenScanner;
+
 import org.apache.log4j.Logger;
 
 /**
- * Class for managing distinct variable constraints.
- * This class performs no checks whatsoever that the specified VariablePairs are actually valid with respect to some {@link ModuleData}.
- * <p>
- * This set is symmetric: whenever (x, y) is in the set, so is (y, x), according to {@link #contains()}.
- * However, only (x, y) with x &lt; y is actually present in the set (and hence returned by an Iterator).
- * <p>
- * It is ensured that no elements of the form (x, x) can be added.
+ * {@link DVConstraints} implementation.
  */
-class DVConstraintsImpl extends HashSet<VariablePair> implements DVConstraints {
+final class DVConstraintsImpl implements DVConstraints, Serializable {
+
+	/**
+	 * Serialisation ID.
+	 */
+	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Logger for this class.
@@ -55,168 +58,195 @@ class DVConstraintsImpl extends HashSet<VariablePair> implements DVConstraints {
 	private static final Logger logger = Logger.getLogger(DVConstraintsImpl.class);
 
 	/**
-	 * Creates a new empty set of distinct variable constraints.
+	 * Empty variable array for type selection.
+	 */
+	private static final Variable[] EMPTY_VAR_ARRAY = new Variable[0];
+
+	/**
+	 * Underlying iterator.
+	 */
+	private static final class DVIterator implements Iterator<Variable[]> {
+
+		/**
+		 * Base iterator.
+		 */
+		private final Iterator<ArrayList<Variable>> baseIterator;
+
+		/**
+		 * Creates a new <code>DVIterator</code>.
+		 *
+		 * @param baseIterator constraint set iterator.
+		 */
+		DVIterator(final Iterator<ArrayList<Variable>> baseIterator) {
+			assert (baseIterator != null): "Supplied base iterator is null";
+			this.baseIterator = baseIterator;
+		}
+
+		public boolean hasNext() {
+			return baseIterator.hasNext();
+		}
+
+		public Variable[] next() {
+			return baseIterator.next().toArray(EMPTY_VAR_ARRAY);
+		}
+
+		public void remove() {
+			logger.error("Remove operation not supported, use the restrict() method to restrict constraints");
+			throw new UnsupportedOperationException("Removing elements from DV constraints is not supported");
+		}
+
+	}
+
+	/**
+	 * Underlying constraints set.
+	 *
+	 * FIXME: We have two choices here:
+	 * <ul>
+	 * <li>Use HashSet<ArrayList>: fast addition and retrieval, slow DV pair creation, lots of overhead
+	 * <li>Use TreeSet<Variable[]> with a suitable comparator: slower addition and retrieval, fatser pair creation
+	 * </ul>
+	 * I'm implementing the first method now, but I'd say the second method warrants some testing...
+	 */
+	private final Set<ArrayList<Variable>> constraintSet;
+
+	/**
+	 * Creates new, empty <code>DVConstraintsImpl</code>.
+	 * <p>
+	 * This constructor is public for serialisation.
 	 */
 	public DVConstraintsImpl() {
-		super();
+		constraintSet = new HashSet();
 	}
 
 	/**
-	 * Creates a shallow copy of the specified DVConstraints object.
+	 * Scans new <code>DVConstraintsImpl</code> from the specified
+	 * {@link TokenScanner} containing variables from the specified symbol
+	 * namespace.
 	 *
-	 * @param dv DVConstraints to be copied (must not be <code>null</code>).
+	 * @param namespace namespace to obtain variables from.
+	 * @param tokenScanner token scanner to scan constraints from.
+	 *
+	 * @throws DataException if a scanner error occurs or if a variable
+	 * 	could not be found.
 	 */
-	DVConstraintsImpl(final DVConstraints dv) {
-		assert (dv != null): "Supplied DV constraints are null.";
-		for (final VariablePair p: dv)
-			add(p);
-	}
-
-	/**
-	 * Adds the specified element or its reverse.
-	 *
-	 * @param pair VariablePair to be added.
-	 *
-	 * @return <code>true</code> if this set has been changed, <code>false</code> otherwise.
-	 *
-	 * @throws NullPointerException if pair is <code>null</code>.
-	 */
-	public boolean add(final VariablePair pair) {
-		assert (pair != null): "Supplied variable pair is null.";
-		assert (pair instanceof VariablePairImpl): "variable pair not from this implementation.";
-		if (pair.getFirst().equals(pair.getSecond()))
-			return false;
-		if (pair.getFirst().compareTo(pair.getSecond()) < 0)
-			return super.add(pair);
-		else
-			return super.add(((VariablePairImpl) pair).reverse());
-	}
-
-	/**
-	 * Adds a set of mutually distinct variables.
-	 *
-	 * @param varSet set of variables.
-	 *
-	 * @return <code>true</code> if this set has been changed, <code>false</code> otherwise.
-	 */
-	public boolean add(final SortedSet<Variable> varSet) {
-		assert (varSet != null): "Supplied variable set is null.";
-		boolean result = false;
-		for (Variable x: varSet) {
-			final Iterator<Variable> tail = varSet.tailSet(x).iterator();
-			tail.next(); // good bye, x!
-			while (tail.hasNext())
-				result |= super.add(new VariablePairImpl(x, tail.next()));
-		}
-		return result;
-	}
-
-	public void addProduct(final SortedSet<Variable> varSet1, final SortedSet<Variable> varSet2) throws DataException {
-		assert ((varSet1 != null) && (varSet2 != null)): "Supplied variable set is null.";
-		if (varSet1.isEmpty() || varSet2.isEmpty())
-			return;
-		SortedSet<Variable> lowSet;
-		SortedSet<Variable> highSet;
-		if (varSet1.first().compareTo(varSet2.first()) < 0) {
-			lowSet = varSet1;
-			highSet = varSet2;
-		} else {
-			lowSet = varSet2;
-			highSet = varSet1;
-		}
-		for (Variable x: lowSet) {
-			if (highSet.contains(x)) {
-				logger.error("Variable " + x + " is not distinct from itself.");
-				throw new DataException("Variable not distinct from itself", x.toString());
+	DVConstraintsImpl(final Namespace<? extends Symbol> namespace, final TokenScanner tokenScanner) throws DataException {
+		constraintSet = new HashSet();
+		assert (namespace != null): "Supplied namespace is null";
+		assert (tokenScanner != null): "Supplied token scanner is null";
+		try {
+			Token outer = tokenScanner.getToken();
+			while (outer.getTokenClass() == Token.Class.BEGIN_EXP) {
+				final List<Variable> varList = new ArrayList();
+				Token inner = tokenScanner.getToken();
+				while (inner.getTokenClass() == Token.Class.ATOM) {
+					final String varName = inner.getTokenString();
+					final Symbol symbol = namespace.getObjectByString(varName);
+					if (symbol == null) {
+						logger.error("Variable " + varName + " not found");
+						logger.debug("Current scanner context: " + tokenScanner.getContextString());
+						throw new DataException("Variable not found");
+					}
+					if (!symbol.isVariable()) {
+						logger.error("Symbol " + varName + " is not a variable");
+						logger.debug("Current scanner context: " + tokenScanner.getContextString());
+						throw new DataException("Symbol is not a variable");
+					}
+					varList.add((Variable) symbol);
+					inner = tokenScanner.getToken();
+				}
+				if (inner.getTokenClass() != Token.Class.END_EXP) {
+					logger.error("Expected end of LISP s-Expression at end of DV constraint");
+					logger.debug("Current scanner context: " + tokenScanner.getContextString());
+					throw new DataException("Expected end of expression");
+				}
+				add(varList.toArray(EMPTY_VAR_ARRAY));
+				outer = tokenScanner.getToken();
 			}
-			for (Variable y: highSet.tailSet(x))
-				super.add(new VariablePairImpl(x, y));
+			tokenScanner.putToken(outer);
+		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input while scanning DV constraints", e);
+			throw new DataException("Unexpected end of input", e);
+		} catch (ScannerException e) {
+			logger.error("Scanner error while scanning DV constraints", e);
+			logger.debug("Scanner context: " + e.getScanner().getContextString());
+			throw new DataException("Scanner error", e);
 		}
 	}
 
-	public void restrict(final Collection<Variable> vars) {
-		assert (vars != null): "Specified collection is null.";
-		final Iterator<VariablePair> i = iterator();
-		while (i.hasNext()) {
-			final VariablePair p = i.next();
-			if (!(vars.contains(p.getFirst()) && vars.contains(p.getSecond())))
+	public void add(final Variable... vars) throws DataException {
+		assert (vars != null): "Supplied variables are null";
+		ArrayList<Variable> element;
+		for (int i = 0; i != vars.length; ++i) {
+			assert (vars[i] != null): "Variable is null";
+			for (int j = i + 1; j != vars.length; ++j) {
+				if (vars[i].equals(vars[j])) {
+					logger.error("Same variable appearing twice in DV list: " + vars[i]);
+					throw new DataException("Same variable appearing twice in DV list");
+				}
+				element = new ArrayList(2);
+				element.add(vars[i]);
+				element.add(vars[j]);
+				constraintSet.add(element);
+				element = new ArrayList(2);
+				element.add(vars[j]);
+				element.add(vars[i]);
+				constraintSet.add(element);
+			}
+		}
+	}
+
+	public void addProduct(final Set<Variable> varSet1, final Set<Variable> varSet2) throws DataException {
+		assert (varSet1 != null): "First supplied set of variables is null";
+		assert (varSet2 != null): "Second supplied set of variables is null";
+		ArrayList<Variable> element;
+		for (final Variable var1: varSet1) {
+			assert (var1 != null): "Variable is null";
+			for (final Variable var2: varSet2) {
+				assert (var2 != null): "Variable is null";
+				if (var1.equals(var2)) {
+					logger.error("Intersection of cartesian product factors is not empty");
+					logger.debug("Common element: " + var1);
+					throw new DataException("Intersection of cartesian product factors is not empty");
+				}
+				element = new ArrayList(2);
+				element.add(var1);
+				element.add(var2);
+				constraintSet.add(element);
+				element = new ArrayList(2);
+				element.add(var2);
+				element.add(var1);
+				constraintSet.add(element);
+			}
+		}
+	}
+
+	public boolean contains(final Variable var1, final Variable var2) {
+		final ArrayList<Variable> element = new ArrayList(2);
+		element.add(var1);
+		element.add(var2);
+		return constraintSet.contains(element);
+	}
+
+	 public boolean contains(final DVConstraints dv) {
+	 	assert (dv instanceof DVConstraintsImpl): "Implementation type error";
+		return constraintSet.containsAll(((DVConstraintsImpl) dv).constraintSet);
+	 }
+
+	public void restrict(final Set<Variable> varSet) {
+		assert (varSet != null): "Supplied set of variables is null";
+		for (final Iterator<ArrayList<Variable>> i = constraintSet.iterator(); i.hasNext();) {
+			final ArrayList<Variable> element = i.next();
+			if (!(varSet.contains(element.get(0)) && varSet.contains(element.get(1))))
 				i.remove();
 		}
 	}
 
-	public @Override boolean addAll(final Collection<? extends VariablePair> c) {
-		boolean result = false;
-		for (VariablePair p: c)
-			result |= add(p);
-		return result;
+	public Iterator<Variable[]> iterator() {
+		return new DVIterator(constraintSet.iterator());
 	}
 
-	public @Override boolean contains(final Object o) {
-		if (!(o instanceof VariablePair))
-			return false;
-		assert (o instanceof VariablePairImpl): "Variable pair not from this implementation.";
-		VariablePairImpl p = (VariablePairImpl) o;
-		return super.contains(p) || super.contains(p.reverse());
-	}
-
-	public @Override boolean containsAll(final Collection<?> c) {
-		for (Object o: c)
-			if (!contains(o))
-				return false;
-		return true;
-	}
-
-	public @Override boolean remove(final Object o) {
-		if (!(o instanceof VariablePair))
-			return false;
-		assert (o instanceof VariablePairImpl): "Variable pair not from this implementation.";
-		VariablePairImpl p = (VariablePairImpl) o;
-		return super.remove(p) || super.remove(p.reverse());
-	}
-
-	public @Override boolean removeAll(final Collection<?> c) {
-		boolean result = false;
-		for (Object o: c)
-			result |= remove(o);
-		return result;
-	}
-
-	/**
-	 * Adapts this object to the specified data with respect to the specified namespace prefix.
-	 *
-	 * @param data module data (must not be <code>null</code>).
-	 * @param kindNameMap map mapping interface kind names to module kind names (must not be <code>null</code>).
-	 * @param varMap variable mapping (must not be <code>null</code>).
-	 *
-	 * @return data adapted DV constraints in raw format.
-	 */
-	List<SortedSet<Variable>> adapt(final ModuleDataImpl data, final Map<String, String> kindNameMap,
-			final Map<Variable, Variable> varMap) {
-		assert (data != null): "Supplied data are null.";
-		assert (kindNameMap != null): "Supplied kind name map is null.";
-		assert (varMap != null): "Supplied variable map is null.";
-		final List<SortedSet<Variable>> result = new ArrayList(this.size());
-		for (final VariablePair pair: this) {
-			final Variable firstVar = pair.getFirst();
-			final Variable secondVar = pair.getSecond();
-			assert ((firstVar instanceof UnnamedVariable) && (secondVar instanceof UnnamedVariable)):
-				"disjoint variables not anonymized.";
-			if (!varMap.containsKey(firstVar)) {
-				final Kind kind = data.getKind(kindNameMap.get(firstVar.getKind().getName()));
-				assert (kind != null): "Kind missing from data.";
-				varMap.put(firstVar, new UnnamedVariable(kind));
-			}
-			if (!varMap.containsKey(secondVar)) {
-				final Kind kind = data.getKind(kindNameMap.get(secondVar.getKind().getName()));
-				assert (kind != null): "Kind missing from data.";
-				varMap.put(secondVar, new UnnamedVariable(kind));
-			}
-			final SortedSet<Variable> rawPair = new TreeSet();
-			rawPair.add(varMap.get(firstVar));
-			rawPair.add(varMap.get(secondVar));
-			result.add(rawPair);
-		}
-		return result;
+	public @Override String toString() {
+		return constraintSet.toString();
 	}
 
 }

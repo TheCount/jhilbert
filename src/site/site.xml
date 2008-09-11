@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="JHilbert">
+  <bannerLeft>
+    <name>JHilbert</name>
+    <!-- <src>http://maven.apache.org/images/apache-maven-project.png</src>
+    <href>http://maven.apache.org/</href> //-->
+  </bannerLeft>
+<!--  <bannerRight>
+    <src>http://maven.apache.org/images/maven-small.gif</src>
+  </bannerRight> //-->
+  <body>
+    <links>
+      <item name="Asteroid Meta" href="http://planetx.cc.vt.edu/AsteroidMeta/" />
+      <item name="JHilbert" href="http://planetx.cc.vt.edu/AsteroidMeta/JHilbert"/>
+    </links>
+
+    <menu name="JHilbert">
+      <item name="About" href="index.html" />
+      <item name="Downloads" href="downloads.html" />
+      <item name="Command documentation" href="commands.html" />
+    </menu>
+    <menu ref="reports" />
+  </body>
+</project>

@@ -22,24 +22,24 @@
 
 package jhilbert.data;
 
-import jhilbert.data.Kind;
-import jhilbert.data.Name;
-
 /**
- * A Term.
- * A term can either be a {@link Variable} or a complex term.
+ * A term.
+ * Terms are objects with a kind.
  */
 public interface Term extends Name {
 
 	/**
-	 * Returns the kind of this term.
+	 * Returns the {@link Kind} of this <code>Term</code>.
+	 *
+	 * @return the kind of this term.
 	 */
 	public Kind getKind();
 
 	/**
-	 * Checks whether this term is a variable.
+	 * Returns whether this <code>Term</code> is a {@link Variable}.
 	 *
-	 * @return <code>true</code> if this object is an instance of {@link Variable}, <code>false</code> otherwise.
+	 * @return <code>true</code> if this <code>Term</code> is a
+	 * 	{@link Variable}, <code>false</code> otherwise.
 	 */
 	public boolean isVariable();
 

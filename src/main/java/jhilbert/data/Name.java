@@ -22,16 +22,46 @@
 
 package jhilbert.data;
 
+import java.io.Serializable;
+
 /**
- * Name to be used as unique identifier in a namespace.
+ * A named piece of data.
  */
-public interface Name extends Comparable<Name> {
+public interface Name extends Serializable {
 
 	/**
-	 * Returns this name as a String.
+	 * Obtains the <code>Name</code> as a {@link java.lang.String}.
 	 *
-	 * @return this name as a String.
+	 * @return this <code>Name</code> as a {@link java.lang.String}.
 	 */
-	public String getName();
+	public String getNameString();
+
+	/**
+	 * Obtains the {@link Namespace} with which this <code>Name</code>
+	 * is registered.
+	 *
+	 * @return {@link Namespace} with which this name is
+	 * 	registered, or <code>null</code> if this name has not yet been
+	 * 	registered with a namespace.
+	 */
+	public Namespace<? extends Name> getNamespace();
+
+	/**
+	 * Obtains the original <code>Name</code> this name is derived from.
+	 *
+	 * @return the original <code>Name</code> this name is derived from,
+	 * 	or <code>null</code> if this name is not derived from any
+	 * 	name.
+	 */
+	public Name getOriginalName();
+
+	/**
+	 * Obtains the index of the {@link Parameter} of the {@link Module} of
+	 * the {@link Namespace} of this <code>Name</code>.
+	 * 
+	 * @return parameter index of module of namespace of this name, or
+	 * 	<code>-1</code> if this name is not derived from any name.
+	 */
+	public int getParameterIndex();
 
 }

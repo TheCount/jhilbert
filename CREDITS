@@ -1,10 +1,10 @@
 GHilbert
 ========
 JHilbert started as an implementation of GHilbert by Raph Levien.
-Unfortunately, as of March 2008, the GHilbert project appears to be on
+Unfortunately, as of September 2008, the GHilbert project appears to be on
 standby. See
 * http://planetx.cc.vt.edu/AsteroidMeta/Ghilbert
-* http://www.ghilbert.org/ (defunct as of March 2008)
+* http://www.ghilbert.org/ (defunct as of September 2008)
 
 metamath
 ========
@@ -17,4 +17,4 @@ theory or quantum logic. See
 * http://us.metamath.org/index.html
 * http://planetx.cc.vt.edu/AsteroidMeta/metamath
 
-Please let me know if there is an acknowledgement missing from this file.
+Please let me know if there is any acknowledgement missing from this file.

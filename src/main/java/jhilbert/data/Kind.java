@@ -22,10 +22,14 @@
 
 package jhilbert.data;
 
-import jhilbert.data.Name;
-
 /**
- * Marker interface for kinds.
+ * A Kind.
+ * Refer to the JHilbert specification for further information on kinds.
  */
 public interface Kind extends Name {
+
+	public Namespace<? extends Kind> getNamespace();
+
+	public Kind getOriginalName();
+
 }

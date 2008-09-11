@@ -22,100 +22,228 @@
 
 package jhilbert.commands;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import jhilbert.commands.VerifyException;
-import jhilbert.data.Data;
-import jhilbert.util.TokenScanner;
+
+import jhilbert.data.Module;
+
+import jhilbert.scanners.TokenScanner;
 
 /**
- * Base class for all commands.
+ * Basic interface for all commands.
+ * Implementing classes <strong>must</strong> provide a constructor which takes
+ * two arguments, the first of type {@link Module}, the second of type
+ * {@link TokenScanner}. These constructors are then provided to the
+ * {@link Command.Class}es and used to create commands.
  */
-public abstract class Command {
+public interface Command {
 
 	/**
 	 * Command classes.
 	 */
-	public static enum CommandClass {
-		DEFINITION,
-		EXPORT,
-		IMPORT,
-		KIND,
-		KINDBIND,
-		PARAMETER,
-		STATEMENT,
-		TERM,
-		THEOREM,
-		VARIABLE
-	}
+	public static enum Class {
 
-	/**
-	 * Map mapping command atoms to {@link CommandClass}.
-	 */
-	private static final Map<String, CommandClass> commandClassMap;
+		DEFINITION("def", true, true),
+		EXPORT("export", true, false),
+		IMPORT("import", true, false),
+		KIND("kind", false, true),
+		KINDBIND("kindbind", true, true),
+		PARAMETER("param", false, true),
+		STATEMENT("stmt", false, true),
+		TERM("term", false, true),
+		THEOREM("thm", true, false),
+		VARIABLE("var", true, true);
 
-	/**
-	 * Set containing all commands admissible in proof modules.
-	 */
-	public static final Set<CommandClass> MODULE_COMMANDS;
+		/**
+		 * LISP atom signifying this command class.
+		 */
+		private final String atom;
 
-	/**
-	 * Set containing all commands admissible in interfaces.
-	 */
-	public static final Set<CommandClass> INTERFACE_COMMANDS;
+		/**
+		 * May the commands of this class occur in proof modules?
+		 */
+		private final boolean proofPermissible;
 
-	/**
-	 * Initializes the static maps and sets of this class.
-	 */
-	static {
-		// commandClassMap
-		commandClassMap = new HashMap();
-		commandClassMap.put("def", CommandClass.DEFINITION);
-		commandClassMap.put("export", CommandClass.EXPORT);
-		commandClassMap.put("import", CommandClass.IMPORT);
-		commandClassMap.put("kind", CommandClass.KIND);
-		commandClassMap.put("kindbind", CommandClass.KINDBIND);
-		commandClassMap.put("param", CommandClass.PARAMETER);
-		commandClassMap.put("stmt", CommandClass.STATEMENT);
-		commandClassMap.put("term", CommandClass.TERM);
-		commandClassMap.put("thm", CommandClass.THEOREM);
-		commandClassMap.put("var", CommandClass.VARIABLE);
-		// module commands
-		MODULE_COMMANDS = EnumSet.of(CommandClass.DEFINITION,
-			CommandClass.EXPORT,
-			CommandClass.IMPORT,
-			CommandClass.KINDBIND,
-			CommandClass.THEOREM);
-		MODULE_COMMANDS.add(CommandClass.VARIABLE);
-		// interface commands
-		INTERFACE_COMMANDS = EnumSet.of(CommandClass.KIND,
-			CommandClass.KINDBIND,
-			CommandClass.PARAMETER,
-			CommandClass.STATEMENT,
-			CommandClass.TERM);
-		INTERFACE_COMMANDS.add(CommandClass.VARIABLE);
-		INTERFACE_COMMANDS.add(CommandClass.DEFINITION); // NEW!
-	}
+		/**
+		 * May the commands of this class occur in interface modules?
+		 */
+		private final boolean interfacePermissible;
 
-	/**
-	 * Maps a command string to the specified command class.
-	 *
-	 * @param commandString the command string (must not be <code>null</code>).
-	 *
-	 * @return the respective CommandClass, or <code>null</code> if the specified command does not exist.
-	 */
-	public static CommandClass getCommandClass(final String commandString) {
-		assert (commandString != null): "Supplied command string is null.";
-		return commandClassMap.get(commandString);
+		/**
+		 * Constructor for a command belonging to this class.
+		 */
+		private Constructor<? extends Command> constructor;
+
+		/**
+		 * Creates a new command class.
+		 *
+		 * @param atom LISP atom signifying this command class.
+		 * @param proofPermissible <code>boolean</code> indicating
+		 * 	whether the commands of this class may occur in
+		 * 	proof modules.
+		 * @param interfacePermissible <code>boolean</code> indicating
+		 * 	whether the commands of this class may occur in
+		 * 	interface modules.
+		 */
+		private Class(final String atom, final boolean proofPermissible, final boolean interfacePermissible) {
+			assert(atom != null): "Supplied atom is null";
+			this.atom = atom;
+			this.proofPermissible = proofPermissible;
+			this.interfacePermissible = interfacePermissible;
+			constructor = null;
+		}
+
+		/**
+		 * Obtains the atom of this command class.
+		 *
+		 * @return LISP atom of this command class.
+		 */
+		public String getAtom() {
+			return atom;
+		}
+
+		/**
+		 * Checks whether this command class may be used in proof
+		 * modules.
+		 *
+		 * @return <code>true</code> if this command class may be used
+		 * 	in proof modules, <code>false</code> otherwise.
+		 */
+		public boolean isProofPermissible() {
+			return proofPermissible;
+		}
+
+		/**
+		 * Checks whether this command class may be used in interface
+		 * modules.
+		 *
+		 * @return <code>true</code> if this command class may be used
+		 * 	in interface modules, <code>false</code> otherwise.
+		 */
+		public boolean isInterfacePermissible() {
+			return interfacePermissible;
+		}
+
+		/**
+		 * Sets the command constructor.
+		 * This method should be called by a static initialiser of the
+		 * command implementation.
+		 *
+		 * @param constructor command constructor. The constructor must
+		 * 	accept precisely two parameters. The first parameter is
+		 * 	a {@link jhilbert.data.Module}, the second parameter is
+		 * 	a {@link jhilbert.scanners.TokenScanner}.
+		 */
+		public void setConstructor(final Constructor<? extends Command> constructor) {
+			assert (constructor != null): "Supplied constructor is null";
+			assert (constructor.getParameterTypes().length == 2):
+				"Supplied constructor must accept two parameters";
+			// FIXME: more assertions...
+			this.constructor = constructor;
+		}
+
+		/**
+		 * Creates a new command from the specified {@link Module} and
+		 * the specified {@link TokenScanner}.
+		 * This method must not be called before the command
+		 * constructor has been initialised. Tjis should not normally
+		 * be a problem, as this initialisation should be performed
+		 * in a static initialiser of the command package
+		 * implementation.
+		 *
+		 * @param module module the command should store its data to.
+		 * @param scanner the token scanner.
+		 *
+		 * @return a command of this class.
+		 *
+		 * @throws SyntaxException if a syntax error occurs. Syntax
+		 * 	errors may also be caused due to the scanner unable to
+		 * 	read a token because of I/O problems.
+		 *
+		 * @see #setConstructor
+		 */
+		public Command createCommand(final Module module, final TokenScanner scanner) throws SyntaxException {
+			assert (module != null): "Supplied module is null";
+			assert (scanner != null): "Supplied scanner is null";
+			assert (constructor != null): "Constructor has not been initialised yet";
+			try {
+				return constructor.newInstance(module, scanner);
+			} catch (InvocationTargetException e) {
+				final Throwable cause = e.getCause();
+				if (cause instanceof SyntaxException)
+					throw (SyntaxException) cause;
+				else if (cause instanceof RuntimeException)
+					throw (RuntimeException) cause;
+				else if (cause instanceof Error)
+					throw (Error) cause;
+				else {
+					final AssertionError ae = new AssertionError(
+						"Implementation throws invalid exception");
+					ae.initCause(e);
+					throw ae;
+				}
+			} catch (IllegalAccessException e) {
+				throw new AssertionError("Implementation provides inaccessible constructors");
+			} catch (IllegalArgumentException e) {
+				throw new AssertionError("Implementation violates contract on constructor arguments");
+			} catch (InstantiationException e) {
+				throw new AssertionError("Implementation provides constructors of abstract classes");
+			}
+		}
+
+		/**
+		 * Mapping from atoms to their respective command classes.
+		 */
+		private static final Map<String, Class> classMap = new HashMap();
+
+		/**
+		 * Set of all proof permissible command classes.
+		 */
+		private static final EnumSet<Class> proofPermissibleClasses = EnumSet.noneOf(Class.class);
+
+		/**
+		 * Set of all interface permissible command classes.
+		 */
+		private static final EnumSet<Class> interfacePermissibleClasses = EnumSet.noneOf(Class.class);
+
+		static {
+			// start factory
+			CommandFactory.getInstance();
+			// init static members
+			for (Class c: Class.values()) {
+				classMap.put(c.getAtom(), c);
+				if (c.isProofPermissible())
+					proofPermissibleClasses.add(c);
+				if (c.isInterfacePermissible())
+					interfacePermissibleClasses.add(c);
+			}
+			// FIXME: we do not seem to need the two EnumSets right now
+		}
+
+		/**
+		 * Obtains the command class belonging to an atom.
+		 *
+		 * @param atom atom to find command class for.
+		 *
+		 * @return the command class of <code>atom</code>, or
+		 * 	<code>null</code> if no matching class exists.
+		 */
+		public static Class get(final String atom) {
+			assert (atom != null): "Supplied atom is null";
+			return classMap.get(atom);
+		}
+
 	}
 
 	/**
 	 * Executes this command.
 	 *
-	 * @throws VerifyException if the command cannot be executed.
+	 * @throws CommandException if this command cannot be executed.
 	 */
-	public abstract void execute() throws VerifyException;
+	public void execute() throws CommandException;
 
 }

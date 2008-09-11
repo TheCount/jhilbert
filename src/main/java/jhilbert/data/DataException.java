@@ -22,34 +22,34 @@
 
 package jhilbert.data;
 
-import jhilbert.exceptions.GeneralException;
+import jhilbert.JHilbertException;
 
 /**
- * Exception thrown when something goes wrong with the data.
- *
- * @see jhilbert.data.Data
+ * An {@link java.lang.Exception} thrown when an error in the context of data
+ * handling occurs.
  */
-public final class DataException extends GeneralException {
+public class DataException extends JHilbertException {
 
 	/**
-	 * Create a new DataException with the specified detail message, context, and cause.
+	 * Constructs a new <code>DataException</code> with the specified
+	 * detail message.
 	 *
 	 * @param message the detail message.
-	 * @param context context String of this exception.
-	 * @param cause Throwable which caused this exception.
 	 */
-	public DataException(final String message, final String context, final Throwable cause) {
-		super(message, context, cause);
+	public DataException(final String message) {
+		this(message, null);
 	}
 
 	/**
-	 * Create a new DataException with the specified detail message and context.
+	 * Constructs a new <code>DataException</code> with the specified
+	 * detail message and cause.
 	 *
 	 * @param message the detail message.
-	 * @param context context String of this exception.
+	 * @param cause (A <code>null</code> value is permitted, and
+	 * 	indicates that the cause is nonexistent or unknown.)
 	 */
-	public DataException(final String message, final String context) {
-		super(message, context);
+	public DataException(final String message, final Throwable cause) {
+		super(message, cause);
 	}
 
 }

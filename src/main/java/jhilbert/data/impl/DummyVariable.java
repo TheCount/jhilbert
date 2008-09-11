@@ -22,43 +22,53 @@
 
 package jhilbert.data.impl;
 
-import jhilbert.data.Kind;
-import jhilbert.data.Variable;
-import jhilbert.data.impl.VariableImpl;
+import java.io.Serializable;
 
 /**
- * Dummy variable.
- * Dummy variables are never equal to non-dummy variables.
+ * A dummy variable.
+ * Dummy variables have the same properties as {@link UnnamedVariable}s in all
+ * respects except that {@link DummyVariable#isDummy} returns
+ * <code>true</code>.
  */
-class DummyVariable extends VariableImpl {
+final class DummyVariable extends VariableImpl implements Serializable {
 
 	/**
-	 * Serialization ID.
+	 * Serialisation ID.
 	 */
 	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
-	 * Internal id of this dummy.
+	 * Dummy ID.
 	 */
 	private static int id = 0;
 
 	/**
-	 * Creates a new dummy variable with the specified kind.
-	 * This dummy variable will be unequal to all other currently existing variables.
-	 *
-	 * @param kind kind of dummy variable.
+	 * Default constructor, for serialisation use only!
 	 */
-	public DummyVariable(final Kind kind) {
+	public DummyVariable() {
+		super();
+	}
+
+	/**
+	 * Creates a new <code>DummyVariable</code> with the specified
+	 * {@link KindImpl}.
+	 *
+	 * @param kind kind of this dummy variable.
+	 */
+	DummyVariable(final KindImpl kind) {
 		super("(dummy" + id + ")", kind);
 		++id;
 	}
 
+	@Override final void setNamespace(final NamespaceImpl<? extends AbstractName> namespace) {
+		throw new AssertionError("Attempt to set namespace for dummy variable");
+	}
+
 	/**
-	 * Creates an uninitialized dummy variable.
-	 * Used by serialization.
+	 * @return <code>true</code>.
 	 */
-	public DummyVariable() {
-		super();
+	public @Override boolean isDummy() {
+		return true;
 	}
 
 }

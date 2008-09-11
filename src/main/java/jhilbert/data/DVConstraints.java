@@ -22,42 +22,69 @@
 
 package jhilbert.data;
 
-import java.util.Collection;
+import java.io.Serializable;
+
 import java.util.Set;
-import java.util.SortedSet;
-import jhilbert.data.DataException;
-import jhilbert.data.Variable;
-import jhilbert.data.VariablePair;
 
 /**
- * Interface for disjoint variable constraints.
+ * Essentially a collection of variable pairs (represented as
+ * {@link Variable}[] of lenghth&nbsp;2).
+ * However, this interface does not extend the {@link java.util.Collection}
+ * interface.
  */
-public interface DVConstraints extends Set<VariablePair> {
+public interface DVConstraints extends Iterable<Variable[]>, Serializable {
 
 	/**
-	 * Adds a set of mutually distinct variables.
+	 * Adds the specified variables to these <code>DVConstraints</code>
+	 * by adding each non-diagonal pair.
 	 *
-	 * @param varSet set of variables.
+	 * @param vars variables to be added.
 	 *
-	 * @return <code>true</code> if this set has been changed, <code>false</code> otherwise.
+	 * @throws DataException if the same variable appears twice in the
+	 * 	specified array.
 	 */
-	 public boolean add(final SortedSet<Variable> varSet);
+	public void add(Variable... vars) throws DataException;
 
 	/**
-	 * Adds the cartesian product of the two specified sets.
+	 * Adds the cartesian product of the two specified sets of variables.
 	 *
-	 * @param varSet1 first set of variables (must not be <code>null</code>).
-	 * @param varSet2 second set of variables (must not be <code>null</code>).
+	 * @param varSet1 first set.
+	 * @param varSet2 second set.
 	 *
-	 * @throws DataException if the cartesian product of the two specified sets contains an element of the form (x, x).
+	 * @throws DataException if the two sets are not disjoint.
 	 */
-	public void addProduct(final SortedSet<Variable> varSet1, final SortedSet<Variable> varSet2) throws DataException;
+	public void addProduct(Set<Variable> varSet1, Set<Variable> varSet2) throws DataException;
 
 	/**
-	 * Restricts these DVconstraints to those pairs of variables ocurring the specified collection.
+	 * Checks whether the specified variable pair is contained in these
+	 * <code>DVConstraints</code>.
 	 *
-	 * @param vars collection of variables to restrict these contraints to (must not be <code>null</code>).
+	 * @param var1 first variable.
+	 * @param var2 second variable.
+	 *
+	 * @return <code>true</code> if {<code>var1</code>, <code>var2</code>}
+	 * 	is contained in these constraints, <code>false</code>
+	 * 	otherwise.
 	 */
-	public void restrict(final Collection<Variable> vars);
+	public boolean contains(Variable var1, Variable var2);
+
+	/**
+	 * Checks whther the specified DV constraints are contained in these
+	 * DV constraints.
+	 *
+	 * @param dv other disjoint variable constraints.
+	 *
+	 * @return <code>true</code> if <code>dv</code> is contained in these
+	 * 	constraints, <code>false</code> otherwise.
+	 */
+	public boolean contains(DVConstraints dv);
+
+	/**
+	 * Removes all variable pairs from these <code>DVConstraints</code>
+	 * whose elements are not both contained in the specified set.
+	 *
+	 * @param varSet variable set to restrict these constraints to.
+	 */
+	public void restrict(Set<Variable> varSet);
 
 }

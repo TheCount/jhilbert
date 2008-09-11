@@ -22,32 +22,31 @@
 
 package jhilbert.commands;
 
-import jhilbert.exceptions.GeneralException;
-
 /**
- * Syntax error while scanning a LISP symbolic expression.
+ * Thrown when a {@link Command} cannot be constructed due to a syntax error.
  */
-public final class SyntaxException extends GeneralException {
+public class SyntaxException extends CommandException {
 
 	/**
-	 * Creates a new SyntaxException with specified detail message, context, and cause.
+	 * Creates a new <code>SyntaxException</code> with the specified
+	 * detail message.
 	 *
-	 * @param message the detail message.
-	 * @param context context String.
-	 * @param cause Throwable which caused this exception.
+	 * @param message detail message.
 	 */
-	public SyntaxException(final String message, final String context, final Throwable cause) {
-		super(message, context, cause);
+	public SyntaxException(final String message) {
+		this(message, null);
 	}
 
 	/**
-	 * Creates a new SyntaxException with specified detail message and context.
+	 * Creates a new <code>SyntaxException</code> with the specified
+	 * detail mesage and cause.
 	 *
-	 * @param message the detail message.
-	 * @param context context String.
+	 * @param message detail message.
+	 * @param cause the cause. (A <code>null</code> value is permitted, and
+	 * 	indicates that the cause is nonexistent or unknown.)
 	 */
-	public SyntaxException(final String message, final String context) {
-		super(message, context);
+	public SyntaxException(final String message, final Throwable cause) {
+		super(message, cause);
 	}
 
 }

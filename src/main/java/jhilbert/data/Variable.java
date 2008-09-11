@@ -22,11 +22,25 @@
 
 package jhilbert.data;
 
-import jhilbert.data.Symbol;
-import jhilbert.data.Term;
-
 /**
- * Marker interface for variables.
+ * Interface for variables.
  */
 public interface Variable extends Symbol, Term {
+
+	/**
+	 * Reimplemented from {@link Name#getOriginalName}, this method always
+	 * returns <code>null</code> as variables are always local.
+	 *
+	 * @return <code>null</code>.
+	 */
+	public Name getOriginalName();
+
+	/**
+	 * Returns whether this <code>Variable</code> is a dummy variable.
+	 *
+	 * @return <code>true</code> if this <code>Variable</code> is a dummy
+	 * 	variable, <code>false</code> otherwise.
+	 */
+	public boolean isDummy();
+
 }

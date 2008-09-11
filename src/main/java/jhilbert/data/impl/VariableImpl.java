@@ -22,40 +22,27 @@
 
 package jhilbert.data.impl;
 
-import jhilbert.data.impl.NameImpl;
-import jhilbert.data.Kind;
+import java.io.Serializable;
+
 import jhilbert.data.Variable;
 
 /**
- * Default implementation of the {@link Variable} interface.
+ * Implementation of the {@link Variable} interface.
  */
-class VariableImpl extends NameImpl implements Variable {
+class VariableImpl extends SymbolImpl implements Variable, Serializable {
 
 	/**
-	 * Serialization ID.
+	 * Serialisation ID.
 	 */
 	private static final long serialVersionUID = jhilbert.Main.VERSION;
 
 	/**
 	 * Kind of this variable.
 	 */
-	private Kind kind;
+	private final KindImpl kind;
 
 	/**
-	 * Creates a new Variable with the specified name and kind.
-	 *
-	 * @param name name of this variable (must not be <code>null</code>).
-	 * @param kind kind of this variable (must not be <code>null</code>).
-	 */
-	VariableImpl(final String name, final Kind kind) {
-		super(name);
-		assert (kind != null): "Supplied kind is null.";
-		this.kind = kind;
-	}
-
-	/**
-	 * Creates an uninitialized variable.
-	 * Used by serialization.
+	 * Default constructor, for serialisation use only!
 	 */
 	public VariableImpl() {
 		super();
@@ -63,16 +50,34 @@ class VariableImpl extends NameImpl implements Variable {
 	}
 
 	/**
-	 * Returns the kind of this variable.
+	 * Creates a new <code>VariableImpl</code> with the specified name
+	 * and the specified {@link KindImpl}.
 	 *
-	 * @return the kind of this variable.
+	 * @param name name of this variable.
+	 * @param kind kind of this variable.
 	 */
-	public Kind getKind() {
+	VariableImpl(final String name, final KindImpl kind) {
+		super(name, null, -1);
+		assert (kind != null): "Supplied kind is null";
+		this.kind = kind;
+	}
+
+	public final KindImpl getKind() {
 		return kind;
 	}
 
 	public final boolean isVariable() {
 		return true;
+	}
+
+	/**
+	 * Default implementation of {@link Variable#isDummy} always returns
+	 * <code>false</code>.
+	 *
+	 * @return <code>false</code>.
+	 */
+	public boolean isDummy() {
+		return false;
 	}
 
 }

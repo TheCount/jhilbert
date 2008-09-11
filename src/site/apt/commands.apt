@@ -1,0 +1,401 @@
+ ---
+ The JHilbert command syntax
+ ---
+ Alexander Klauer
+ ---
+
+ This is a quick rundown of the JHilbert syntax.
+
+ The JHilbert syntax is derived from (and, in fact, very similar to) the syntax
+ of Raph Levien's GHilbert: command atoms followed by symbolic expressions
+ as in LISP.
+
+ Like GHilbert, JHilbert has a modular structure: proof contents can be spread
+ over multiple files. JHilbert knows about three types of files:
+
+ * Interface files (suffix .jhi), defining interfaces.
+   These files contain data defining the metalogical framework, namely kinds
+   and terms, as well as statements without proofs. Unlike in GHilbert,
+   JHilbert interfaces may also contain definitions. Furthermore, interfaces
+   can be parameterized by other interfaces.
+
+ * Library files (suffix .jhl).
+   These are binary files used internally by JHilbert. Each interface file
+   is compiled to such a library file. With these files, interfaces may be
+   loaded without parsing the .jhi file again. JHilbert compares the
+   .jhl and .jhi timestamps and regenerates the .jhl file when the .jhi
+   file has been changed.
+   As of version version 3, the library format is defined by a serialisation
+   of an new internal data structure. This produces less bloat than in version 2
+   but eventually, JHilbert data should be stored in a relational database
+   rather than serialised.
+
+ * Proof files (suffix .jh).
+   These files contains the actual proofs of the statements from the
+   interfaces. Interfaces can be imported into, or exported from a proof module.
+   An export checks whether all interface data has been defined resp. proven
+   in the module. An import adds all the interface data to the module.
+   Imported statements may be considered as axioms, or at least as given.
+ 
+ []
+
+ JHilbert commands introduce names into command specific namespaces, with
+ command specific data and meaning attached to each name. Syntactically,
+ a name can be any non-empty UTF-8 string composed of printable characters
+ except whitespace characters and the parentheses ( and ), which are used as
+ delimiters.
+
+ JHilbert recognizes the following ten commands in .jhi and .jh files:
+
+kind (name)
+
+ Admissible in interface files only, this command introduces a new kind with
+ the specified name. There must not have been another kind or kind alias with
+ that name defined.
+
+kindbind (oldkind newkind)
+
+ This command can be used to define the alias newkind for the
+ previously defined kind oldkind. There must not already exist a kind named
+ newkind. Since version 3 it is also possible (as was in GHilbert) to identify
+ two existing kinds. This is useful in writing "adapters" between two theories
+ which use different language.
+
+var (varkind var1 \[ var 2 \[ ... \[ varN \] ... \] \])
+
+ Defines variables var1 to varN of the previously defined kind varkind. There
+ must not have been defined other variables or statements with the same names.
+ Variables can be defined in both interface and proof files, and they are local
+ to the file they were defined in, i.e. they are never imported or exported.
+
+term (termkind (newterm \[ kind1 \[ kind2 \[ ... \[ kindN \] ... \] \] \]))
+
+ Admissible in interface files only, this command introduces a new term newterm.
+ There must not have been defined other terms or definitions with the same name.
+ A term has a result kind termkind and N input kinds kind1 through kindN.
+ All these kinds must have been defined previously. The number N is called the
+ place count of the new term. Is it permissible to define a term with a place
+ count of zero. Such a term is referred to as constant.
+
+ Terms can be used to syntactically build complex expressions. An expression
+ is either a variable or a list whose first item is a term and whose remaining
+ items are again expressions. In flex notation:
+
+---
+	expression:
+		variable
+		(term)
+		(term expression_list)
+	
+	expression_list:
+		expression
+		expression_list expression
+---
+
+ An expression S is called a subexpression of an expression E either if S occurs
+ in the expression list of E, or if S is a subexpression of one of the
+ expressions in the expression list of E.
+
+ An expression is valid if it is a variable defined previously, or if all of
+ the following conditions are true:
+
+ * Its term's place count equals the number of expressions in its expression
+   list.
+
+ * The result or variable kinds (whatever is applicable) of the expressions of
+   its expression list match the respective input kinds of its term.
+
+ * All expressions of its expression list are valid.
+
+def ((newdef \[ var1 \[ var2 \[ ... \[ varN \] ... \] \] \]) definiens)
+
+ This command introduces a new definition newdef. There must not have been
+ defined other terms or definitions with the same name. Definitions are a
+ special case of terms in that they may be used to build expressions as
+ described above. The input kinds of a definition are determined by the kinds
+ of the variables var1 through varN. These variables must have been defined
+ previously in the same file. The result kind of a definition is determined
+ by the definiens, which must be a valid expression.
+
+ Whenever a subexpression's term of an expression is a definition, this
+ subexpression may be transparently replaced by that definition's definiens,
+ with its variables properly substituted according to the definition's
+ expression list. Proper substitution here means: the variables are substituted
+ with expressions of their kind, and if two variables are equal, they are both
+ substituted with the same expression. This process is called unfolding the
+ definition. A definition may be unfolded at any time, whenever necessary or
+ convenient. This is a significant difference from the GHilbert philosophy,
+ where definitions were unfolded only at the end of a proof. This suggests the
+ admissibility of definitions outside proof files (implemented since version 2).
+
+ Not all variables occurring in the definition's variable list need actually
+ occur in the definiens. Such variables and the expression which would be
+ substituted for them are simply ignored.
+
+ The case where variables occur in the definiens which are not in the
+ definition's variable list is more subtle. Such variables are called dummy
+ variables. JHilbert internally assigns unique dummy variables for each
+ definition so as to ensure soundness.
+
+stmt (newstmt (\[ dvc \]) (\[ hypotheses \]) stmtexpr)
+
+ This command may only be used in interface files. It introduces the valid
+ expression stmtexpr as a new statement newstmt. There must not have been
+ defined statements or variables of the same name. A statement may have
+ hypotheses, expressions which serve as conditions under which the statement
+ may be deemed provable. Syntactically, hypotheses are an expression_list (see
+ above) of valid expressions.
+ The applicability of a statement may be restricted further by specifying
+ disjoint variable constraints dvc. The constraints have the format
+
+---
+	disjoint_group1 [ disjoint_group2 [ ... [ disjoint_group_N ] ... ] ]
+---
+
+ where each disjoint_group has the format
+
+---
+	([ var1 [ var2 [ ... [ varN ] ... ] ] ])
+---
+
+ where var1 through varN are names of previously defined variables.
+ These constraints can forbid certain kinds of substitutions in stmtexpr which
+ would otherwise be proper: it is an error if substituted expressions for
+ variables in the same disjoint group have variables in common.
+
+ The canonical example where such a restriction is necessary is the
+ generalisation axiom from predicate logic where the predicate formula
+
+---
+	phi
+---
+
+ may be generalised to
+
+---
+	forall x: phi
+---
+
+ provided that the variable x does not occur in phi. You might encode this as
+
+---
+stmt (ax-gen (x phi) (phi) (forall x phi))
+---
+
+ It is not necessary that two variables from the same disjoint group are
+ substituted with the same expression for the constraint to take effect, mere
+ occurrence of the same variable in both expressions is enough. On the other
+ hand, it is always permitted to substitute two variables with the same constant
+ term if the substitution is proper, even if these two variables are from the
+ same disjoint group.
+
+ Variables which occur in dvc, but not in the hypotheses nor in stmtexpr are
+ ignored (they are silently stripped). This is necessary to ensure soundness.
+ GHilbert did not require the extra constraints to be stripped but it was sound
+ nevertheless, of course, due to its weaker definition mechanism. For example,
+ the following is valid GHilbert syntax:
+
+---
+import (PROP pax/prop () "")
+import (ZFC zfc/set_mm_ax (PROP) "")
+
+var (wff ph)
+var (set x)
+
+def ((foo) (-> ph (A. x ph)))
+
+thm (bar ((x ph)) () (foo) (
+	ph x ax-17
+))
+
+thm (omg () () (foo) (
+	bar
+))
+---
+
+ Due to the weaker definition mechanism, the seemingly wrong theorem omg is
+ simply an unusable statement. If omg were provable in JHilbert, however, omg
+ could be used as an replacement for ax-17 with no disjoint variable
+ constraints. Luckily, JHilbert strips the disjoint group (x ph) from theorem
+ bar, making the proof of bar erroneous in JHilbert.
+
+ Variables which occur in stmtexpr but not in the hypotheses are called the
+ mandatory variables of newstmt. They are treated distinctly from the remaining
+ variables in the proof of a theorem, see below. Mandatory variables are ordered
+ by first occurrence, when stmtexpr is read from left to right.
+
+thm (newthm (\[ dvc \]) (\[ labeled_hyps \]) thmexpr (proof))
+
+ This command is the counterpart of the stmt command and may be used in proof
+ files only. Like the stmt command, it introduces the valid expression thmexpr,
+ provided the supplied proof is correct (see below). The prerequisites on
+ newthm, dvc and thmexpr are the same as for newstmt, dvc and stmtexpr,
+ respectively, of the stmt command, as specified above. The labeled_hyps are
+ semantically the same as the hypotheses in the stmt command but the syntax is
+ slightly different, so that hypotheses may be referred to in the proof:
+
+---
+	labeled_hyp1 [ labeled_hyp2 [ ... [ labeled_hypN ] ... ] ]
+---
+
+ where each labeled_hyp has the format
+
+---
+	(label expression)
+---
+
+ The individual expressions make up a list of hypotheses with the same
+ prerequisites as in a stmt command. The individual labels must be mutually
+ distinct, but may otherwise be any name. However, if a variable or a statement
+ with the same name as a label has been defined before, then that variable or
+ statement cannot be used in the proof.
+
+ The proof itself is a list
+
+---
+	proof_item1 [ proof_item2 [ ... [ proof_itemN ] ... ] ]
+---
+
+ where each proof item is either a label, the name of a previously defined
+ statement, or a valid expression. The proof is verified for correctness
+ according to the following formal procedure (explanations in parentheses):
+
+ [[1]] Initialize the following data structures:
+
+       [[a]] the proven expressions stack, a stack of valid expressions, initially
+             empty. (This stack holds intermediate results proven from previously
+             defined statements or this statement's hypotheses.)
+
+       [[b]] the mandatory expressions list, a list of valid expressions, initially
+             empty. (This list holds expressions intended to be assigned for
+             mandatory variables in statements.)
+
+       [[c]] the required disjoint variable constraints, a set of disjoint variable
+             groups, initially empty. (This set collects all the disjoint variable
+             constraints required during intermediate steps, to be checked at the end
+             of the proof.)
+
+ [[2]] Repeat for each proof item:
+
+       [[a]] If the item is the name of a hypothesis label, and the mandatory
+             expressions list is empty, push that hypothesis on the proven
+             expressions stack and continue to the next proof item.
+
+       [[b]] If the item is the name of a hypothesis label, and the mandatory
+             expressions list is not empty, the verification fails. (When using a
+             statement in a proof, its hypotheses must be specified before its
+             mandatory variables.)
+
+       [[c]] If the item is an expression, append it to the mandatory expressions list
+             and continue to the next proof item.
+
+       [[d]] (From this point on, the proof item is necessarily the name of a
+             statement.) We call the statement the proof item refers to the current
+             statement.
+
+       [[e]] If the size of the mandatory expressions list is not equal to the number
+             of mandatory variables of the current statement, the verification fails.
+
+       [[f]] If the result kinds of the expressions on the mandatory expressions list
+             do not match the kinds of the respective mandatory variables of the
+             current statement, the verification fails. (This is to ensure proper
+             substitution later on.)
+
+       [[g]] If the size of the proven expressions stack is smaller than the number
+             of hypotheses of the current statement (call that number n), the
+             verification fails. (Obviously, we need enough hypotheses to make the
+             current statement work.)
+
+       [[h]] If there does not exist a single assignment of valid expressions with the
+             correct kind to the variables in the n topmost expressions in the proven
+             expressions stack, such that substitution of these variables with this
+             assignment yields the hypotheses of the current statement, the
+             verification fails. (This process is called unification. If the
+             unification succeeds, the resulting hypotheses are unique. However, if
+             both source and target of the unification have become unfolded during the
+             process, dummy variables may be assigned, leaving some kind of
+             arbitrariness nevertheless. This is not dangerous, but see {{4}} below.)
+
+       [[i]] The mandatory expressions list is cleared, and n expressions are popped
+             from the proven expressions stack.
+
+       [[j]] Each disjoint variable group is transformed to an expression group
+             according to the assignment gained from steps {{f}} and {{h}}. Then the Cartesian
+             product of the variables from the expressions in this expression group
+             is added (set union) to the set of required disjoint variable
+             constraints. If there is a disjoint variable group in the Cartesian
+             product whose variables are not mutually distinct, the verification
+             fails. (The required disjoint variable constraints are checked near the
+             end of the verification procedure, but blatant errors are already caught
+             here.)
+
+       [[k]] The current statement, with the variable assignment gained from steps {{f}}
+             and {{h}} is pushed on the proven expressions stack.
+
+ [[3]] If the mandatory expressions list is not empty, or if the proven expressions
+       stack does not contain exactly one expression, the verification fails.
+       Otherwise, the single expression on the proven expressions stack will be
+       called the proof result. (We do not want stray mandatory expressions or
+       superfluous results at the end of the proof.)
+
+ [[4]] The proof result is compared against the thmexpr. Both expressions must be
+       equal up to unfolding of definitions, except that dummy variables in
+       thmexpr may match variables in the proof result which do not appear in the
+       hypotheses or in thmexpr, as long as true equality can be attained by a
+       proper substitution. If this is not possible, the verification fails.
+
+ [[5]] The disjoint variable groups dvc must contain all the disjoint variable
+       groups in the set of required disjoint variable constraints, or at least
+       equivalent forms of such groups (for example, the set \{(x y z)\} would be
+       equivalent to the set \{(x y), (x z), (y z)\}). Otherwise, the verification
+       fails.
+
+ [[6]] The verification succeeds.
+
+ []
+
+ If the verification fails at any point, JHilbert will exit with an error
+ message.
+
+param (newparam locator (\[ param1 \[ param2 \[ ... \[ paramN \] ... \] \] \]) prefix)
+
+ Introduces a new interface parameter newparam. As the name suggests, interface
+ parameters may only be defined in interface files. There must not have been
+ defined a parameter of the same name previously. The locator is a name
+ determining the location of an interface which serves as a constraint for
+ the new parameter when the interface defining the parameter is imported into
+ or exported from a proof file (see below), or if it is referred to by a param
+ command in another interface. The interpretation of the locator is
+ implementation dependent. Currently (version 3), JHilbert simply appends a .jhi
+ suffix to the locator and treats it as a relative file name. The names param1
+ through paramN belong to previously defined parameters, and serve as parameters
+ for the interface found at the specified locator. The prefix is either a name
+ or the empty list (), in which case it is interpreted as an empty string.
+ A successful param command makes available all kinds and terms from the
+ interface found at the specified locator under the names specified in that
+ interface, prefixed with the prefix. It is an error if there is a name clash.
+ In order to be successful, the passed interface parameters param1 through
+ paramN must define compatible kinds, terms, and statements (with proper
+ prefixes) of their respective param counterparts in the specified files.
+
+import (newparam locator (\[ param1 \[ param2 \[ ... \[ paramN \] ... \] \] \]) prefix)
+
+ Admissible only in proof files, this command makes the interface parameter
+ newparam available for use as parameter for other import/export commands. The
+ command syntax is the same as for the param command, as are the prerequisites
+ on the command parameters. The side effect of the import command is also
+ similar: all kinds, terms, and statements from the interface specified at the
+ provided locator become available for use in the proof file, with their names
+ prefixed with the prefix. As with the param command, name clashes are an error.
+
+export (newparam locator (\[ param1 \[ param2 \[ ... \[ paramN \] ... \] \] \]) prefix)
+
+ The export command is identical to the import command in all respects, with the
+ following important exception: instead of making available kinds, terms, and
+ statements, the proof file must already have defined those kinds, terms, and
+ statements for the export command to succeed. In other words: a successful
+ export command shows that the specified interface can be satisfied. In
+ particular, the stmt commands in the interface are usually furnished with
+ proofs. Note, however, that JHilbert does not attempt to detect "cheating",
+ such as importing and immediately re-exporting an interface, so some care is
+ required from the user.
