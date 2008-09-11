@@ -19,8 +19,10 @@ over multiple files. JHilbert knows about three types of files:
   loaded without parsing the .jhi file again. JHilbert compares the
   .jhl and .jhi timestamps and regenerates the .jhl file when the .jhi
   file has been changed.
-  As of version 2 this library format is quite suboptimal. This will
-  hopefully change in version 3.
+  As of version version 3, the library format is defined by a serialisation
+  of an new internal data structure. This produces less bloat than in version 2
+  but eventually, JHilbert data should be stored in a relational database
+  rather than serialised.
 
 * Proof files (suffix .jh).
   These files contains the actual proofs of the statements from the
@@ -45,13 +47,11 @@ that name defined.
 
 kindbind (oldkind newkind)
 ==========================
-This command can be used in proof files to define the alias newkind for the
+This command can be used to define the alias newkind for the
 previously defined kind oldkind. There must not already exist a kind named
-newkind.
-In GHilbert it was possible to use kindbind in interface files to unify
-two existing kinds so they become indistinguishable. This is planned for
-JHilbert as well but is currently (as of version 2) broken. It is planned to be
-fixed in version 3.
+newkind. Since version 3 it is also possible (as was in GHilbert) to identify
+two existing kinds. This is useful in writing "adapters" between two theories
+which use different language.
 
 var (varkind var1 [ var 2 [ ... [ varN ] ... ] ])
 =================================================
@@ -141,9 +141,9 @@ would otherwise be proper: it is an error if substituted expressions for
 variables in the same disjoint group have variables in common.
 
 The canonical example where such a restriction is necessary is the
-generalization axiom from predicate logic where the predicate formula
+generalisation axiom from predicate logic where the predicate formula
 	phi
-may be generalized to
+may be generalised to
 	forall x: phi
 provided that the variable x does not occur in phi. You might encode this as
 
@@ -157,10 +157,10 @@ term if the substitution is proper, even if these two variables are from the
 same disjoint group.
 
 Variables which occur in dvc, but not in the hypotheses nor in stmtexpr are
-ignored (JHilbert will print a warning). This is necessary to ensure soundness.
+ignored (they are silently stripped). This is necessary to ensure soundness.
 GHilbert did not require the extra constraints to be stripped but it was sound
-nevertheless due to its weaker definition mechanism. For example, the following
-is valid GHilbert syntax:
+nevertheless, of course, due to its weaker definition mechanism. For example,
+the following is valid GHilbert syntax:
 
 import (PROP pax/prop () "")
 import (ZFC zfc/set_mm_ax (PROP) "")
@@ -298,7 +298,7 @@ determining the location of an interface which serves as a constraint for
 the new parameter when the interface defining the parameter is imported into
 or exported from a proof file (see below), or if it is referred to by a param
 command in another interface. The interpretation of the locator is
-implementation dependent. Currently (version 2), JHilbert simply appends a .jhi
+implementation dependent. Currently (version 3), JHilbert simply appends a .jhi
 suffix to the locator and treats it as a relative file name. The names param1
 through paramN belong to previously defined parameters, and serve as parameters
 for the interface found at the specified locator. The prefix is either a name
@@ -308,8 +308,7 @@ interface found at the specified locator under the names specified in that
 interface, prefixed with the prefix. It is an error if there is a name clash.
 In order to be successful, the passed interface parameters param1 through
 paramN must define compatible kinds, terms, and statements (with proper
-prefixes) of their respective param counterparts in the specified files. (The
-handling of this requirement is rather lax in JHilbert as of version 2.)
+prefixes) of their respective param counterparts in the specified files.
 
 import (newparam locator ([ param1 [ param2 [ ... [ paramN ] ... ] ] ]) prefix)
 ===============================================================================
