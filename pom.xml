@@ -26,7 +26,7 @@
 	<groupId>jhilbert</groupId>
 	<artifactId>jhilbert</artifactId>
 	<packaging>bundle</packaging>
-	<version>3</version>
+	<version>4</version>
 	<name>jhilbert</name>
 	<url>http://planetx.cc.vt.edu/AsteroidMeta/JHilbert</url>
 	<build>
@@ -40,6 +40,15 @@
 					<showDeprecation>true</showDeprecation>
 					<showWarnings>true</showWarnings>
 					<target>1.5</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-site-plugin</artifactId>
+				<configuration>
+					<locales>en</locales>
+					<inputEncoding>UTF-8</inputEncoding>
+					<outputEncoding>UTF-8</outputEncoding>
 				</configuration>
 			</plugin>
 			<plugin>
