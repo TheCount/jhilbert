@@ -1,3 +1,23 @@
+~~  JHilbert, a verifier for collaborative theorem proving
+~~  Maven project file
+~~  Copyright © 2008 Alexander Klauer
+~~
+~~  This program is free software: you can redistribute it and/or modify
+~~  it under the terms of the GNU General Public License as published by
+~~  the Free Software Foundation, either version 3 of the License, or
+~~  (at your option) any later version.
+~~
+~~  This program is distributed in the hope that it will be useful,
+~~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+~~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+~~  GNU General Public License for more details.
+~~
+~~  You should have received a copy of the GNU General Public License
+~~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+~~
+~~  You may contact the author on these Wiki pages:
+~~  http://planetx.cc.vt.edu/AsteroidMeta//GrafZahl (preferred)
+~~  http://en.wikisource.org/wiki/User_talk:GrafZahl
  ---
  The JHilbert command syntax
  ---
@@ -61,7 +81,7 @@ kindbind (oldkind newkind)
  two existing kinds. This is useful in writing "adapters" between two theories
  which use different language.
 
-var (varkind var1 \[ var 2 \[ ... \[ varN \] ... \] \])
+var (varkind var1 \[ var2 \[ ... \[ varN \] ... \] \])
 
  Defines variables var1 to varN of the previously defined kind varkind. There
  must not have been defined other variables or statements with the same names.
