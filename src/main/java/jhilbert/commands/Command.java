@@ -150,7 +150,7 @@ public interface Command {
 		 * Creates a new command from the specified {@link Module} and
 		 * the specified {@link TokenScanner}.
 		 * This method must not be called before the command
-		 * constructor has been initialised. Tjis should not normally
+		 * constructor has been initialised. This should not normally
 		 * be a problem, as this initialisation should be performed
 		 * in a static initialiser of the command package
 		 * implementation.

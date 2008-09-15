@@ -71,7 +71,9 @@ public final class Storage extends jhilbert.storage.Storage {
 		return false;
 	}
 
-	protected @Override Module retrieveModule(final String locator, final long revision) throws StorageException {
+	protected synchronized @Override Module retrieveModule(final String locator, final long revision)
+	throws StorageException {
+		// bottleneck alert: the file storage implementation is not really meant for multithreading use
 		assert (locator != null): "Supplied locator is null";
 		assert (!"".equals(locator)): "No storage for a proof module";
 		if (revision != -1) {

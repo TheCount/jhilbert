@@ -23,6 +23,7 @@
 package jhilbert;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 
 import java.util.HashMap;
 
@@ -46,7 +47,7 @@ public final class Main {
 	/**
 	 * Version.
 	 */
-	public static final int VERSION = 3;
+	public static final int VERSION = 4;
 
 	/**
 	 * Program entry point.
@@ -58,6 +59,7 @@ public final class Main {
 	public static void main(String... args) throws Exception {
 		BasicConfigurator.configure();
 		final Logger logger = Logger.getRootLogger();
+		boolean startDaemon = false;
 		try {
 			logger.setLevel(Level.INFO);
 			String inputFileName = null;
@@ -65,11 +67,15 @@ public final class Main {
 				logger.info("Command line argument: " + arg);
 				if (arg.startsWith("-l"))
 					logger.setLevel(Level.toLevel(arg.substring(2)));
+				else if (arg.equals("-d"))
+					startDaemon = true;
 				else if (arg.equals("--license"))
 					showLicense();
 				else
 					inputFileName = arg;
 			}
+			if (startDaemon == true)
+				startDaemon();
 			if (inputFileName == null) {
 				printUsage();
 				System.exit(1);
@@ -118,6 +124,8 @@ public final class Main {
 		System.out.println("              to INFO. If the log level is specified, but not from the above");
 		System.out.println("              list, the log level is set to TRACE.");
 		System.out.println();
+		System.out.println("  -d          Start in daemon mode. Creates a PHP/Java bridge on port 8080.");
+		System.out.println();
 		System.out.println("  --license   Displays license information and exits.");
 		System.out.println();
 		System.out.println("Please report bugs to <Graf." + "Zahl" + '@' + "gmx." + "net>.");
@@ -145,6 +153,20 @@ public final class Main {
 		System.out.println("    You should have received a copy of the GNU General Public License");
 		System.out.println("    along with this program.  If not, see <http://www.gnu.org/licenses/>.");
 		System.exit(0);
+	}
+
+	/**
+	 * Starts a PHP/Java bridge daemon.
+	 */
+	private static void startDaemon() throws IOException { // FIXME: catch & log IOException!
+		final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getRequiredInstance("INET_LOCAL:8080");
+		while (true) {
+			try {
+				Thread.sleep(Long.MAX_VALUE);
+			} catch (InterruptedException e) {
+				// No, I don't wanna!
+			}
+		}
 	}
 
 }

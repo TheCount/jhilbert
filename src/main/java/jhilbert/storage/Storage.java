@@ -22,6 +22,9 @@
 
 package jhilbert.storage;
 
+import java.util.Collections;
+import java.util.Map;
+
 import jhilbert.data.Module;
 
 import jhilbert.utils.LRUCache;
@@ -60,7 +63,7 @@ public abstract class Storage {
 	/**
 	 * Module cache.
 	 */
-	private final LRUCache<String, Module> moduleCache;
+	private final Map<String, Module> moduleCache;
 
 	/**
 	 * Creates a new <code>Storage</code> with a cache size of
@@ -77,7 +80,7 @@ public abstract class Storage {
 	 */
 	protected Storage(final int size) {
 		assert (size >= 0): "Supplied size is negative";
-		moduleCache = new LRUCache(size);
+		moduleCache = Collections.synchronizedMap(new LRUCache(size));
 	}
 	
 	/**

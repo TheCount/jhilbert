@@ -24,6 +24,8 @@ package jhilbert.data.impl;
 
 import java.io.Serializable;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * A dummy variable.
  * Dummy variables have the same properties as {@link UnnamedVariable}s in all
@@ -40,7 +42,7 @@ final class DummyVariable extends VariableImpl implements Serializable {
 	/**
 	 * Dummy ID.
 	 */
-	private static int id = 0;
+	private static AtomicInteger id = new AtomicInteger();
 
 	/**
 	 * Default constructor, for serialisation use only!
@@ -56,8 +58,7 @@ final class DummyVariable extends VariableImpl implements Serializable {
 	 * @param kind kind of this dummy variable.
 	 */
 	DummyVariable(final KindImpl kind) {
-		super("(dummy" + id + ")", kind);
-		++id;
+		super("(dummy" + id.getAndIncrement() + ")", kind);
 	}
 
 	@Override final void setNamespace(final NamespaceImpl<? extends AbstractName> namespace) {

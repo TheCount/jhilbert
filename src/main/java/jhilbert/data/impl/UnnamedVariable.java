@@ -24,6 +24,8 @@ package jhilbert.data.impl;
 
 import java.io.Serializable;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Unnamed variable.
  * This class creates variables not part of any namespace which are unequal to
@@ -39,7 +41,7 @@ final class UnnamedVariable extends VariableImpl implements Serializable {
 	/**
 	 * Variable ID.
 	 */
-	private static int id = 0;
+	private static AtomicInteger id = new AtomicInteger();
 
 	/**
 	 * Default constructor, for serialisation use only!
@@ -57,8 +59,7 @@ final class UnnamedVariable extends VariableImpl implements Serializable {
 	 * @param kind kind of this unnamed variable.
 	 */
 	UnnamedVariable(final KindImpl kind) {
-		super("(?" + id + ")", kind);
-		++id;
+		super("(?" + id.getAndIncrement() + ")", kind);
 	}
 
 	@Override final void setNamespace(final NamespaceImpl<? extends AbstractName> namespace) {

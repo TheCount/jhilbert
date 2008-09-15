@@ -67,7 +67,7 @@ public class ArrayTreeNode<E> implements TreeNode<E>, Serializable {
 	 * and no children.
 	 *
 	 * @param value value; <code>null</code> values are <em>not</em>
-	 * 	permitted. Use the default constructor to create a null-values
+	 * 	permitted. Use the default constructor to create a null-valued
 	 * 	node.
 	 */
 	public ArrayTreeNode(final E value) {
