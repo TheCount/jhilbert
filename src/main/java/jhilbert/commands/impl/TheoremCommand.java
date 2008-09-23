@@ -96,7 +96,7 @@ public final class TheoremCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public TheoremCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		final Namespace<? extends Symbol> symbolNamespace = module.getSymbolNamespace();
 		assert (symbolNamespace != null): "Module provided null namespace";
 		final ExpressionFactory expressionFactory = ExpressionFactory.getInstance();

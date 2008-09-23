@@ -61,7 +61,7 @@ public final class ExportCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public ExportCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		try {
 			parameter = DataFactory.getInstance().createParameter(module, tokenScanner);
 		} catch (DataException e) {

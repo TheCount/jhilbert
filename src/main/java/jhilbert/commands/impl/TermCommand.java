@@ -75,7 +75,7 @@ public final class TermCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public TermCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		try  {
 			kindName = tokenScanner.getAtom();
 			tokenScanner.beginExp();

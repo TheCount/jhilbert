@@ -81,7 +81,7 @@ public final class DefinitionCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public DefinitionCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		try {
 			tokenScanner.beginExp();
 			name = tokenScanner.getAtom();

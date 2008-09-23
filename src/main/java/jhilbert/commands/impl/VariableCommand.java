@@ -70,7 +70,7 @@ public final class VariableCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public VariableCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		try {
 			kindName = tokenScanner.getAtom();
 			variableNameList = new ArrayList();

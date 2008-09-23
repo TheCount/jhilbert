@@ -27,8 +27,6 @@ import jhilbert.commands.CommandException;
 
 import jhilbert.data.Module;
 
-import jhilbert.scanners.TokenScanner;
-
 /**
  * Basic {@link Command} implementation.
  */
@@ -40,22 +38,15 @@ abstract class AbstractCommand implements Command {
 	private final Module module;
 
 	/**
-	 * Token scanner.
-	 */
-	private final TokenScanner tokenScanner;
-
-	/**
 	 * Creates a new <code>AbstractCommand</code> which will use the
-	 * specified {@link Module} and the specified {@link TokenScanner}.
+	 * specified {@link Module}.
 	 *
 	 * @param module module for data handling.
 	 * @param tokenScanner the token scanner.
 	 */
-	AbstractCommand(final Module module, final TokenScanner tokenScanner) {
+	AbstractCommand(final Module module) {
 		assert (module != null): "Supplied module is null";
-		assert (tokenScanner != null): "Supplied token scanner is null";
 		this.module = module;
-		this.tokenScanner = tokenScanner;
 	}
 
 	/**
@@ -65,15 +56,6 @@ abstract class AbstractCommand implements Command {
 	 */
 	protected Module getModule() {
 		return module;
-	}
-
-	/**
-	 * Obtains the {@link TokenScanner} used by this command.
-	 *
-	 * @return token scanner used by this command.
-	 */
-	protected TokenScanner getTokenScanner() {
-		return tokenScanner;
 	}
 
 	public abstract void execute() throws CommandException;

@@ -64,7 +64,7 @@ public final class KindbindCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public KindbindCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		try {
 			oldKindName = tokenScanner.getAtom();
 			newKindName = tokenScanner.getAtom();

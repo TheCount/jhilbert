@@ -61,7 +61,7 @@ public final class ParameterCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public ParameterCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		try {
 			parameter = DataFactory.getInstance().createParameter(module, tokenScanner);
 		} catch (DataException e) {

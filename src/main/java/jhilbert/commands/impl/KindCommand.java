@@ -62,7 +62,7 @@ public final class KindCommand extends AbstractCommand {
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public KindCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module, tokenScanner);
+		super(module);
 		try {
 			kindName = tokenScanner.getAtom();
 		} catch (ScannerException e) {
