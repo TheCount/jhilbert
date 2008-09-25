@@ -35,12 +35,14 @@ import jhilbert.data.*;
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.KindMismatchException;
+import jhilbert.expressions.PlaceCountMismatchException;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
 import jhilbert.utils.ArrayTreeNode;
+import jhilbert.utils.TreeNode;
 
 import org.apache.log4j.Logger;
 
@@ -82,55 +84,17 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 	throws KindMismatchException, ExpressionException {
 		assert (module != null): "Supplied module is null";
 		assert (tokenScanner != null): "Supplied token scanner is null";
-		final Namespace<? extends Kind> kindNamespace = module.getKindNamespace();
-		final Namespace<? extends Functor> functorNamespace = module.getFunctorNamespace();
-		final Namespace<? extends Symbol> symbolNamespace = module.getSymbolNamespace();
-		assert (kindNamespace != null): "Module supplied null kind namespace";
-		assert (functorNamespace != null): "Module supplied null functor namespace";
-		assert (symbolNamespace != null): "Module supplied null symbol namespace";
 		try {
 			final Token token = tokenScanner.getToken();
 			switch (token.getTokenClass()) {
 				case ATOM: // variable name
-				final String varName = token.getTokenString();
-				if (logger.isTraceEnabled())
-					logger.trace("Scanning expression: found var ATOM " + varName);
-				final Symbol sym = symbolNamespace.getObjectByString(varName);
-				if (sym == null) {
-					logger.error("Symbol not found: " + varName);
-					logger.debug("Current scanner context: " + tokenScanner.getContextString());
-					throw new ExpressionException("Symbol not found");
-				}
-				if (!sym.isVariable()) {
-					logger.error("Non-variable symbol found in expression: " + varName);
-					logger.debug("Current scanner context: " + tokenScanner.getContextString());
-					throw new ExpressionException("Non-variable symbol found in expression");
-				}
-				setValue((Variable) sym);
+				setVariable(module, token.getTokenString());
 				break;
 
 				case BEGIN_EXP: // subexpression
-				final String functorName = tokenScanner.getAtom();
-				if (logger.isTraceEnabled())
-					logger.trace("Scanning expression: found functor ATOM " + functorName);
-				final Functor functor = functorNamespace.getObjectByString(functorName);
-				if (functor == null) {
-					logger.error("Term not found: " + functorName);
-					logger.debug("Current scanner context: " + tokenScanner.getContextString());
-					throw new ExpressionException("Term not found");
-				}
-				setValue(functor);
-				for (final Kind inputKind: functor.getInputKinds()) {
-					final ExpressionImpl inputExpression = new ExpressionImpl(module, tokenScanner);
-					if (!kindNamespace.checkEquality(inputKind, inputExpression.getKind())) {
-						logger.error("Kind mismatch");
-						logger.debug("Current scanner context: " + tokenScanner.getContextString());
-						logger.debug("Expected kind: " + inputKind);
-						logger.debug("Found kind:    " + inputExpression.getKind());
-						throw new KindMismatchException("Kind mismatch");
-					}
-					addChild(inputExpression);
-				}
+				final Functor functor = setFunctor(module, tokenScanner.getAtom());
+				for (final Kind inputKind: functor.getInputKinds())
+					addExpression(new ExpressionImpl(module, tokenScanner), inputKind);
 				tokenScanner.endExp();
 				break;
 
@@ -146,12 +110,72 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 			logger.error("Scanner error", e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new ExpressionException("Scanner error", e);
-		} catch (DataException e) {
-			logger.error("Data handling error", e);
-			throw new ExpressionException("Data handling error", e);
+		} catch (ExpressionException e) {
+			logger.debug("Current scanner context: " + tokenScanner.getContextString());
+			throw e;
 		}
 		if (logger.isTraceEnabled())
 			logger.trace("Expression complete: " + toString());
+	}
+
+	ExpressionImpl(final Module module, final TreeNode<String> tree) throws ExpressionException {
+		assert (module != null): "Supplied module is null";
+		assert (tree != null): "Supplied LISP tree is null";
+		try {
+			if (tree.isLeaf()) // variable
+				setVariable(module, tree.getValue());
+			else { // complex expression
+				final List<? extends TreeNode<String>> children = tree.getChildren();
+				final Functor functor = setFunctor(module, children.get(0).getValue());
+				final List<? extends Kind> inputKindList = functor.getInputKinds();
+				final int size = inputKindList.size();
+				if (size != children.size() - 1) {
+					logger.error("Wrong place count for functor " + children.get(0).getValue());
+					logger.debug("Expected place count: " + size);
+					logger.debug("Actual place count:   " + (children.size() - 1));
+					throw new PlaceCountMismatchException("Wrong place count");
+				}
+				for (int i = 1; i <= size; ++i)
+					addExpression(new ExpressionImpl(module, children.get(i)),
+						inputKindList.get(i - 1));
+			}
+		} catch (RuntimeException e) {
+			logger.error("Invalid expression: " + tree);
+			throw new ExpressionException("Invalid expression");
+		}
+	}
+
+	private void setVariable(final Module module, final String varName) throws ExpressionException {
+		final Symbol sym = module.getSymbolNamespace().getObjectByString(varName);
+		if (sym == null) {
+			logger.error("Symbol not found: " + varName);
+			throw new ExpressionException("Symbol not found");
+		}
+		if (!sym.isVariable()) {
+			logger.error("Non-variable symbol found in expression: " + varName);
+			throw new ExpressionException("Non-variable symbol found in expression");
+		}
+		setValue((Variable) sym);
+	}
+
+	private Functor setFunctor(final Module module, final String functorName) throws ExpressionException {
+		final Functor functor = module.getFunctorNamespace().getObjectByString(functorName);
+		if (functor == null) {
+			logger.error("Term not found: " + functorName);
+			throw new ExpressionException("Term not found");
+		}
+		setValue(functor);
+		return functor;
+	}
+
+	private void addExpression(final ExpressionImpl expr, final Kind targetKind) throws ExpressionException {
+		if (!expr.getKind().equals(targetKind)) {
+			logger.error("Kind mismatch");
+			logger.debug("Expected kind: " + targetKind);
+			logger.debug("Found kind:    " + expr.getKind());
+			throw new KindMismatchException("Kind mismatch");
+		}
+		addChild(expr);
 	}
 
 	/**

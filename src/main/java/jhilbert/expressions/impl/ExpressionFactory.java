@@ -36,6 +36,8 @@ import jhilbert.expressions.ExpressionException;
 
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 /**
  * {@link jhilbert.expressions.ExpressionFactory} implementation.
  */
@@ -47,6 +49,13 @@ public final class ExpressionFactory extends jhilbert.expressions.ExpressionFact
 		assert (module != null): "Supplied module is null";
 		assert (tokenScanner != null): "Supplied token scanner is null";
 		return new ExpressionImpl(module, tokenScanner);
+	}
+
+	public @Override ExpressionImpl createExpression(final Module module, final TreeNode<String> tree)
+	throws ExpressionException {
+		assert (module != null): "Supplied module is null";
+		assert (tree != null): "Supplied LISP tree is null";
+		return new ExpressionImpl(module, tree);
 	}
 
 	public @Override ExpressionImpl createExpression(final Variable var) {

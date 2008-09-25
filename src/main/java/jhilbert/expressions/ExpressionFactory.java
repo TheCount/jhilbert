@@ -33,6 +33,8 @@ import jhilbert.data.Variable;
 
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 /**
  * Factory class for {@link Expression}s and expression related tools.
  */
@@ -64,6 +66,19 @@ public abstract class ExpressionFactory {
 	 * @throws ExpressionException if an error occurs.
 	 */
 	public abstract Expression createExpression(Module module, TokenScanner tokenScanner) throws ExpressionException;
+
+	/**
+	 * Creates a new {@link Expression} from the specified LISP expression
+	 * tree using data from the specified {@link Module}.
+	 *
+	 * @param module data module.
+	 * @param tree LISP tree.
+	 *
+	 * @return the new expression.
+	 *
+	 * @throws ExpressionException if an error occurs.
+	 */
+	public abstract Expression createExpression(Module module, TreeNode<String> tree) throws ExpressionException;
 
 	/**
 	 * Creates a new {@link Expression} consisting just of the specified
