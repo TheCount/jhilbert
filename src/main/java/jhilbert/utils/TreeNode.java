@@ -22,7 +22,7 @@
 
 package jhilbert.utils;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
  * A node in a tree-like data structure.
@@ -41,12 +41,12 @@ public interface TreeNode<E> {
 	public E getValue();
 
 	/**
-	 * Returns an unmodifiable {@link Collection} of children of this tree
+	 * Returns an unmodifiable {@link List} of children of this tree
 	 * node.
 	 *
-	 * @return collection of children of this tree node.
+	 * @return list of children of this tree node.
 	 */
-	public Collection<? extends TreeNode<E>> getChildren();
+	public List<? extends TreeNode<E>> getChildren();
 
 	/**
 	 * Adds a child to this <code>TreeNode</code>.

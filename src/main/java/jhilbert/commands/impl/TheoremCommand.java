@@ -46,6 +46,8 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 import jhilbert.verifier.Verifier;
 import jhilbert.verifier.VerifierFactory;
 import jhilbert.verifier.VerifyException;
@@ -75,7 +77,7 @@ public final class TheoremCommand extends AbstractCommand {
 	/**
 	 * Hypotheses.
 	 */
-	private final Map<String, Expression> hypotheses;
+	private final LinkedHashMap<String, Expression> hypotheses;
 
 	/**
 	 * Consequent.
@@ -84,6 +86,7 @@ public final class TheoremCommand extends AbstractCommand {
 
 	/**
 	 * Proof.
+	 * List of complex Expressions or Strings.
 	 */
 	private final List<Object> proof;
 
@@ -163,6 +166,80 @@ public final class TheoremCommand extends AbstractCommand {
 		} catch (DataException e) {
 			logger.error("Unable to scan DV constraints", e);
 			throw new SyntaxException("Unable to scan DV constraints", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>TheoremCommand</code>.
+	 *
+	 * @param module {@link Module} to add theorem statement to.
+	 * @param tree syntax tree to obtain theorem data from.
+	 *
+	 * @throws SyntaxException if a syntax error occurs.
+	 */
+	public TheoremCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+		super(module);
+		assert (tree != null): "Supplied LISP syntax tree is null";
+		final Namespace<? extends Symbol> symbolNamespace = module.getSymbolNamespace();
+		final ExpressionFactory expressionFactory = ExpressionFactory.getInstance();
+		try {
+			if (tree.getValue() != null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> children = tree.getChildren();
+			if (children.size() != 5)
+				throw new IndexOutOfBoundsException();
+			// name
+			name = children.get(0).getValue();
+			if (name == null)
+				throw new NullPointerException();
+			// DV constraints
+			dvConstraints = DataFactory.getInstance().createDVConstraints(symbolNamespace, children.get(1));
+			// hypotheses
+			final TreeNode<String> hypTree = children.get(2);
+			if (hypTree.getValue() != null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> hypList = hypTree.getChildren();
+			hypotheses = new LinkedHashMap(hypList.size());
+			for (final TreeNode<String> hyp: hypList) {
+				if (hyp.getValue() != null)
+					throw new NullPointerException();
+				final List<? extends TreeNode<String>> pair = hyp.getChildren();
+				if (pair.size() != 2)
+					throw new IndexOutOfBoundsException();
+				final String label = pair.get(0).getValue();
+				if (label == null)
+					throw new NullPointerException();
+				if (hypotheses.containsKey(label)) {
+					logger.error("Hypothesis label " + label + " already in use");
+					logger.debug("Expression this label was previously used on: " + hypotheses.get(label));
+					throw new SyntaxException("Hypothesis label already in use");
+				}
+				hypotheses.put(label, expressionFactory.createExpression(module, pair.get(1)));
+			}
+			// consequent
+			consequent = expressionFactory.createExpression(module, children.get(3));
+			// proof
+			final TreeNode<String> proofTree = children.get(4);
+			if (proofTree.getValue() != null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> proofList = proofTree.getChildren();
+			proof = new ArrayList(proofList.size());
+			for (final TreeNode<String> proofItem: proofList) {
+				final String value = proofItem.getValue();
+				if (value != null)
+					proof.add(value);
+				else
+					proof.add(expressionFactory.createExpression(module, proofItem));
+			}
+		} catch (RuntimeException e) {
+			logger.error("Syntax error, expected thm (newthm ([ dvc ]) ([ labeled_hyps ]) thmexpr (proof)), got " + tree);
+			throw new SyntaxException("Syntax error in theorem", e);
+		} catch (DataException e) {
+			logger.error("Unable to scan DV constraints");
+			throw new SyntaxException("Unable to scan DV constraints", e);
+		} catch (ExpressionException e) {
+			logger.error("Unable to scan expression");
+			throw new SyntaxException("Unable to scan expression", e);
 		}
 	}
 

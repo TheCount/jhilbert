@@ -36,6 +36,8 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -145,6 +147,63 @@ final class ParameterImpl implements Parameter, Serializable {
 			logger.error("Scanner error while scanning parameter", e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new DataException("Scanner error while scanning parameter", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>ParameterImpl</code> from the specified syntax
+	 * tree using data from the specified module.
+	 *
+	 * @param module data module.
+	 * @param tree syntax tree.
+	 *
+	 * @throws DataException if a syntax error occurs.
+	 */
+	ParameterImpl(final Module module, final TreeNode<String> tree) throws DataException {
+		assert (module != null): "Supplied module is null";
+		assert (tree != null): "Supplied syntax tree is null";
+		try {
+			if (tree.getValue() != null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> children = tree.getChildren();
+			if (children.size() != 4)
+				throw new IndexOutOfBoundsException();
+			name = children.get(0).getValue();
+			if (name == null)
+				throw new NullPointerException();
+			locator = children.get(1).getValue();
+			if (locator == null)
+				throw new NullPointerException();
+			// parameter list
+			final TreeNode<String> parameterTree = children.get(2);
+			if (parameterTree.getValue() != null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> parameterTreeList = parameterTree.getChildren();
+			final List<Parameter> parameterList = new ArrayList(parameterTreeList.size());
+			for (final TreeNode<String> listItem: parameterTreeList) {
+				final String parameterName = listItem.getValue();
+				if (parameterName == null)
+					throw new NullPointerException();
+				final Parameter parameter = module.getParameter(parameterName);
+				if (parameter == null) {
+					logger.error("Parameter " + parameterName + " unknown");
+					throw new DataException("Parameter unknown");
+				}
+				parameterList.add(parameter);
+			}
+			this.parameterList = Collections.unmodifiableList(parameterList);
+			// prefix
+			final TreeNode<String> prefixTree = children.get(3);
+			String prefix = prefixTree.getValue();
+			if (prefix == null) {
+				prefix = "";
+				if (prefixTree.getChildren().size() != 0)
+					throw new IndexOutOfBoundsException();
+			}
+			this.prefix = prefix;
+		} catch (RuntimeException e) {
+			logger.error("Syntax error in parameter specification, expected (newparam locator ([ param1 [ param2 [ ... [ paramN ] ... ] ] ]) prefix), got " + tree);
+			throw new DataException("Syntax error in parameter specification", e);
 		}
 	}
 

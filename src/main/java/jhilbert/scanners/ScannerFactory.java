@@ -64,9 +64,18 @@ public abstract class ScannerFactory {
 	 * @param in input stream.
 	 * @param module data module.
 	 *
+	 * @return the new command scanner.
+	 *
 	 * @throws ScannerException if the underlying token scanner cannot
 	 * 	be set up.
 	 */
 	public abstract CommandScanner createCommandScanner(final InputStream in, final Module module) throws ScannerException;
+
+	/**
+	 * Creates a new {@link LISPFeed}.
+	 *
+	 * @return the new LISP feed.
+	 */
+	public abstract LISPFeed createLISPFeed();
 
 }

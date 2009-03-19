@@ -28,6 +28,8 @@ import jhilbert.data.Module;
 
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 /**
  * Command factory implementation.
  */
@@ -38,26 +40,29 @@ public class CommandFactory extends jhilbert.commands.CommandFactory {
 	 */
 	public CommandFactory() {
 		try {
-			Command.Class.KIND.setConstructor(KindCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.KINDBIND.setConstructor(KindbindCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.VARIABLE.setConstructor(VariableCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.TERM.setConstructor(TermCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.DEFINITION.setConstructor(DefinitionCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.STATEMENT.setConstructor(StatementCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.THEOREM.setConstructor(TheoremCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.PARAMETER.setConstructor(ParameterCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.IMPORT.setConstructor(ImportCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
-			Command.Class.EXPORT.setConstructor(ExportCommand.class.getConstructor(Module.class,
-				TokenScanner.class));
+			if (jhilbert.Main.isUsingFeeds()) {
+				Command.Class.KIND.setConstructor(KindCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.KINDBIND.setConstructor(KindbindCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.VARIABLE.setConstructor(VariableCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.TERM.setConstructor(TermCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.DEFINITION.setConstructor(DefinitionCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.STATEMENT.setConstructor(StatementCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.THEOREM.setConstructor(TheoremCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.PARAMETER.setConstructor(ParameterCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.IMPORT.setConstructor(ImportCommand.class.getConstructor(Module.class, TreeNode.class));
+				Command.Class.EXPORT.setConstructor(ExportCommand.class.getConstructor(Module.class, TreeNode.class));
+			} else {
+				Command.Class.KIND.setConstructor(KindCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.KINDBIND.setConstructor(KindbindCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.VARIABLE.setConstructor(VariableCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.TERM.setConstructor(TermCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.DEFINITION.setConstructor(DefinitionCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.STATEMENT.setConstructor(StatementCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.THEOREM.setConstructor(TheoremCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.PARAMETER.setConstructor(ParameterCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.IMPORT.setConstructor(ImportCommand.class.getConstructor(Module.class, TokenScanner.class));
+				Command.Class.EXPORT.setConstructor(ExportCommand.class.getConstructor(Module.class, TokenScanner.class));
+			}
 		} catch (NoSuchMethodException e) {
 			final Error err = new AssertionError("Constructor missing");
 			err.initCause(e);

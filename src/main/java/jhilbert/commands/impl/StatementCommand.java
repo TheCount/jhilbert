@@ -43,6 +43,8 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -106,18 +108,63 @@ public final class StatementCommand extends AbstractCommand {
 			// consequent
 			consequent = expressionFactory.createExpression(module, tokenScanner);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning stmt command", e);
+			logger.error("Unexpected end of input while scanning stmt command");
 			throw new SyntaxException("Unexpected end of input", e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error while scanning stmt command", e);
+			logger.error("Scanner error while scanning stmt command");
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new SyntaxException("Scanner error", e);
 		} catch (ExpressionException e) {
-			logger.error("Unable to scan expression", e);
+			logger.error("Unable to scan expression");
 			throw new SyntaxException("Unable to scan expression", e);
 		} catch (DataException e) {
-			logger.error("Unable to scan DV constraints", e);
+			logger.error("Unable to scan DV constraints");
 			throw new SyntaxException("Unable to scan DV constraints", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>StatementCommand</code>.
+	 *
+	 * @param module {@link Module} to add statement to.
+	 * @param tree syntax tree to obtain statement data from.
+	 *
+	 * @throws SyntaxException if a syntax error occurs.
+	 */
+	public StatementCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+		super(module);
+		assert (tree != null): "Specified LISP tree is null";
+		final Namespace<? extends Symbol> symbolNamespace = module.getSymbolNamespace();
+		final ExpressionFactory expressionFactory = ExpressionFactory.getInstance();
+		try {
+			final List<? extends TreeNode<String>> children = tree.getChildren();
+			if (children.size() != 4)
+				throw new IndexOutOfBoundsException();
+			// name
+			name = children.get(0).getValue();
+			if (name == null)
+				throw new NullPointerException();
+			// DV constraints
+			dvConstraints = DataFactory.getInstance().createDVConstraints(symbolNamespace, children.get(1));
+			// hypotheses
+			final TreeNode<String> hypTree = children.get(2);
+			if (hypTree.getValue() != null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> hypList = hypTree.getChildren();
+			hypotheses = new ArrayList(hypList.size());
+			for (final TreeNode<String> hyp: hypList)
+				hypotheses.add(expressionFactory.createExpression(module, hyp));
+			// consequent
+			consequent = expressionFactory.createExpression(module, children.get(3));
+		} catch (NullPointerException e) {
+			logger.error("Syntax error, expected stmt (newstmt ([ dvc ]) ([ hypotheses ]) stmtexpr), got " + tree);
+			throw new SyntaxException("Syntax error in statement", e);
+		} catch (DataException e) {
+			logger.error("Unable to scan DV constraints");
+			throw new SyntaxException("Unable to scan DV constraints", e);
+		} catch (ExpressionException e) {
+			logger.error("Unable to scan expression");
+			throw new SyntaxException("Unable to scan expression", e);
 		}
 	}
 

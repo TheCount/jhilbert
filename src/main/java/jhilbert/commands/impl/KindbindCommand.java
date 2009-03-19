@@ -22,6 +22,8 @@
 
 package jhilbert.commands.impl;
 
+import java.util.List;
+
 import jhilbert.commands.CommandException;
 import jhilbert.commands.SyntaxException;
 
@@ -32,6 +34,8 @@ import jhilbert.data.Namespace;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.TokenScanner;
+
+import jhilbert.utils.TreeNode;
 
 import org.apache.log4j.Logger;
 
@@ -59,7 +63,7 @@ public final class KindbindCommand extends AbstractCommand {
 	 * Creates a new <code>KindbindCommand</code>.
 	 *
 	 * @param module {@link Module} in which to bind kinds.
-	 * @param tokenScanner {@link TokenScanner} to obtain kindbind data.
+	 * @param tokenScanner {@link TokenScanner} to obtain kindbind data from.
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
@@ -72,6 +76,30 @@ public final class KindbindCommand extends AbstractCommand {
 			logger.error("Error scanning kindbind", e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new SyntaxException("Error scanning kindbind", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>KindbindCommand</code>.
+	 *
+	 * @param module {@link Module} in which to bind kinds.
+	 * @param tree syntax tree to obtain kindbind data from.
+	 *
+	 * @throws SyntaxException if a syntax error occurs.
+	 */
+	public KindbindCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+		super(module);
+		assert (tree != null): "Supplied LISP tree is null";
+		final List<? extends TreeNode<String>> children = tree.getChildren();
+		if (children.size() != 2) {
+			logger.error("Expected (oldkindname newkindname), got " + children);
+			throw new SyntaxException("Expected (oldkindname newkindname)");
+		}
+		oldKindName = children.get(0).getValue();
+		newKindName = children.get(1).getValue();
+		if ((oldKindName == null) || (newKindName == null)) {
+			logger.error("Expected (oldkindname newkindname), got " + children);
+			throw new SyntaxException("Expected (oldkindname newkindname)");
 		}
 	}
 

@@ -39,6 +39,8 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -64,8 +66,8 @@ public final class VariableCommand extends AbstractCommand {
 	/**
 	 * Creates a new <code>VariableCommand</code>.
 	 *
-	 * @param module {@link Module} to add kind to.
-	 * @param tokenScanner {@link TokenScanner} to obtain variable data.
+	 * @param module {@link Module} to add variable to.
+	 * @param tokenScanner {@link TokenScanner} to obtain variable data from.
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
@@ -93,6 +95,38 @@ public final class VariableCommand extends AbstractCommand {
 			logger.error("Scanner error while scanning var command", e);
 			logger.debug("Current scanner context: " + e.getScanner().getContextString());
 			throw new SyntaxException("Scanner error", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>VariableCommand</code>.
+	 *
+	 * @param module {@link Module} to add variable to.
+	 * @param tree syntax tree to obtain variable data from.
+	 *
+	 * @throws SyntaxException if a syntax error occurs.
+	 */
+	public VariableCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+		super(module);
+		assert (tree != null): "Supplied LISP tree is null";
+		final List<? extends TreeNode<String>> children = tree.getChildren();
+		final int size = children.size();
+		try {
+			kindName = children.get(0).getValue();
+			if (kindName == null)
+				throw new NullPointerException();
+			variableNameList = new ArrayList(size - 1);
+			for (int i = 1; i != size; ++i) {
+				final String variableName = children.get(i).getValue();
+				if (variableName == null)
+					throw new NullPointerException();
+				variableNameList.add(variableName);
+			}
+			if (variableNameList.size() == 0)
+				throw new IndexOutOfBoundsException();
+		} catch (RuntimeException e) {
+			logger.error("Expected (kind var1 var2 ... varN), got " + children);
+			throw new SyntaxException("Expected (kind var1 var2 ... varN)", e);
 		}
 	}
 

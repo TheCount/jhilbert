@@ -20,36 +20,12 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.verifier;
-
-import java.util.Map;
-
-import jhilbert.data.DVConstraints;
-import jhilbert.data.Module;
-
-import jhilbert.expressions.Expression;
+package jhilbert.scanners;
 
 /**
- * Verifier interface.
+ * A {@link Feed} used by the PHP code.
+ * The PHP code feeds this feed with JHilbert code. The feed returns rendered
+ * HTML code.
  */
-public interface Verifier {
-
-	/**
-	 * Verifies the proof in the context of the specified module with
-	 * respect to the specified disjoint variable constraints and
-	 * hypotheses.
-	 * Succeeds if the proof is correct and its final outcome is compatible
-	 * with the specified consequent.
-	 *
-	 * @param module data module.
-	 * @param dvConstraints DV constraints. If necessary, the verifier will
-	 * 	restrict the constraints.
-	 * @param hypotheses the labelled hypotheses.
-	 * @param consequent the consequent.
-	 *
-	 * @throws VerifyException if the proof does not verify.
-	 */
-	public void verify(final Module module, DVConstraints dvConstraints, Map<String, Expression> hypotheses, Expression consequent)
-	throws VerifyException;
-
+public interface PHPFeed extends Feed<String, String> {
 }

@@ -45,6 +45,8 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -76,12 +78,13 @@ public final class DefinitionCommand extends AbstractCommand {
 	 * Creates a new <code>DefinitionCommand</code>.
 	 *
 	 * @param module {@link Module} to add definition to.
-	 * @param tokenScanner {@link TokenScanner} to obtain definition data.
+	 * @param tokenScanner {@link TokenScanner} to obtain definition data from.
 	 *
 	 * @throws SyntaxException if a syntax error occurs.
 	 */
 	public DefinitionCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
 		super(module);
+		assert (tokenScanner != null): "Supplied token scanner is null";
 		try {
 			tokenScanner.beginExp();
 			name = tokenScanner.getAtom();
@@ -98,15 +101,51 @@ public final class DefinitionCommand extends AbstractCommand {
 			}
 			definiens = ExpressionFactory.getInstance().createExpression(module, tokenScanner);
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning def command", e);
+			logger.error("Unexpected end of input while scanning def command");
 			throw new SyntaxException("Unexpected end of input", e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error while scanning def command", e);
+			logger.error("Scanner error while scanning def command");
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new SyntaxException("Scanner error", e);
 		} catch (ExpressionException e) {
-			logger.error("Unable to scan expression", e);
+			logger.error("Unable to scan expression");
 			throw new SyntaxException("Unable to scan expression", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>DefinitionCommand</code>.
+	 *
+	 * @param module {@link Module} to add definition to.
+	 * @param tree syntax tree to obtain definition data from.
+	 *
+	 * @throws SyntaxException if a syntax error occurs.
+	 */
+	public DefinitionCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+		super(module);
+		assert (tree != null): "Supplied LISP tree is null";
+		final List<? extends TreeNode<String>> children = tree.getChildren();
+		try {
+			if (children.size() != 2)
+				throw new IndexOutOfBoundsException();
+			final List<? extends TreeNode<String>> defSpec = children.get(0).getChildren();
+			name = defSpec.get(0).getValue();
+			if (name == null)
+				throw new NullPointerException();
+			final int size = defSpec.size();
+			varNameList = new ArrayList(size - 1);
+			for (int i = 1; i != size; ++i) {
+				final String varName = defSpec.get(i).getValue();
+				if (varName == null)
+					throw new NullPointerException();
+				varNameList.add(varName);
+			}
+			definiens = ExpressionFactory.getInstance().createExpression(module, children.get(1));
+		} catch (RuntimeException e) {
+			logger.error("Expected ((defName var1 ... varN) expression), got " + children);
+			throw new SyntaxException("Expected ((defName var1 ... varN) expression)", e);
+		} catch (ExpressionException e) {
+			throw new SyntaxException("Expression error", e);
 		}
 	}
 

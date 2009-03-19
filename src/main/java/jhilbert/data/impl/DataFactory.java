@@ -31,6 +31,8 @@ import jhilbert.expressions.Expression;
 
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 /**
  * {@link DataFactory} implementation.
  */
@@ -117,6 +119,12 @@ public final class DataFactory extends jhilbert.data.DataFactory {
 		assert (namespace != null): "Supplied namespace is null";
 		assert (tokenScanner != null): "Supplied token scanner is null";
 		return new DVConstraintsImpl(namespace, tokenScanner);
+	}
+
+	public @Override DVConstraintsImpl createDVConstraints(final Namespace<? extends Symbol> namespace, final TreeNode<String> tree) throws DataException {
+		assert (namespace != null): "Supplied namespace is null";
+		assert (tree != null): "Supplied syntax tree is null";
+		return new DVConstraintsImpl(namespace, tree);
 	}
 
 	public @Override StatementImpl createStatement(final String name, final Statement orig, final int parameterIndex, final DVConstraints dv,

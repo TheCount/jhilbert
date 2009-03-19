@@ -28,6 +28,8 @@ import jhilbert.expressions.Expression;
 
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 /**
  * Data factory.
  */
@@ -260,6 +262,19 @@ public abstract class DataFactory {
 	 * 	could not be found.
 	 */
 	public abstract DVConstraints createDVConstraints(Namespace<? extends Symbol> namespace, TokenScanner tokenScanner) throws DataException;
+
+	/**
+	 * Creates new {@link DVConstraints} from the specified
+	 * syntax tree containing variables from the specified symbol
+	 * namespace.
+	 *
+	 * @param namespace namespace to obtain variables from.
+	 * @param tree syntax tree to obtain constraints from.
+	 *
+	 * @throws DataException if a syntax error occurs or if a variable
+	 * 	could not be found.
+	 */
+	public abstract DVConstraints createDVConstraints(Namespace<? extends Symbol> namespace, TreeNode<String> tree) throws DataException;
 
 	/**
 	 * Creates a new {@link Statement} with the specified name, disjoint

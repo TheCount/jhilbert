@@ -22,6 +22,8 @@
 
 package jhilbert.commands.impl;
 
+import java.util.List;
+
 import jhilbert.commands.CommandException;
 import jhilbert.commands.SyntaxException;
 
@@ -33,6 +35,8 @@ import jhilbert.data.Namespace;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.TokenScanner;
+
+import jhilbert.utils.TreeNode;
 
 import org.apache.log4j.Logger;
 
@@ -69,6 +73,29 @@ public final class KindCommand extends AbstractCommand {
 			logger.error("Error scanning kind", e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new SyntaxException("Error scanning kind", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>KindCommand</code>.
+	 *
+	 * @param module {@link Module} to add kind to.
+	 * @param tree syntax tree to obtain kind data from.
+	 *
+	 * @throws SyntaxException if a syntax error occurs.
+	 */
+	public KindCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+		super(module);
+		assert (tree != null): "Supplied syntax tree is null";
+		final List<? extends TreeNode<String>> children = tree.getChildren();
+		if (children.size() != 1) {
+			logger.error("Expected one kind name, got " + children);
+			throw new SyntaxException("Too many elements in LISP list");
+		}
+		kindName = children.get(0).getValue();
+		if (kindName == null) {
+			logger.error("Expected kind name, got " + children);
+			throw new SyntaxException("No kind name found");
 		}
 	}
 

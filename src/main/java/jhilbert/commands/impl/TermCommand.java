@@ -39,6 +39,8 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -98,6 +100,44 @@ public final class TermCommand extends AbstractCommand {
 			logger.error("Scanner error while scanning term command", e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new SyntaxException("Scanner error", e);
+		}
+	}
+
+	/**
+	 * Creates a new <code>TermCommand</code>.
+	 *
+	 * @param module {@link Module} to add functor to.
+	 * @param tree synatx tree to obtain functor data from.
+	 *
+	 * @throws SyntaxException if a syntax error occurs.
+	 */
+	public TermCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+		super (module);
+		assert (tree != null): "Supplied LISP tree is null";
+		final List<? extends TreeNode<String>> children = tree.getChildren();
+		try {
+			if (children.size() != 2)
+				throw new IndexOutOfBoundsException();
+			kindName = children.get(0).getValue();
+			if (kindName == null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> termspec = children.get(1).getChildren();
+			name = termspec.get(0).getValue();
+			if (name == null)
+				throw new NullPointerException();
+			final int size = termspec.size();
+			inputKindNameList = new ArrayList(size - 1);
+			for (int i = 1; i != size; ++i) {
+				final String kindName = termspec.get(i).getValue();
+				if (kindName == null)
+					throw new NullPointerException();
+				inputKindNameList.add(kindName);
+			}
+			if (inputKindNameList.size() == 0)
+				throw new IndexOutOfBoundsException();
+		} catch (RuntimeException e) {
+			logger.error("Expected (kind (termName kind1 ... kindN)), got " + children);
+			throw new SyntaxException("Expected (kind (termName kind1 ... kindN))", e);
 		}
 	}
 

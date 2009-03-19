@@ -40,6 +40,8 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -103,7 +105,7 @@ final class DVConstraintsImpl implements DVConstraints, Serializable {
 	 * FIXME: We have two choices here:
 	 * <ul>
 	 * <li>Use HashSet<ArrayList>: fast addition and retrieval, slow DV pair creation, lots of overhead
-	 * <li>Use TreeSet<Variable[]> with a suitable comparator: slower addition and retrieval, fatser pair creation
+	 * <li>Use TreeSet<Variable[]> with a suitable comparator: slower addition and retrieval, faster pair creation
 	 * </ul>
 	 * I'm implementing the first method now, but I'd say the second method warrants some testing...
 	 */
@@ -170,6 +172,59 @@ final class DVConstraintsImpl implements DVConstraints, Serializable {
 			logger.error("Scanner error while scanning DV constraints", e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
 			throw new DataException("Scanner error", e);
+		}
+	}
+
+	/**
+	 * Creates new <code>DVConstraintsImpl</code> from the specified
+	 * syntax tree containing variables from the specified symbol
+	 * namespace.
+	 *
+	 * @param namespace namespace to obtain variables from.
+	 * @param tree syntax tree to obtain constraints from.
+	 *
+	 * @throws DataException if a syntax error occurs or if a variable
+	 * 	could not be found.
+	 */
+	DVConstraintsImpl(final Namespace<? extends Symbol> namespace, final TreeNode<String> tree) throws DataException {
+		constraintSet = new HashSet();
+		assert (namespace != null): "Supplied namespace is null";
+		assert (tree != null): "Supplied syntax tree is null";
+		try {
+			if (tree.getValue() != null)
+				throw new NullPointerException();
+			final List<? extends TreeNode<String>> children = tree.getChildren();
+			for (final TreeNode<String> varNameTree: children) {
+				if (varNameTree.getValue() != null)
+					throw new NullPointerException();
+				final List<? extends TreeNode<String>> leaves = varNameTree.getChildren();
+				final int size = leaves.size();
+				// convert syntax tree to string array
+				final String[] varNameList = new String[size];
+				for (int i = 0; i != size; ++i) {
+					varNameList[i] = leaves.get(i).getValue();
+					if (varNameList[i] == null)
+						throw new NullPointerException(leaves.get(i).toString());
+				}
+				// search appropriate variables
+				final Variable[] constraint = new Variable[size];
+				for (int i = 0; i != size; ++i) {
+					final Symbol symbol = namespace.getObjectByString(varNameList[i]);
+					if (symbol == null) {
+						logger.error("Variable " + varNameList[i] + " not found");
+						throw new DataException("Variable not found");
+					}
+					if (!symbol.isVariable()) {
+						logger.error("Symbol " + varNameList[i] + " is not a variable");
+						throw new DataException("Symbol is not a variable");
+					}
+					constraint[i] = (Variable) symbol;
+				}
+				add(constraint);
+			}
+		} catch (NullPointerException e) {
+			logger.error("DV constraint syntax error, expected ([ var1 [ var2 [ ... [ varN ] ... ] ] ])");
+			throw new DataException("DV constraint syntax error", e);
 		}
 	}
 

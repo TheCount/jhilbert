@@ -50,6 +50,27 @@ public final class Main {
 	public static final int VERSION = 4;
 
 	/**
+	 * Logger.
+	 */
+	private static final Logger logger;
+
+	/**
+	 * Use feeds?
+	 */
+	private static boolean useFeeds = false;
+
+	/**
+	 * Static initialiser.
+	 *
+	 * Initialises the logger.
+	 */
+	static {
+		BasicConfigurator.configure();
+		logger = Logger.getRootLogger();
+		logger.setLevel(Level.INFO);
+	}
+
+	/**
 	 * Program entry point.
 	 *
 	 * @param args command line arguments.
@@ -57,11 +78,8 @@ public final class Main {
 	 * @throws Exception if anything out of the ordinary happens.
 	 */
 	public static void main(String... args) throws Exception {
-		BasicConfigurator.configure();
-		final Logger logger = Logger.getRootLogger();
 		boolean startDaemon = false;
 		try {
-			logger.setLevel(Level.INFO);
 			String inputFileName = null;
 			for (String arg: args) {
 				logger.info("Command line argument: " + arg);
@@ -74,8 +92,10 @@ public final class Main {
 				else
 					inputFileName = arg;
 			}
-			if (startDaemon == true)
+			if (startDaemon == true) {
 				startDaemon();
+				return;
+			}
 			if (inputFileName == null) {
 				printUsage();
 				System.exit(1);
@@ -158,15 +178,31 @@ public final class Main {
 	/**
 	 * Starts a PHP/Java bridge daemon.
 	 */
-	private static void startDaemon() throws IOException { // FIXME: catch & log IOException!
-		final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getRequiredInstance("INET_LOCAL:8080");
-		while (true) {
-			try {
-				Thread.sleep(Long.MAX_VALUE);
-			} catch (InterruptedException e) {
-				// No, I don't wanna!
+	private static void startDaemon() {
+		useFeeds = true;
+		try {
+			final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getRequiredInstance("INET_LOCAL:8080");
+			while (true) {
+				try {
+					Thread.sleep(Long.MAX_VALUE);
+				} catch (InterruptedException e) {
+					logger.warn("Bridge daemon thread interrupted", e);
+				}
 			}
+		} catch (IOException e) {
+			logger.fatal("Unable to create PHP/Java bridge", e);
+			System.exit(1);
 		}
+	}
+
+	/**
+	 * Returns whether feeds should be used.
+	 *
+	 * @return <code>true</code> if feeds should be used,
+	 * 	<code>false</code> otherwise.
+	 */
+	public static boolean isUsingFeeds() {
+		return useFeeds;
 	}
 
 }

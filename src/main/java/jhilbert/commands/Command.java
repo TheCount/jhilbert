@@ -33,12 +33,18 @@ import jhilbert.data.Module;
 
 import jhilbert.scanners.TokenScanner;
 
+import jhilbert.utils.TreeNode;
+
 /**
  * Basic interface for all commands.
  * Implementing classes <strong>must</strong> provide a constructor which takes
  * two arguments, the first of type {@link Module}, the second of type
  * {@link TokenScanner}. These constructors are then provided to the
  * {@link Command.Class}es and used to create commands.
+ *
+ * Commands must be constructed in proper order and then {@link #execute}d
+ * before the next command is constructed.
+ * FIXME: This restriction is probably a design error.
  */
 public interface Command {
 
@@ -181,8 +187,50 @@ public interface Command {
 				else if (cause instanceof Error)
 					throw (Error) cause;
 				else {
-					final AssertionError ae = new AssertionError(
-						"Implementation throws invalid exception");
+					final AssertionError ae = new AssertionError("Implementation throws invalid exception");
+					ae.initCause(e);
+					throw ae;
+				}
+			} catch (IllegalAccessException e) {
+				throw new AssertionError("Implementation provides inaccessible constructors");
+			} catch (IllegalArgumentException e) {
+				throw new AssertionError("Implementation violates contract on constructor arguments");
+			} catch (InstantiationException e) {
+				throw new AssertionError("Implementation provides constructors of abstract classes");
+			}
+		}
+
+		/**
+		 * Creates a new command from the specified {@link Module} and
+		 * the specified syntax tree.
+		 * See {@link #createCommand(Module, TokenScanner)} for more
+		 * information.
+		 *
+		 * @param module module the command should store its data to.
+		 * @param tree syntax tree.
+		 *
+		 * @return a command of this class.
+		 *
+		 * @throws SyntaxException if a syntax error occurs.
+		 *
+		 * @see #createCommand(Module, TokenScanner)
+		 */
+		public Command createCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
+			assert (module != null): "Supplied module is null";
+			assert (tree != null): "Supplied syntax tree is null";
+			assert (constructor != null): "Constructor has not been initialised yet";
+			try {
+				return constructor.newInstance(module, tree);
+			} catch (InvocationTargetException e) {
+				final Throwable cause = e.getCause();
+				if (cause instanceof SyntaxException)
+					throw (SyntaxException) cause;
+				else if (cause instanceof RuntimeException)
+					throw (RuntimeException) cause;
+				else if (cause instanceof Error)
+					throw (Error) cause;
+				else {
+					final AssertionError ae = new AssertionError("Implementation throws invalid exception");
 					ae.initCause(e);
 					throw ae;
 				}
