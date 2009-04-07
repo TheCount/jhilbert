@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,9 +34,7 @@ import jhilbert.data.Parameter;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
+import jhilbert.scanners.TokenFeed;
 
 import org.apache.log4j.Logger;
 
@@ -107,103 +105,51 @@ final class ParameterImpl implements Parameter, Serializable {
 
 	/**
 	 * Scans a new <code>ParameterImpl</code> from the specified token
-	 * scanner using data from the specified module.
+	 * feed using data from the specified module.
 	 *
 	 * @param module data module.
-	 * @param tokenScanner {@link TokenScanner} to obtain parameter data.
+	 * @param tokenFeed {@link TokenFeed} to obtain parameter data.
 	 *
 	 * @throws DataException if a syntax error occurs.
 	 */
-	ParameterImpl(final Module module, final TokenScanner tokenScanner) throws DataException {
+	ParameterImpl(final Module module, final TokenFeed tokenFeed) throws DataException {
 		assert (module != null): "Supplied module is null";
-		assert (tokenScanner != null): "Supplied tokenScanner is null";
+		assert (tokenFeed != null): "Supplied token feed is null";
 		try {
-			name = tokenScanner.getAtom();
-			locator = tokenScanner.getAtom();
+			name = tokenFeed.getAtom();
+			tokenFeed.confirmParameter();
+			locator = tokenFeed.getAtom();
+			tokenFeed.confirmLocator();
+			tokenFeed.beginExp();
+			tokenFeed.confirmBeginExp();
 			final List<Parameter> parameterList = new ArrayList();
-			tokenScanner.beginExp();
-			Token token = tokenScanner.getToken();
+			Token token = tokenFeed.getToken();
 			while (token.getTokenClass() == Token.Class.ATOM) {
 				final Parameter parameter = module.getParameter(token.getTokenString());
 				if (parameter == null) {
-					logger.error("Parameter " + token.getTokenString() + " unknown");
-					logger.debug("Current scanner context: " + tokenScanner.getContextString());
+					tokenFeed.reject("Parameter " + token.getTokenString() + " unknown");
+					logger.debug("Current scanner context: " + tokenFeed.getContextString());
 					throw new DataException("Parameter unknown");
 				}
 				parameterList.add(parameter);
-				token = tokenScanner.getToken();
+				tokenFeed.confirmParameter();
+				token = tokenFeed.getToken();
 			}
 			if (token.getTokenClass() != Token.Class.END_EXP) {
-				logger.error("Expected end of parameter list");
-				logger.debug("Current scanner context: " + tokenScanner.getContextString());
+				tokenFeed.reject("Expected end of parameter list");
+				logger.debug("Current scanner context: " + tokenFeed.getContextString());
 				throw new DataException("Expected end of parameter list");
 			}
 			this.parameterList = Collections.unmodifiableList(parameterList);
-			prefix = tokenScanner.getString();
+			tokenFeed.confirmEndExp();
+			prefix = tokenFeed.getString();
+			tokenFeed.confirmString();
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning parameter", e);
+			logger.error("Unexpected end of input while scanning parameter");
 			throw new DataException("Unexpected end of input while scanning parameter", e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error while scanning parameter", e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
-			throw new DataException("Scanner error while scanning parameter", e);
-		}
-	}
-
-	/**
-	 * Creates a new <code>ParameterImpl</code> from the specified syntax
-	 * tree using data from the specified module.
-	 *
-	 * @param module data module.
-	 * @param tree syntax tree.
-	 *
-	 * @throws DataException if a syntax error occurs.
-	 */
-	ParameterImpl(final Module module, final TreeNode<String> tree) throws DataException {
-		assert (module != null): "Supplied module is null";
-		assert (tree != null): "Supplied syntax tree is null";
-		try {
-			if (tree.getValue() != null)
-				throw new NullPointerException();
-			final List<? extends TreeNode<String>> children = tree.getChildren();
-			if (children.size() != 4)
-				throw new IndexOutOfBoundsException();
-			name = children.get(0).getValue();
-			if (name == null)
-				throw new NullPointerException();
-			locator = children.get(1).getValue();
-			if (locator == null)
-				throw new NullPointerException();
-			// parameter list
-			final TreeNode<String> parameterTree = children.get(2);
-			if (parameterTree.getValue() != null)
-				throw new NullPointerException();
-			final List<? extends TreeNode<String>> parameterTreeList = parameterTree.getChildren();
-			final List<Parameter> parameterList = new ArrayList(parameterTreeList.size());
-			for (final TreeNode<String> listItem: parameterTreeList) {
-				final String parameterName = listItem.getValue();
-				if (parameterName == null)
-					throw new NullPointerException();
-				final Parameter parameter = module.getParameter(parameterName);
-				if (parameter == null) {
-					logger.error("Parameter " + parameterName + " unknown");
-					throw new DataException("Parameter unknown");
-				}
-				parameterList.add(parameter);
-			}
-			this.parameterList = Collections.unmodifiableList(parameterList);
-			// prefix
-			final TreeNode<String> prefixTree = children.get(3);
-			String prefix = prefixTree.getValue();
-			if (prefix == null) {
-				prefix = "";
-				if (prefixTree.getChildren().size() != 0)
-					throw new IndexOutOfBoundsException();
-			}
-			this.prefix = prefix;
-		} catch (RuntimeException e) {
-			logger.error("Syntax error in parameter specification, expected (newparam locator ([ param1 [ param2 [ ... [ paramN ] ... ] ] ]) prefix), got " + tree);
-			throw new DataException("Syntax error in parameter specification", e);
+			throw new DataException("Feed error", e);
 		}
 	}
 

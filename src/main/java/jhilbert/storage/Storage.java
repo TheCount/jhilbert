@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,9 +43,15 @@ public abstract class Storage {
 	 * Choose instance.
 	 */
 	static {
-		// Right now there is only file based storage.
-		// In the future, the storage method should be selectable by a command line switch
-		instance = new jhilbert.storage.file.Storage();
+		try {
+			if (jhilbert.Main.getHashstorePath() == null) {
+				instance = new jhilbert.storage.file.Storage();
+			} else {
+				instance = new jhilbert.storage.hashstore.Storage();
+			}
+		} catch (StorageException e) {
+			throw new RuntimeException("StorageException in static Storage initializer", e);
+		}
 	}
 
 	/**
@@ -144,6 +150,42 @@ public abstract class Storage {
 	 */
 	public final Module loadModule(final String locator) throws StorageException {
 		return loadModule(locator, -1);
+	}
+
+	/**
+	 * Stores the specified module at the specified locator with the
+	 * specified revision.
+	 *
+	 * @param module data module to store.
+	 * @param locator module name.
+	 * @param version revision number, or <code>-1</code> if the module
+	 * 	is unversioned.
+	 *
+	 * @throws StorageException if the module cannot be stored.
+	 */
+	protected abstract void storeModule(Module module, String locator, long version) throws StorageException;
+
+	/**
+	 * Saves the specified module at the specified locator with the
+	 * specified revision, updating the cache.
+	 *
+	 * @param module data module to store.
+	 * @param locator module name.
+	 * @param version revision number, or <code>-1</code> if the module
+	 * 	is unversioned.
+	 *
+	 * @throws StorageException if the module cannot be saved.
+	 */
+	public final void saveModule(final Module module, final String locator, long version) throws StorageException {
+		assert (module != null): "Supplied module is null";
+		assert (locator != null): "Supplied locator is null";
+		assert (!"".equals(locator)): "Proof modules cannot be saved";
+		assert (version >= -1): "Invalid version number supplied";
+		storeModule(module, locator, version);
+		synchronized (moduleCache) {
+			if (moduleCache.containsKey(locator))
+				moduleCache.put(locator, module);
+		}
 	}
 
 }

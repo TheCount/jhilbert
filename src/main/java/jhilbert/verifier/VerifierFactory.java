@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@
 
 package jhilbert.verifier;
 
-import java.util.List;
+import jhilbert.data.Module;
+
+import jhilbert.scanners.TokenFeed;
 
 /**
  * Factory class for {@link Verifier}s.
@@ -44,14 +46,14 @@ public abstract class VerifierFactory {
 	// default constructed
 	
 	/**
-	 * Creates a new {@link Verifier} for the specified proof.
+	 * Creates a new {@link Verifier} for the specified module and token
+	 * feed.
 	 *
-	 * @param proof the proof, which is a {@link List} of {@link Object}s
-	 * 	each of which must be convertible to either {@link String} or
-	 * 	{@link jhilbert.expressions.Expression}.
+	 * @param module data module.
+	 * @param tokenFeed token feed.
 	 *
 	 * @return the new verifier.
 	 */
-	public abstract Verifier createVerifier(List<Object> proof);
+	public abstract Verifier createVerifier(Module module, TokenFeed tokenFeed);
 
 }

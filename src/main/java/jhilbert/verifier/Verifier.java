@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,13 +35,11 @@ import jhilbert.expressions.Expression;
 public interface Verifier {
 
 	/**
-	 * Verifies the proof in the context of the specified module with
-	 * respect to the specified disjoint variable constraints and
-	 * hypotheses.
+	 * Verifies the proof with respect to the specified disjoint variable
+	 * constraints and hypotheses.
 	 * Succeeds if the proof is correct and its final outcome is compatible
 	 * with the specified consequent.
 	 *
-	 * @param module data module.
 	 * @param dvConstraints DV constraints. If necessary, the verifier will
 	 * 	restrict the constraints.
 	 * @param hypotheses the labelled hypotheses.
@@ -49,7 +47,7 @@ public interface Verifier {
 	 *
 	 * @throws VerifyException if the proof does not verify.
 	 */
-	public void verify(final Module module, DVConstraints dvConstraints, Map<String, Expression> hypotheses, Expression consequent)
+	public void verify(DVConstraints dvConstraints, Map<String, Expression> hypotheses, Expression consequent)
 	throws VerifyException;
 
 }

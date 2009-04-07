@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,14 +20,34 @@
     http://en.wikisource.org/wiki/User_talk:GrafZahl
 */
 
-package jhilbert.scanners;
-
-import jhilbert.utils.TreeNode;
+package jhilbert.data;
 
 /**
- * A {@link Feed} creating LISP expressions out of strings.
- * The LISP expressions are represented as a {@link TreeNode} of
- * {@link String}s.
+ * An {@link java.lang.Exception} thrown when an error during creation of
+ * {@link DVConstraints} occurs.
  */
-public interface LISPFeed extends Feed<String, TreeNode<String>> {
+public class ConstraintException extends DataException {
+
+	/**
+	 * Constructs a new <code>ConstraintException</code> with the
+	 * specified detail message.
+	 *
+	 * @param message detail message.
+	 */
+	public ConstraintException(final String message) {
+		this(message, null);
+	}
+
+	/**
+	 * Constructs a new <code>ConstraintException</code> with the
+	 * specified detail message and cause.
+	 *
+	 * @param message detail message.
+	 * @param cause (A <code>null</code> value is permitted, and
+	 * 	indicates that the cause is nonexistent or unknown.)
+	 */
+	public ConstraintException(final String message, final Throwable cause) {
+		super(message, cause);
+	}
+
 }

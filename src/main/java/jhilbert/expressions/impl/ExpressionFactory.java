@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,9 +34,7 @@ import jhilbert.data.Variable;
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
 
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * {@link jhilbert.expressions.ExpressionFactory} implementation.
@@ -45,17 +43,10 @@ public final class ExpressionFactory extends jhilbert.expressions.ExpressionFact
 
 	// default constructed
 	
-	public @Override ExpressionImpl createExpression(final Module module, final TokenScanner tokenScanner) throws ExpressionException {
+	public @Override ExpressionImpl createExpression(final Module module, final TokenFeed tokenFeed) throws ExpressionException {
 		assert (module != null): "Supplied module is null";
-		assert (tokenScanner != null): "Supplied token scanner is null";
-		return new ExpressionImpl(module, tokenScanner);
-	}
-
-	public @Override ExpressionImpl createExpression(final Module module, final TreeNode<String> tree)
-	throws ExpressionException {
-		assert (module != null): "Supplied module is null";
-		assert (tree != null): "Supplied LISP tree is null";
-		return new ExpressionImpl(module, tree);
+		assert (tokenFeed != null): "Supplied token feed is null";
+		return new ExpressionImpl(module, tokenFeed);
 	}
 
 	public @Override ExpressionImpl createExpression(final Variable var) {

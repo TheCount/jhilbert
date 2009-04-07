@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 
 package jhilbert.scanners.impl;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStream;
 
 import jhilbert.data.Module;
@@ -35,19 +37,15 @@ public final class ScannerFactory extends jhilbert.scanners.ScannerFactory {
 
 	// instances are default-constructed.
 
-	public @Override TokenScannerImpl createTokenScanner(final InputStream in) throws ScannerException {
+	public @Override StreamTokenFeed createTokenFeed(final InputStream in) throws ScannerException {
 		assert (in != null): "Supplied input stream is null";
-		return new TokenScannerImpl(in);
+		return new StreamTokenFeed(in);
 	}
 
-	public @Override CommandScannerImpl createCommandScanner(final InputStream in, final Module module) throws ScannerException {
-		assert (in != null): "Supplied input stream is null";
-		assert (module != null): "Supplied module is null";
-		return new CommandScannerImpl(in, module);
-	}
-
-	public @Override LISPFeedImpl createLISPFeed() {
-		return new LISPFeedImpl();
+	public @Override IOTokenFeed createTokenFeed(final BufferedReader in, final BufferedWriter out) {
+		assert (in != null): "Supplied input reader is null";
+		assert (out != null): "Supplied output writer is null";
+		return new IOTokenFeed(in, out);
 	}
 
 }

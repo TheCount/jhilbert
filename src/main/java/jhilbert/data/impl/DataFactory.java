@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,9 +29,7 @@ import jhilbert.data.*;
 
 import jhilbert.expressions.Expression;
 
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * {@link DataFactory} implementation.
@@ -114,17 +112,11 @@ public final class DataFactory extends jhilbert.data.DataFactory {
 		return new DVConstraintsImpl();
 	}
 
-	public @Override DVConstraintsImpl createDVConstraints(final Namespace<? extends Symbol> namespace, final TokenScanner tokenScanner)
-	throws DataException {
+	public @Override DVConstraintsImpl createDVConstraints(final Namespace<? extends Symbol> namespace, final TokenFeed tokenFeed)
+	throws ConstraintException {
 		assert (namespace != null): "Supplied namespace is null";
-		assert (tokenScanner != null): "Supplied token scanner is null";
-		return new DVConstraintsImpl(namespace, tokenScanner);
-	}
-
-	public @Override DVConstraintsImpl createDVConstraints(final Namespace<? extends Symbol> namespace, final TreeNode<String> tree) throws DataException {
-		assert (namespace != null): "Supplied namespace is null";
-		assert (tree != null): "Supplied syntax tree is null";
-		return new DVConstraintsImpl(namespace, tree);
+		assert (tokenFeed != null): "Supplied token feed is null";
+		return new DVConstraintsImpl(namespace, tokenFeed);
 	}
 
 	public @Override StatementImpl createStatement(final String name, final Statement orig, final int parameterIndex, final DVConstraints dv,
@@ -149,10 +141,11 @@ public final class DataFactory extends jhilbert.data.DataFactory {
 		return new ParameterImpl(name, locator, parameterList, prefix);
 	}
 
-	public @Override ParameterImpl createParameter(final Module module, final TokenScanner tokenScanner) throws DataException {
+	public @Override ParameterImpl createParameter(final Module module, final TokenFeed tokenFeed)
+	throws DataException {
 		assert (module != null): "Supplied module is null";
-		assert (tokenScanner != null): "Supplied token scanner is null";
-		return new ParameterImpl(module, tokenScanner);
+		assert (tokenFeed != null): "Supplied token feed is null";
+		return new ParameterImpl(module, tokenFeed);
 	}
 
 	public @Override ParameterLoaderImpl createParameterLoader(final Parameter parameter, final Module module)

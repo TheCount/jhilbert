@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,15 +25,20 @@ package jhilbert;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
 import java.util.HashMap;
 
-import jhilbert.commands.Command;
+import jhilbert.commands.CommandFactory;
 
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
 
-import jhilbert.scanners.CommandScanner;
 import jhilbert.scanners.ScannerFactory;
+import jhilbert.scanners.TokenFeed;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -55,9 +60,19 @@ public final class Main {
 	private static final Logger logger;
 
 	/**
-	 * Use feeds?
+	 * Daemon port.
 	 */
-	private static boolean useFeeds = false;
+	private static final int DAEMON_PORT = 3141;
+
+	/**
+	 * Default location for hashstore.
+	 */
+	private static final String HASHSTORE_DEFAULT_PATH = "/var/local/lib/jhilbert/hashstore";
+
+	/**
+	 * Hashstore location.
+	 */
+	private static String hashstorePath;
 
 	/**
 	 * Static initialiser.
@@ -79,18 +94,26 @@ public final class Main {
 	 */
 	public static void main(String... args) throws Exception {
 		boolean startDaemon = false;
+		hashstorePath = null;
 		try {
 			String inputFileName = null;
 			for (String arg: args) {
 				logger.info("Command line argument: " + arg);
-				if (arg.startsWith("-l"))
+				if (arg.startsWith("-l")) {
 					logger.setLevel(Level.toLevel(arg.substring(2)));
-				else if (arg.equals("-d"))
+				} else if (arg.startsWith("-p")) {
+					if (arg.length() > 2) {
+						hashstorePath = arg.substring(2);
+					} else {
+						hashstorePath = HASHSTORE_DEFAULT_PATH;
+					}
+				} else if (arg.equals("-d")) {
 					startDaemon = true;
-				else if (arg.equals("--license"))
+				} else if (arg.equals("--license")) {
 					showLicense();
-				else
+				} else {
 					inputFileName = arg;
+				}
 			}
 			if (startDaemon == true) {
 				startDaemon();
@@ -102,15 +125,10 @@ public final class Main {
 			}
 			logger.info("Processing file " + inputFileName);
 			final Module mainModule = DataFactory.getInstance().createModule("");
-			final CommandScanner cs = ScannerFactory.getInstance()
-				.createCommandScanner(new FileInputStream(inputFileName), mainModule);
-			for (Command c = cs.getToken(); c != null; c = cs.getToken()) {
-				if (logger.isDebugEnabled())
-					logger.debug("Current command: " + cs.getContextString());
-				c.execute();
-				cs.resetContext();
-			}
-			logger.info("File processes successfully");
+			final TokenFeed tokenFeed = ScannerFactory
+				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
+			CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
+			logger.info("File processed successfully");
 			return;
 		} catch (JHilbertException e) {
 			logger.fatal("Exiting due to unrecoverable error", e);
@@ -125,7 +143,7 @@ public final class Main {
 	 * Prints command line usage help.
 	 */
 	private static void printUsage() {
-		System.out.println("Usage: java -jar jhilbert.jar [ OPTIONS ] file.jh");
+		System.out.println("Usage: java -jar jhilbert.jar [ OPTIONS ] [ file.jh ]");
 		System.out.println("Runs the JHilbert proof verifier.");
 		System.out.println();
 		System.out.println("Available options:");
@@ -144,7 +162,11 @@ public final class Main {
 		System.out.println("              to INFO. If the log level is specified, but not from the above");
 		System.out.println("              list, the log level is set to TRACE.");
 		System.out.println();
-		System.out.println("  -d          Start in daemon mode. Creates a PHP/Java bridge on port 8080.");
+		System.out.println("  -d          Start in daemon mode. Creates a JHilbert daemon on port " + DAEMON_PORT);
+		System.out.println();
+		System.out.println("  -pPATH      Uses hashstore storage instead of file storage. Useful in daemon");
+		System.out.println("              mode. The PATH is the base directory used for storage. If PATH is");
+		System.out.println("              not specified, it defaults to " + HASHSTORE_DEFAULT_PATH);
 		System.out.println();
 		System.out.println("  --license   Displays license information and exits.");
 		System.out.println();
@@ -158,7 +180,7 @@ public final class Main {
 		System.out.println("JHilbert version " + VERSION);
 		System.out.println();
 		System.out.println("    JHilbert is a verifier for collaborative theorem proving.");
-		System.out.println("    Copyright © 2008 Alexander Klauer");
+		System.out.println("    Copyright © 2008, 2009 Alexander Klauer");
 		System.out.println();
 		System.out.println("    This program is free software: you can redistribute it and/or modify");
 		System.out.println("    it under the terms of the GNU General Public License as published by");
@@ -176,33 +198,34 @@ public final class Main {
 	}
 
 	/**
-	 * Starts a PHP/Java bridge daemon.
+	 * Starts a JHilbert daemon.
 	 */
-	private static void startDaemon() {
-		useFeeds = true;
+	private static void startDaemon() throws JHilbertException {
+		final byte[] localHost = { 127, 0, 0, 1 };
+		int transactionCounter = 0;
 		try {
-			final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getRequiredInstance("INET_LOCAL:8080");
-			while (true) {
-				try {
-					Thread.sleep(Long.MAX_VALUE);
-				} catch (InterruptedException e) {
-					logger.warn("Bridge daemon thread interrupted", e);
-				}
+			final ServerSocket listener = new ServerSocket(DAEMON_PORT, 50, InetAddress.getByAddress(localHost));
+			for (;;) {
+				final Socket conn = listener.accept();
+				final Server thread = new Server("JHilbert transaction " + ++transactionCounter, conn);
+				thread.start();
 			}
+		} catch (UnknownHostException e) {
+			logger.error("No localhost. Is your networking configured correctly?");
+			throw new JHilbertException("No localhost", e);
 		} catch (IOException e) {
-			logger.fatal("Unable to create PHP/Java bridge", e);
-			System.exit(1);
+			logger.error("Unable to create socket: " + e.getMessage());
+			throw new JHilbertException("Unable to create socket", e);
 		}
 	}
 
 	/**
-	 * Returns whether feeds should be used.
+	 * Retrieves the hashstore path.
 	 *
-	 * @return <code>true</code> if feeds should be used,
-	 * 	<code>false</code> otherwise.
+	 * @return the hashstore path.
 	 */
-	public static boolean isUsingFeeds() {
-		return useFeeds;
+	public static String getHashstorePath() {
+		return hashstorePath;
 	}
 
 }

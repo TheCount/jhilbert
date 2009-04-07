@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
 
 package jhilbert.scanners;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStream;
 
 import jhilbert.data.Module;
@@ -46,36 +48,24 @@ public abstract class ScannerFactory {
 	}
 
 	/**
-	 * Creates a new {@link TokenScanner} from the specified
+	 * Creates a new {@link TokenFeed} from the specified
 	 * {@link java.io.InputStream}.
 	 *
-	 * @param in input stream to create the <code>TokenScanner</code> from.
+	 * @param in input stream to create the <code>TokenFeed</code> from.
 	 *
-	 * @return the new <code>TokenScanner</code>.
+	 * @return the new <code>TokenFeed</code>.
 	 *
 	 * @throws ScannerException if the scanner cannot be created.
 	 */
-	public abstract TokenScanner createTokenScanner(final InputStream in) throws ScannerException;
+	public abstract TokenFeed createTokenFeed(final InputStream in) throws ScannerException;
 
 	/**
-	 * Creates a new {@link CommandScanner} from the specified
-	 * {@link InputStream} for the for the specified {@link Module}.
+	 * Creates a new {@link TokenFeed} from the specified input and
+	 * output buffers (for server operation).
 	 *
-	 * @param in input stream.
-	 * @param module data module.
-	 *
-	 * @return the new command scanner.
-	 *
-	 * @throws ScannerException if the underlying token scanner cannot
-	 * 	be set up.
+	 * @param in input reader.
+	 * @param out output writer.
 	 */
-	public abstract CommandScanner createCommandScanner(final InputStream in, final Module module) throws ScannerException;
-
-	/**
-	 * Creates a new {@link LISPFeed}.
-	 *
-	 * @return the new LISP feed.
-	 */
-	public abstract LISPFeed createLISPFeed();
+	public abstract TokenFeed createTokenFeed(final BufferedReader in, final BufferedWriter out);
 
 }

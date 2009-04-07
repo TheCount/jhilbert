@@ -43,7 +43,7 @@ public interface DVConstraints extends Iterable<Variable[]>, Serializable {
 	 * @throws DataException if the same variable appears twice in the
 	 * 	specified array.
 	 */
-	public void add(Variable... vars) throws DataException;
+	public void add(Variable... vars) throws ConstraintException;
 
 	/**
 	 * Adds the cartesian product of the two specified sets of variables.
@@ -53,7 +53,7 @@ public interface DVConstraints extends Iterable<Variable[]>, Serializable {
 	 *
 	 * @throws DataException if the two sets are not disjoint.
 	 */
-	public void addProduct(Set<Variable> varSet1, Set<Variable> varSet2) throws DataException;
+	public void addProduct(Set<Variable> varSet1, Set<Variable> varSet2) throws ConstraintException;
 
 	/**
 	 * Checks whether the specified variable pair is contained in these

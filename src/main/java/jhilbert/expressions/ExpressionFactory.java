@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,9 +31,7 @@ import jhilbert.data.Kind;
 import jhilbert.data.Module;
 import jhilbert.data.Variable;
 
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * Factory class for {@link Expression}s and expression related tools.
@@ -56,29 +54,16 @@ public abstract class ExpressionFactory {
 
 	/**
 	 * Scans a new {@link Expression} from the specified
-	 * {@link TokenScanner} using data from the specified {@link Module}.
+	 * {@link TokenFeed} using data from the specified {@link Module}.
 	 *
 	 * @param module data module.
-	 * @param tokenScanner token scanner.
+	 * @param tokenFeed token feed.
 	 *
 	 * @return the new expression.
 	 *
 	 * @throws ExpressionException if an error occurs.
 	 */
-	public abstract Expression createExpression(Module module, TokenScanner tokenScanner) throws ExpressionException;
-
-	/**
-	 * Creates a new {@link Expression} from the specified LISP expression
-	 * tree using data from the specified {@link Module}.
-	 *
-	 * @param module data module.
-	 * @param tree LISP tree.
-	 *
-	 * @return the new expression.
-	 *
-	 * @throws ExpressionException if an error occurs.
-	 */
-	public abstract Expression createExpression(Module module, TreeNode<String> tree) throws ExpressionException;
+	public abstract Expression createExpression(Module module, TokenFeed tokenFeed) throws ExpressionException;
 
 	/**
 	 * Creates a new {@link Expression} consisting just of the specified

@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ package jhilbert.commands.impl;
 import java.util.List;
 
 import jhilbert.commands.CommandException;
-import jhilbert.commands.SyntaxException;
 
 import jhilbert.data.DataException;
 import jhilbert.data.Kind;
@@ -33,91 +32,54 @@ import jhilbert.data.Module;
 import jhilbert.data.Namespace;
 
 import jhilbert.scanners.ScannerException;
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
-
-import org.apache.log4j.Logger;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * Command to bind two kinds together.
  */
-public final class KindbindCommand extends AbstractCommand {
-
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger logger = Logger.getLogger(KindbindCommand.class);
-
-	/**
-	 * Old kind name.
-	 */
-	private final String oldKindName;
-
-	/**
-	 * New kind name.
-	 */
-	private final String newKindName;
+final class KindbindCommand extends AbstractCommand {
 
 	/**
 	 * Creates a new <code>KindbindCommand</code>.
 	 *
 	 * @param module {@link Module} in which to bind kinds.
-	 * @param tokenScanner {@link TokenScanner} to obtain kindbind data from.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
+	 * @param tokenFeed {@link TokenFeed} to obtain kindbind data from.
 	 */
-	public KindbindCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module);
-		try {
-			oldKindName = tokenScanner.getAtom();
-			newKindName = tokenScanner.getAtom();
-		} catch (ScannerException e) {
-			logger.error("Error scanning kindbind", e);
-			logger.debug("Scanner context: " + e.getScanner().getContextString());
-			throw new SyntaxException("Error scanning kindbind", e);
-		}
-	}
-
-	/**
-	 * Creates a new <code>KindbindCommand</code>.
-	 *
-	 * @param module {@link Module} in which to bind kinds.
-	 * @param tree syntax tree to obtain kindbind data from.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
-	 */
-	public KindbindCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
-		super(module);
-		assert (tree != null): "Supplied LISP tree is null";
-		final List<? extends TreeNode<String>> children = tree.getChildren();
-		if (children.size() != 2) {
-			logger.error("Expected (oldkindname newkindname), got " + children);
-			throw new SyntaxException("Expected (oldkindname newkindname)");
-		}
-		oldKindName = children.get(0).getValue();
-		newKindName = children.get(1).getValue();
-		if ((oldKindName == null) || (newKindName == null)) {
-			logger.error("Expected (oldkindname newkindname), got " + children);
-			throw new SyntaxException("Expected (oldkindname newkindname)");
-		}
+	public KindbindCommand(final Module module, final TokenFeed tokenFeed) {
+		super(module, tokenFeed);
 	}
 
 	public @Override void execute() throws CommandException {
 		final Namespace<? extends Kind> namespace = getModule().getKindNamespace();
 		assert (namespace != null): "Module provided null namespace";
-		final Kind oldKind = namespace.getObjectByString(oldKindName);
-		if (oldKind == null) {
-			logger.error("Kind " + oldKindName + " not found");
-			throw new CommandException("Kind not found");
-		}
-		final Kind newKind = namespace.getObjectByString(newKindName);
+		final TokenFeed feed = getFeed();
 		try {
-			if (newKind == null)
+			feed.beginExp();
+			feed.confirmBeginExp();
+			final Kind oldKind = namespace.getObjectByString(feed.getAtom());
+			if (oldKind == null) {
+				feed.reject("Kind not found");
+				throw new CommandException("Kind not found");
+			}
+			feed.confirmKind();
+			final String newKindName = feed.getAtom();
+			final Kind newKind = namespace.getObjectByString(newKindName);
+			if (newKind == null) {
 				namespace.createAlias(oldKind, newKindName);
-			else
+			} else {
 				namespace.identify(oldKind, newKind);
+			}
+			feed.confirmKind();
+			feed.endExp();
+			feed.confirmEndCmd();
+		} catch (ScannerException e) {
+			throw new CommandException("Feed error", e);
 		} catch (DataException e) {
+			try {
+				feed.reject("Error creating alias/identifying; this should not happen");
+			} catch (ScannerException ignored) {
+				// ignored
+			}
 			throw new AssertionError("Error creating alias/identifying; this should not happen");
 		}
 	}

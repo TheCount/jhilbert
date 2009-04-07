@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,9 +26,7 @@ import java.util.List;
 
 import jhilbert.expressions.Expression;
 
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * Data factory.
@@ -250,31 +248,18 @@ public abstract class DataFactory {
 
 	/**
 	 * Scans new {@link DVConstraints} from the specified
-	 * {@link TokenScanner} containing variables from the specified symbol
+	 * {@link TokenFeed} containing variables from the specified symbol
 	 * namespace.
 	 *
 	 * @param namespace namespace to obtain variables from.
-	 * @param tokenScanner token scanner to scan constraints from.
+	 * @param tokenFeed token feed to scan constraints from.
 	 *
 	 * @return the new constraints.
 	 *
-	 * @throws DataException if a scanner error occurs or if a variable
+	 * @throws ConstraintException if a scanner error occurs or if a variable
 	 * 	could not be found.
 	 */
-	public abstract DVConstraints createDVConstraints(Namespace<? extends Symbol> namespace, TokenScanner tokenScanner) throws DataException;
-
-	/**
-	 * Creates new {@link DVConstraints} from the specified
-	 * syntax tree containing variables from the specified symbol
-	 * namespace.
-	 *
-	 * @param namespace namespace to obtain variables from.
-	 * @param tree syntax tree to obtain constraints from.
-	 *
-	 * @throws DataException if a syntax error occurs or if a variable
-	 * 	could not be found.
-	 */
-	public abstract DVConstraints createDVConstraints(Namespace<? extends Symbol> namespace, TreeNode<String> tree) throws DataException;
+	public abstract DVConstraints createDVConstraints(Namespace<? extends Symbol> namespace, TokenFeed tokenFeed) throws ConstraintException;
 
 	/**
 	 * Creates a new {@link Statement} with the specified name, disjoint
@@ -335,17 +320,17 @@ public abstract class DataFactory {
 	public abstract Parameter createParameter(String name, String locator, List<Parameter> parameterList, String prefix);
 
 	/**
-	 * Scans a new {@link Parameter} from the specified token scanner using
+	 * Scans a new {@link Parameter} from the specified token feed using
 	 * data from the specified module.
 	 *
 	 * @param module data module.
-	 * @param tokenScanner {@link TokenScanner} to obtain parameter data.
+	 * @param tokenFeed {@link TokenFeed} to obtain parameter data.
 	 *
 	 * @return the new parameter.
 	 *
 	 * @throws DataException if a syntax error occurs.
 	 */
-	public abstract Parameter createParameter(Module module, TokenScanner tokenScanner) throws DataException;
+	public abstract Parameter createParameter(Module module, TokenFeed tokenFeed) throws DataException;
 
 	/**
 	 * Creates a new {@link ParameterLoader} to load the specified

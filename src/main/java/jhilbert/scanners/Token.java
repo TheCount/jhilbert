@@ -22,6 +22,8 @@
 
 package jhilbert.scanners;
 
+import java.util.regex.Pattern;
+
 /**
  * A LISP token.
  */
@@ -48,6 +50,12 @@ public interface Token {
 		ATOM
 
 	}
+
+	/**
+	 * Valid ATOM tokens.
+	 */
+	public static final Pattern VALID_ATOM
+		= Pattern.compile("[^\\p{Cn}\\p{Cf}\\p{Cc}\\p{Zs}\\p{Zl}\\p{Zp}\\t\\(\\)\\r\\n\\#]+");
 
 	/**
 	 * Obtains a string representation of this token.

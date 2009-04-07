@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,10 +39,9 @@ import jhilbert.expressions.PlaceCountMismatchException;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
-import jhilbert.scanners.TokenScanner;
+import jhilbert.scanners.TokenFeed;
 
 import jhilbert.utils.ArrayTreeNode;
-import jhilbert.utils.TreeNode;
 
 import org.apache.log4j.Logger;
 
@@ -70,98 +69,82 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 
 	/**
 	 * Scans a new <code>ExpressionImpl</code> from the specified
-	 * {@link TokenScanner} using data from the specified {@link Module}.
+	 * {@link TokenFeed} using data from the specified {@link Module}.
 	 *
 	 * @param module data module.
-	 * @param tokenScanner token scanner.
+	 * @param tokenFeed token scanner.
 	 *
 	 * @throws KindMismatchException if an input {@link Kind} and a result
 	 * 	kind do not match during parsing.
 	 * @throws ExpressionException if some other error (such as a scanner
 	 * 	related error) occurs.
 	 */
-	ExpressionImpl(final Module module, final TokenScanner tokenScanner)
+	ExpressionImpl(final Module module, final TokenFeed tokenFeed)
 	throws KindMismatchException, ExpressionException {
 		assert (module != null): "Supplied module is null";
-		assert (tokenScanner != null): "Supplied token scanner is null";
+		assert (tokenFeed != null): "Supplied token feed is null";
 		try {
-			final Token token = tokenScanner.getToken();
+			final Token token = tokenFeed.getToken();
 			switch (token.getTokenClass()) {
 				case ATOM: // variable name
-				setVariable(module, token.getTokenString());
+				setVariable(module, tokenFeed, token.getTokenString());
+				tokenFeed.confirmVar();
 				break;
 
 				case BEGIN_EXP: // subexpression
-				final Functor functor = setFunctor(module, tokenScanner.getAtom());
+				tokenFeed.confirmBeginExp();
+				final Functor functor = setFunctor(module, tokenFeed, tokenFeed.getAtom());
+				tokenFeed.confirmFunctor(functor);
 				for (final Kind inputKind: functor.getInputKinds())
-					addExpression(new ExpressionImpl(module, tokenScanner), inputKind);
-				tokenScanner.endExp();
+					addExpression(new ExpressionImpl(module, tokenFeed), inputKind);
+				tokenFeed.endExp();
+				tokenFeed.confirmEndExp();
 				break;
 
 				default:
-				logger.error("Expected expression");
-				logger.debug("Current scanner context: " + tokenScanner.getContextString());
+				tokenFeed.reject("Expected expression");
 				throw new ExpressionException("Expected expression");
 			}
 		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning expression", e);
+			logger.error("Unexpected end of input while scanning expression");
 			throw new ExpressionException("Unexpected end of input", e);
 		} catch (ScannerException e) {
-			logger.error("Scanner error", e);
-			logger.debug("Scanner context: " + e.getScanner().getContextString());
-			throw new ExpressionException("Scanner error", e);
-		} catch (ExpressionException e) {
-			logger.debug("Current scanner context: " + tokenScanner.getContextString());
-			throw e;
+			throw new ExpressionException("Feed error", e);
+		} catch (ClassCastException e) {
+			try {
+				tokenFeed.reject("Non-variable symbol in expression");
+			} catch (ScannerException ignored) {
+				// ignored
+			}
+			throw new ExpressionException("Non-variable symbol found in expression", e);
 		}
 		if (logger.isTraceEnabled())
 			logger.trace("Expression complete: " + toString());
 	}
 
-	ExpressionImpl(final Module module, final TreeNode<String> tree) throws ExpressionException {
-		assert (module != null): "Supplied module is null";
-		assert (tree != null): "Supplied LISP tree is null";
-		try {
-			if (tree.isLeaf()) // variable
-				setVariable(module, tree.getValue());
-			else { // complex expression
-				final List<? extends TreeNode<String>> children = tree.getChildren();
-				final Functor functor = setFunctor(module, children.get(0).getValue());
-				final List<? extends Kind> inputKindList = functor.getInputKinds();
-				final int size = inputKindList.size();
-				if (size != children.size() - 1) {
-					logger.error("Wrong place count for functor " + children.get(0).getValue());
-					logger.debug("Expected place count: " + size);
-					logger.debug("Actual place count:   " + (children.size() - 1));
-					throw new PlaceCountMismatchException("Wrong place count");
-				}
-				for (int i = 1; i <= size; ++i)
-					addExpression(new ExpressionImpl(module, children.get(i)),
-						inputKindList.get(i - 1));
-			}
-		} catch (RuntimeException e) {
-			logger.error("Invalid expression: " + tree);
-			throw new ExpressionException("Invalid expression");
-		}
-	}
-
-	private void setVariable(final Module module, final String varName) throws ExpressionException {
+	private void setVariable(final Module module, final TokenFeed tokenFeed, final String varName)
+	throws ExpressionException {
 		final Symbol sym = module.getSymbolNamespace().getObjectByString(varName);
 		if (sym == null) {
-			logger.error("Symbol not found: " + varName);
+			try {
+				tokenFeed.reject("Symbol not found");
+			} catch (ScannerException ignored) {
+				// ignored
+			}
 			throw new ExpressionException("Symbol not found");
-		}
-		if (!sym.isVariable()) {
-			logger.error("Non-variable symbol found in expression: " + varName);
-			throw new ExpressionException("Non-variable symbol found in expression");
 		}
 		setValue((Variable) sym);
 	}
 
-	private Functor setFunctor(final Module module, final String functorName) throws ExpressionException {
+	private Functor setFunctor(final Module module, final TokenFeed tokenFeed, final String functorName)
+	throws ExpressionException {
 		final Functor functor = module.getFunctorNamespace().getObjectByString(functorName);
 		if (functor == null) {
-			logger.error("Term not found: " + functorName);
+			try {
+				tokenFeed.reject("Term not found");
+			} catch (ScannerException ignored) {
+				// ignored
+			}
 			throw new ExpressionException("Term not found");
 		}
 		setValue(functor);

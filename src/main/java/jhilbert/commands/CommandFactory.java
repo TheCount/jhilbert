@@ -24,21 +24,12 @@ package jhilbert.commands;
 
 import jhilbert.data.Module;
 
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
-
-import org.apache.log4j.Logger;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * {@link Command} factory.
  */
 public abstract class CommandFactory {
-
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger logger = Logger.getLogger(CommandFactory.class);
 
 	/**
 	 * Instance.
@@ -55,88 +46,13 @@ public abstract class CommandFactory {
 	}
 
 	/**
-	 * Creates a new command.
-	 * The correct {@link Command.Class} is chosen from the specified atom.
-	 * Then a command from this class is created using the specified
-	 * {@link Module} and {@link TokenScanner}.
-	 * <p>
-	 * <strong>Warning:</strong> It is imperative that the implementation
-	 * correctly initialises the command class's command constructors.
+	 * Process commands for the specified module from the specified feed.
 	 *
-	 * @param atom command atom.
-	 * @param module data module the command should work with.
-	 * @param tokenScanner token scanner.
-	 * @param proofCommand whether the command should be permissible in
-	 * 	proof modules. <code>true</code> if it should be permissible
-	 * 	in proof modules, <code>false</code> if it should be
-	 * 	permissible in interface modules.
+	 * @param module data module.
+	 * @param tokenFeed token feed.
 	 *
-	 * @return the newly created command.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
-	 * @throws CommandNotFoundException if <code>atom</code> does not refer
-	 * 	to a valid command class.
-	 * @throws InvalidCommandException if <code>atom</code> <em>does</em>
-	 * 	refer to a valid command class, but is not permissible for the
-	 * 	requested interface type.
+	 * @throws CommandException if an error occurs.
 	 */
-	public final Command createCommand(final String atom, final Module module, final TokenScanner tokenScanner,
-		final boolean proofCommand)
-	throws SyntaxException, CommandNotFoundException, InvalidCommandException {
-		assert (atom != null): "Supplied atom is null";
-		assert (module != null): "Supplied module is null";
-		assert (tokenScanner != null): "Supplied token scanner is null";
-		final Command.Class commandClass = Command.Class.get(atom);
-		if (commandClass == null) {
-			logger.error("No such command class: " + atom);
-			throw new CommandNotFoundException(atom, "No such command class");
-		}
-		if ((proofCommand && !commandClass.isProofPermissible()) ||
-				!(proofCommand || commandClass.isInterfacePermissible())) {
-			logger.error("Command class " + commandClass + " may not be used in "
-				+ (proofCommand ? "proof modules" : "interface modules"));
-			throw new InvalidCommandException(commandClass, "Command invalid here");
-		}
-		return commandClass.createCommand(module, tokenScanner);
-	}
-
-	/**
-	 * Creates a new command from module and syntax tree.
-	 * See {@link #createCommand(String, Module, TokenScanner, boolean)}
-	 * for details.
-	 *
-	 * @param atom command atom.
-	 * @param module data module the command should work with.
-	 * @param tree syntax tree.
-	 * @param proofCommand whether the command should be permissible in
-	 * 	proof modules. <code>true</code> if it should be permissible
-	 * 	in proof modules, <code>false</code> if it should be
-	 * 	permissible in interface modules.
-	 *
-	 * @return the newly created command.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
-	 * @throws CommandNotFoundException if <code>atom</code> does not refer
-	 * 	to a valid command class.
-	 * @throws InvalidCommandException if <code>atom</code> <em>does</em>
-	 * 	refer to a valid command class, but is not permissible for the
-	 * 	requested interface type.
-	 */
-	public final Command createCommand(final String atom, final Module module, final TreeNode<String> tree, final boolean proofCommand)
-	throws SyntaxException, CommandNotFoundException, InvalidCommandException {
-		assert (atom != null): "Supplied atom is null";
-		assert (module != null): "Supplied module is null";
-		assert (tree != null): "Supplied syntax tree is null";
-		final Command.Class commandClass = Command.Class.get(atom);
-		if (commandClass == null) {
-			logger.error("No such command class: " + atom);
-			throw new CommandNotFoundException(atom, "No such command class");
-		}
-		if ((proofCommand && !commandClass.isProofPermissible()) || !(proofCommand || commandClass.isInterfacePermissible())) {
-			logger.error("Command class " + commandClass + " may not be used in " + (proofCommand ? "proof modules" : "interface modules"));
-			throw new InvalidCommandException(commandClass, "Command invalid here");
-		}
-		return commandClass.createCommand(module, tree);
-	}
+	public abstract void processCommands(Module module, TokenFeed tokenFeed) throws CommandException;
 
 }

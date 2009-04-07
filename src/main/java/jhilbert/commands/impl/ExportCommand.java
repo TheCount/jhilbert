@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,55 +26,44 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jhilbert.commands.CommandException;
-import jhilbert.commands.SyntaxException;
 
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
 import jhilbert.data.Parameter;
 
-import jhilbert.scanners.TokenScanner;
-
-import org.apache.log4j.Logger;
+import jhilbert.scanners.ScannerException;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * Command exporting a new {@link Parameter}.
  */
-public final class ExportCommand extends AbstractCommand {
-
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger logger = Logger.getLogger(ExportCommand.class);
-
-	/**
-	 * Parameter.
-	 */
-	private final Parameter parameter;
+final class ExportCommand extends AbstractCommand {
 
 	/**
 	 * Creates a new <code>ExportCommand</code>.
 	 *
 	 * @param module {@link Module} to load parameter into.
-	 * @param tokenScanner {@link TokenScanner} to obtain parameter data.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
+	 * @param tokenFeed {@link TokenFeed} to obtain parameter data from.
 	 */
-	public ExportCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module);
-		try {
-			parameter = DataFactory.getInstance().createParameter(module, tokenScanner);
-		} catch (DataException e) {
-			logger.error("Unable to scan parameter", e);
-			throw new SyntaxException("Unable to scan parameter", e);
-		}
+	public ExportCommand(final Module module, final TokenFeed tokenFeed) {
+		super(module, tokenFeed);
 	}
 
 	public @Override void execute() throws CommandException {
+		final Module module = getModule();
+		final TokenFeed feed = getFeed();
+		final DataFactory dataFactory = DataFactory.getInstance();
 		try {
-			DataFactory.getInstance().createParameterLoader(parameter, getModule()).exportParameter();
+			feed.beginExp();
+			feed.confirmBeginExp();
+			final Parameter parameter = dataFactory.createParameter(module, feed);
+			dataFactory.createParameterLoader(parameter, getModule()).exportParameter();
+			feed.endExp();
+			feed.confirmEndCmd();
+		} catch (ScannerException e) {
+			throw new CommandException("Feed error", e);
 		} catch (DataException e) {
-			logger.error("Unable to export parameter " + parameter, e);
 			throw new CommandException("Unable to export parameter", e);
 		}
 	}

@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@ import jhilbert.commands.CommandException;
 
 import jhilbert.data.Module;
 
+import jhilbert.scanners.TokenFeed;
+
 /**
  * Basic {@link Command} implementation.
  */
@@ -38,15 +40,22 @@ abstract class AbstractCommand implements Command {
 	private final Module module;
 
 	/**
+	 * Token feed.
+	 */
+	private final TokenFeed tokenFeed;
+
+	/**
 	 * Creates a new <code>AbstractCommand</code> which will use the
-	 * specified {@link Module}.
+	 * specified {@link Module} and {@link TokenFeed}.
 	 *
 	 * @param module module for data handling.
-	 * @param tokenScanner the token scanner.
+	 * @param tokenFeed the token feed.
 	 */
-	AbstractCommand(final Module module) {
+	AbstractCommand(final Module module, final TokenFeed tokenFeed) {
 		assert (module != null): "Supplied module is null";
+		assert (tokenFeed != null): "Supplied token feed is null";
 		this.module = module;
+		this.tokenFeed = tokenFeed;
 	}
 
 	/**
@@ -54,8 +63,17 @@ abstract class AbstractCommand implements Command {
 	 *
 	 * @return module used by this command.
 	 */
-	protected Module getModule() {
+	protected final Module getModule() {
 		return module;
+	}
+
+	/**
+	 * Obtains the {@link TokenFeed} used by this command.
+	 *
+	 * @return token feed used by this command.
+	 */
+	protected final TokenFeed getFeed() {
+		return tokenFeed;
 	}
 
 	public abstract void execute() throws CommandException;

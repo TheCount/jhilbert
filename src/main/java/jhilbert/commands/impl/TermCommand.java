@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jhilbert.commands.CommandException;
-import jhilbert.commands.SyntaxException;
 
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
@@ -37,108 +36,21 @@ import jhilbert.data.Namespace;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
-
-import org.apache.log4j.Logger;
+import jhilbert.scanners.TokenFeed;
 
 /**
  * Command to introduce a new {@link jhilbert.data.Functor}.
  */
-public final class TermCommand extends AbstractCommand {
-
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger logger = Logger.getLogger(TermCommand.class);
-
-	/**
-	 * Term name.
-	 */
-	private final String name;
-
-	/**
-	 * Result kind name.
-	 */
-	private final String kindName;
-
-	/**
-	 * List of input kind names.
-	 */
-	private final List<String> inputKindNameList;
+final class TermCommand extends AbstractCommand {
 
 	/**
 	 * Creates a new <code>TermCommand</code>.
 	 *
 	 * @param module {@link Module} to add functor to.
-	 * @param tokenScanner {@link TokenScanner} to obtain functor data.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
+	 * @param tokenFeed {@link TokenFeed} to obtain functor data from.
 	 */
-	public TermCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module);
-		try  {
-			kindName = tokenScanner.getAtom();
-			tokenScanner.beginExp();
-			name = tokenScanner.getAtom();
-			inputKindNameList = new ArrayList();
-			Token token = tokenScanner.getToken();
-			while (token.getTokenClass() == Token.Class.ATOM) {
-				inputKindNameList.add(token.getTokenString());
-				token = tokenScanner.getToken();
-			}
-			if (token.getTokenClass() != Token.Class.END_EXP) {
-				logger.error("Expected end of LISP s-expression");
-				logger.debug("Current scanner context: " + tokenScanner.getContextString());
-				throw new SyntaxException("Expected end of expression");
-			}
-		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning term command", e);
-			throw new SyntaxException("Unexpected end of input", e);
-		} catch (ScannerException e) {
-			logger.error("Scanner error while scanning term command", e);
-			logger.debug("Scanner context: " + e.getScanner().getContextString());
-			throw new SyntaxException("Scanner error", e);
-		}
-	}
-
-	/**
-	 * Creates a new <code>TermCommand</code>.
-	 *
-	 * @param module {@link Module} to add functor to.
-	 * @param tree synatx tree to obtain functor data from.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
-	 */
-	public TermCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
-		super (module);
-		assert (tree != null): "Supplied LISP tree is null";
-		final List<? extends TreeNode<String>> children = tree.getChildren();
-		try {
-			if (children.size() != 2)
-				throw new IndexOutOfBoundsException();
-			kindName = children.get(0).getValue();
-			if (kindName == null)
-				throw new NullPointerException();
-			final List<? extends TreeNode<String>> termspec = children.get(1).getChildren();
-			name = termspec.get(0).getValue();
-			if (name == null)
-				throw new NullPointerException();
-			final int size = termspec.size();
-			inputKindNameList = new ArrayList(size - 1);
-			for (int i = 1; i != size; ++i) {
-				final String kindName = termspec.get(i).getValue();
-				if (kindName == null)
-					throw new NullPointerException();
-				inputKindNameList.add(kindName);
-			}
-			if (inputKindNameList.size() == 0)
-				throw new IndexOutOfBoundsException();
-		} catch (RuntimeException e) {
-			logger.error("Expected (kind (termName kind1 ... kindN)), got " + children);
-			throw new SyntaxException("Expected (kind (termName kind1 ... kindN))", e);
-		}
+	public TermCommand(final Module module, final TokenFeed tokenFeed) {
+		super(module, tokenFeed);
 	}
 
 	public @Override void execute() throws CommandException {
@@ -147,26 +59,49 @@ public final class TermCommand extends AbstractCommand {
 		assert (kindNamespace != null): "Module supplied null kind namespace";
 		final Namespace<? extends Functor> functorNamespace = module.getFunctorNamespace();
 		assert (functorNamespace != null): "Module supplied null functor namespace";
+		final TokenFeed feed = getFeed();
 		try {
-			final Kind kind = kindNamespace.getObjectByString(kindName);
+			feed.beginExp();
+			feed.confirmBeginExp();
+			final Kind kind = kindNamespace.getObjectByString(feed.getAtom());
 			if (kind == null) {
-				logger.error("Kind " + kindName + " not found");
+				feed.reject("Kind not found");
 				throw new CommandException("Kind not found");
 			}
-			final List<Kind> inputKindList = new ArrayList(inputKindNameList.size());
-			for (final String inputKindName: inputKindNameList) {
-				final Kind inputKind = kindNamespace.getObjectByString(inputKindName);
+			feed.confirmKind();
+			feed.beginExp();
+			feed.confirmBeginExp();
+			final String name = feed.getAtom();
+			feed.confirmTerm();
+			final List<Kind> inputKindList = new ArrayList();
+			Token token = feed.getToken();
+			while (token.getTokenClass() == Token.Class.ATOM) {
+				final Kind inputKind = kindNamespace.getObjectByString(token.getTokenString());
 				if (inputKind == null) {
-					logger.error("Input kind " + inputKindName + " not found");
-					throw new CommandException("Input kind not found");
+					feed.reject("Kind not found");
+					throw new CommandException("Kind not found");
 				}
 				inputKindList.add(inputKind);
+				feed.confirmKind();
+				token = feed.getToken();
 			}
-			final DataFactory dataFactory = DataFactory.getInstance();
-			dataFactory.createFunctor(name, kind, inputKindList, functorNamespace);
+			if (token.getTokenClass() != Token.Class.END_EXP) {
+				feed.reject("Expected end of expression");
+				throw new CommandException("Expected end of expression");
+			}
+			DataFactory.getInstance().createFunctor(name, kind, inputKindList, functorNamespace);
+			feed.confirmEndExp();
+			feed.endExp();
+			feed.confirmEndCmd();
 		} catch (DataException e) {
-			logger.error("Unable to define functor " + name, e);
-			throw new CommandException("Unable to define functor", e);
+			try {
+				feed.reject("Unable to create functor: " + e.getMessage());
+			} catch (ScannerException ignored) {
+				// ignored
+			}
+			throw new CommandException("Unable to create functor", e);
+		} catch (ScannerException e) {
+			throw new CommandException("Feed error", e);
 		}
 	}
 

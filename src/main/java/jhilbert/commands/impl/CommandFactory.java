@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,50 +23,67 @@
 package jhilbert.commands.impl;
 
 import jhilbert.commands.Command;
+import jhilbert.commands.CommandException;
 
 import jhilbert.data.Module;
 
-import jhilbert.scanners.TokenScanner;
+import jhilbert.scanners.ScannerException;
+import jhilbert.scanners.Token;
+import jhilbert.scanners.TokenFeed;
 
-import jhilbert.utils.TreeNode;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Command factory implementation.
  */
-public class CommandFactory extends jhilbert.commands.CommandFactory {
+public final class CommandFactory extends jhilbert.commands.CommandFactory {
 
 	/**
-	 * Creates the new command factory.
+	 * Finish command.
 	 */
-	public CommandFactory() {
+	private static final String FINISH_CMD = "FINI";
+
+	// default constructed
+	
+	public @Override void processCommands(final Module module, final TokenFeed tokenFeed) throws CommandException {
+		assert (module != null): "Supplied data module is null";
+		assert (tokenFeed != null): "Supplied token feed is null";
+		final Map<String, Command> commandMap = new HashMap();
+		// init command map for module and feed
+		commandMap.put("def", new DefinitionCommand(module, tokenFeed));
+		commandMap.put("kindbind", new KindbindCommand(module, tokenFeed));
+		commandMap.put("var", new VariableCommand(module, tokenFeed));
+		if ("".equals(module.getName())) {
+			// proof module only commands
+			commandMap.put("export", new ExportCommand(module, tokenFeed));
+			commandMap.put("import", new ImportCommand(module, tokenFeed));
+			commandMap.put("thm", new TheoremCommand(module, tokenFeed));
+		} else {
+			// interface module only commands
+			commandMap.put("kind", new KindCommand(module, tokenFeed));
+			commandMap.put("param", new ParameterCommand(module, tokenFeed));
+			commandMap.put("stmt", new StatementCommand(module, tokenFeed));
+			commandMap.put("term", new TermCommand(module, tokenFeed));
+		}
+		// process commands
 		try {
-			if (jhilbert.Main.isUsingFeeds()) {
-				Command.Class.KIND.setConstructor(KindCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.KINDBIND.setConstructor(KindbindCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.VARIABLE.setConstructor(VariableCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.TERM.setConstructor(TermCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.DEFINITION.setConstructor(DefinitionCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.STATEMENT.setConstructor(StatementCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.THEOREM.setConstructor(TheoremCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.PARAMETER.setConstructor(ParameterCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.IMPORT.setConstructor(ImportCommand.class.getConstructor(Module.class, TreeNode.class));
-				Command.Class.EXPORT.setConstructor(ExportCommand.class.getConstructor(Module.class, TreeNode.class));
-			} else {
-				Command.Class.KIND.setConstructor(KindCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.KINDBIND.setConstructor(KindbindCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.VARIABLE.setConstructor(VariableCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.TERM.setConstructor(TermCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.DEFINITION.setConstructor(DefinitionCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.STATEMENT.setConstructor(StatementCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.THEOREM.setConstructor(TheoremCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.PARAMETER.setConstructor(ParameterCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.IMPORT.setConstructor(ImportCommand.class.getConstructor(Module.class, TokenScanner.class));
-				Command.Class.EXPORT.setConstructor(ExportCommand.class.getConstructor(Module.class, TokenScanner.class));
+			for (;;) {
+				final Token token = tokenFeed.getToken();
+				if (token == null)
+					return;
+				final String command = token.getTokenString();
+				if (FINISH_CMD.equals(command))
+					return;
+				if (!commandMap.containsKey(command)) {
+					tokenFeed.reject("Command " + command + " unknown");
+					throw new CommandException("Command unknown");
+				}
+				tokenFeed.confirmKeyword();
+				commandMap.get(command).execute();
 			}
-		} catch (NoSuchMethodException e) {
-			final Error err = new AssertionError("Constructor missing");
-			err.initCause(e);
-			throw err;
+		} catch (ScannerException e) {
+			throw new CommandException("Feed error", e);
 		}
 	}
 

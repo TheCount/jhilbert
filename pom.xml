@@ -58,8 +58,7 @@
 				<configuration>
 					<instructions>
 						<Export-Package>jhilbert.*</Export-Package>
-						<Private-Package>org.apache.log4j,org.apache.log4j.config,org.apache.log4j.helpers,org.apache.log4j.or,org.apache.log4j.spi,php.java.bridge,php.java.bridge.http</Private-Package>
-						<Class-Path>JavaBridge.jar</Class-Path>
+						<Private-Package>org.apache.log4j,org.apache.log4j.config,org.apache.log4j.helpers,org.apache.log4j.or,org.apache.log4j.spi</Private-Package>
 						<Main-Class>jhilbert.Main</Main-Class>
 					</instructions>
 				</configuration>
@@ -77,11 +76,6 @@
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.osgi.core</artifactId>
 			<version>1.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>php.java.bridge</groupId>
-			<artifactId>php.java.bridge</artifactId>
-			<version>5.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jhilbert.commands.CommandException;
-import jhilbert.commands.SyntaxException;
 
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
@@ -43,16 +42,14 @@ import jhilbert.expressions.ExpressionFactory;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
-import jhilbert.scanners.TokenScanner;
-
-import jhilbert.utils.TreeNode;
+import jhilbert.scanners.TokenFeed;
 
 import org.apache.log4j.Logger;
 
 /**
  * Command introducing a new {@link Definition}
  */
-public final class DefinitionCommand extends AbstractCommand {
+final class DefinitionCommand extends AbstractCommand {
 
 	/**
 	 * Logger for this class.
@@ -60,93 +57,13 @@ public final class DefinitionCommand extends AbstractCommand {
 	private static final Logger logger = Logger.getLogger(DefinitionCommand.class);
 
 	/**
-	 * Name of definition.
-	 */
-	private final String name;
-
-	/**
-	 * List of argument names.
-	 */
-	private final List<String> varNameList;
-
-	/**
-	 * Definiens.
-	 */
-	private final Expression definiens;
-
-	/**
 	 * Creates a new <code>DefinitionCommand</code>.
 	 *
 	 * @param module {@link Module} to add definition to.
-	 * @param tokenScanner {@link TokenScanner} to obtain definition data from.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
+	 * @param tokenFeed {@link TokenFeed} to obtain definition data from.
 	 */
-	public DefinitionCommand(final Module module, final TokenScanner tokenScanner) throws SyntaxException {
-		super(module);
-		assert (tokenScanner != null): "Supplied token scanner is null";
-		try {
-			tokenScanner.beginExp();
-			name = tokenScanner.getAtom();
-			varNameList = new ArrayList();
-			Token token = tokenScanner.getToken();
-			while (token.getTokenClass() == Token.Class.ATOM) {
-				varNameList.add(token.getTokenString());
-				token = tokenScanner.getToken();
-			}
-			if (token.getTokenClass() != Token.Class.END_EXP) {
-				logger.error("Expected end of LISP s-expression");
-				logger.debug("Current scanner context: " + tokenScanner.getContextString());
-				throw new SyntaxException("Expected end of expression");
-			}
-			definiens = ExpressionFactory.getInstance().createExpression(module, tokenScanner);
-		} catch (NullPointerException e) {
-			logger.error("Unexpected end of input while scanning def command");
-			throw new SyntaxException("Unexpected end of input", e);
-		} catch (ScannerException e) {
-			logger.error("Scanner error while scanning def command");
-			logger.debug("Scanner context: " + e.getScanner().getContextString());
-			throw new SyntaxException("Scanner error", e);
-		} catch (ExpressionException e) {
-			logger.error("Unable to scan expression");
-			throw new SyntaxException("Unable to scan expression", e);
-		}
-	}
-
-	/**
-	 * Creates a new <code>DefinitionCommand</code>.
-	 *
-	 * @param module {@link Module} to add definition to.
-	 * @param tree syntax tree to obtain definition data from.
-	 *
-	 * @throws SyntaxException if a syntax error occurs.
-	 */
-	public DefinitionCommand(final Module module, final TreeNode<String> tree) throws SyntaxException {
-		super(module);
-		assert (tree != null): "Supplied LISP tree is null";
-		final List<? extends TreeNode<String>> children = tree.getChildren();
-		try {
-			if (children.size() != 2)
-				throw new IndexOutOfBoundsException();
-			final List<? extends TreeNode<String>> defSpec = children.get(0).getChildren();
-			name = defSpec.get(0).getValue();
-			if (name == null)
-				throw new NullPointerException();
-			final int size = defSpec.size();
-			varNameList = new ArrayList(size - 1);
-			for (int i = 1; i != size; ++i) {
-				final String varName = defSpec.get(i).getValue();
-				if (varName == null)
-					throw new NullPointerException();
-				varNameList.add(varName);
-			}
-			definiens = ExpressionFactory.getInstance().createExpression(module, children.get(1));
-		} catch (RuntimeException e) {
-			logger.error("Expected ((defName var1 ... varN) expression), got " + children);
-			throw new SyntaxException("Expected ((defName var1 ... varN) expression)", e);
-		} catch (ExpressionException e) {
-			throw new SyntaxException("Expression error", e);
-		}
+	public DefinitionCommand(final Module module, final TokenFeed tokenFeed) {
+		super(module, tokenFeed);
 	}
 
 	public @Override void execute() throws CommandException {
@@ -155,24 +72,56 @@ public final class DefinitionCommand extends AbstractCommand {
 		assert (symbolNamespace != null): "Module provided null symbol namespace";
 		final Namespace<? extends Functor> functorNamespace = module.getFunctorNamespace();
 		assert (functorNamespace != null): "Module provided null functor namespace";
+		final TokenFeed feed = getFeed();
 		try {
-			final List<Variable> arguments = new ArrayList(varNameList.size());
-			for (final String varName: varNameList) {
-				final Symbol symbol = symbolNamespace.getObjectByString(varName);
+			feed.beginExp();
+			feed.confirmBeginExp();
+			feed.beginExp();
+			feed.confirmBeginExp();
+			final String name = feed.getAtom();
+			feed.confirmDef();
+			final List<Variable> arguments = new ArrayList();
+			Token token = feed.getToken();
+			while (token.getTokenClass() == Token.Class.ATOM) {
+				final Symbol symbol = symbolNamespace.getObjectByString(token.getTokenString());
 				if (symbol == null) {
-					logger.error("Variable " + varName + " not found");
+					feed.reject("Variable not found");
 					throw new CommandException("Variable not found");
 				}
-				if (!symbol.isVariable()) {
-					logger.error("Symbol " + varName + " is not a variable");
-					throw new CommandException("Symbol is not a variable");
-				}
 				arguments.add((Variable) symbol);
+				feed.confirmVar();
+				token = feed.getToken();
 			}
+			if (token.getTokenClass() != Token.Class.END_EXP) {
+				feed.reject("Expected end of expression");
+				throw new CommandException("Expected end of expression");
+			}
+			feed.confirmEndExp();
+			final Expression definiens = ExpressionFactory.getInstance().createExpression(module, feed);
+			feed.endExp();
 			DataFactory.getInstance().createDefinition(name, arguments, definiens, functorNamespace);
+			feed.confirmEndCmd();
+		} catch (ClassCastException e) {
+			try {
+				feed.reject("This symbol is not a variable");
+			} catch (ScannerException ignored) {
+				logger.error("Symbol is not a variable");
+			}
+			throw new CommandException("Symbol is not a variable", e);
+		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input while scanning definition");
+			throw new CommandException("Unexpected end of input", e);
+		} catch (ScannerException e) {
+			throw new CommandException("Feed error", e);
+		} catch (ExpressionException e) {
+			throw new CommandException("Unable to scan expression", e);
 		} catch (DataException e) {
-			logger.error("Unable to define definition " + name, e);
-			throw new CommandException("Unable to define definition", e);
+			try {
+				feed.reject("Unable to create definition: " + e.getMessage());
+			} catch (ScannerException ignored) {
+				logger.error("Unable to create definition: " + e.getMessage());
+			}
+			throw new CommandException("Unable to create definiton", e);
 		}
 	}
 

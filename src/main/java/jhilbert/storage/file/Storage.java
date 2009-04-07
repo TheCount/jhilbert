@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,16 +34,16 @@ import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.StreamCorruptedException;
 
-import jhilbert.commands.Command;
 import jhilbert.commands.CommandException;
+import jhilbert.commands.CommandFactory;
 
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
 
-import jhilbert.scanners.CommandScanner;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
+import jhilbert.scanners.TokenFeed;
 
 import jhilbert.storage.StorageException;
 
@@ -119,14 +119,9 @@ public final class Storage extends jhilbert.storage.Storage {
 			throw err;
 		}
 		try {
-			final CommandScanner commandScanner = ScannerFactory.getInstance().createCommandScanner(new FileInputStream(interfaceFile), module);
-			for (Command command = commandScanner.getToken(); command != null;
-					command = commandScanner.getToken()) {
-				if (logger.isDebugEnabled())
-					logger.debug("Current command: " + commandScanner.getContextString());
-				command.execute();
-				commandScanner.resetContext();
-			}
+			final TokenFeed tokenFeed = ScannerFactory.getInstance()
+				.createTokenFeed(new FileInputStream(interfaceFile));
+			CommandFactory.getInstance().processCommands(module, tokenFeed);
 			libraryFile.delete();
 			(new ObjectOutputStream(new FileOutputStream(libraryFile))).writeObject(module);
 			logger.info("Library for interface " + locator + " created");
@@ -151,6 +146,10 @@ public final class Storage extends jhilbert.storage.Storage {
 			logger.warn("Unable to write library file while creating library for interface " + locator, e);
 		}
 		return module;
+	}
+
+	protected @Override void storeModule(final Module module, final String locator, long version) {
+		throw new UnsupportedOperationException("Storing not supported in this implementation");
 	}
 
 }

@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import jhilbert.data.DataException;
+import jhilbert.data.ConstraintException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.DVConstraints;
 import jhilbert.data.Kind;
@@ -40,9 +40,14 @@ import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
 
 import jhilbert.expressions.Expression;
+import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.ExpressionFactory;
 import jhilbert.expressions.Substituter;
 import jhilbert.expressions.UnifyException;
+
+import jhilbert.scanners.ScannerException;
+import jhilbert.scanners.Token;
+import jhilbert.scanners.TokenFeed;
 
 import jhilbert.verifier.Verifier;
 import jhilbert.verifier.VerifyException;
@@ -60,46 +65,51 @@ final class VerifierImpl implements Verifier {
 	private static final Logger logger = Logger.getLogger(VerifierImpl.class);
 
 	/**
-	 * Proof.
+	 * Data module.
 	 */
-	private final List<Object> proof;
+	private final Module module;
+
+	/**
+	 * Token feed.
+	 */
+	private final TokenFeed feed;
 
 	// local proof environment follows:
 
 	/**
 	 * Proof stack.
 	 */
-	private Stack<Expression> proofStack;
+	private final Stack<Expression> proofStack;
 
 	/**
 	 * Mandatory stack.
 	 */
-	private Stack<Expression> mandatoryStack;
+	private final Stack<Expression> mandatoryStack;
 
 	/**
 	 * Data factory.
 	 */
-	private DataFactory dataFactory;
+	private final DataFactory dataFactory;
 
 	/**
 	 * Expression factory.
 	 */
-	private ExpressionFactory expressionFactory;
+	private final ExpressionFactory expressionFactory;
 
 	/**
 	 * Kind namespace.
 	 */
-	private Namespace<? extends Kind> kindNamespace;
+	private final Namespace<? extends Kind> kindNamespace;
 
 	/**
 	 * Symbol namespace.
 	 */
-	private Namespace<? extends Symbol> symbolNamespace;
+	private final Namespace<? extends Symbol> symbolNamespace;
 
 	/**
 	 * DV constraints which must be checked at the end of the proof.
 	 */
-	private DVConstraints requiredDVConstraints;
+	private final DVConstraints requiredDVConstraints;
 
 	/**
 	 * Hypotheses.
@@ -109,113 +119,135 @@ final class VerifierImpl implements Verifier {
 	// constructors & methods:
 
 	/**
-	 * Creates a new <code>VerifierImpl</code> for the specified proof.
+	 * Creates a new <code>VerifierImpl</code> for the specified data
+	 * module and token feed.
 	 *
-	 * @param proof the proof, which is a {@link List} of {@link Object}s
-	 * 	each of which must be convertible to either {@link String} or
-	 * 	{@link Expression}.
+	 * @param module data module;
+	 * @param tokenFeed token feed;
 	 */
-	VerifierImpl(final List<Object> proof) {
-		assert (proof != null): "Supplied proof is null";
-		this.proof = proof;
-	}
-
-	public void verify(final Module module, final DVConstraints dvConstraints, final Map<String, Expression> hypotheses, final Expression consequent)
-	throws VerifyException {
-		assert (module != null): "Supplied module is null";
-		assert (dvConstraints != null): "Supplied DV constraints are null";
-		assert (hypotheses != null): "Supplied hypotheses are null";
-		assert (consequent != null): "Supplied consequent is null";
+	VerifierImpl(final Module module, final TokenFeed tokenFeed) {
+		assert (module != null): "Supplied data module is null";
+		assert (tokenFeed != null): "Supplied token feed is null";
+		this.module = module;
+		feed = tokenFeed;
 		proofStack = new Stack();
 		mandatoryStack = new Stack();
 		dataFactory = DataFactory.getInstance();
 		expressionFactory = ExpressionFactory.getInstance();
 		kindNamespace = module.getKindNamespace();
-		assert (kindNamespace != null): "Supplied kind namespace is null";
+		assert (kindNamespace != null): "Module supplied null kind namespace";
 		symbolNamespace = module.getSymbolNamespace();
-		assert (symbolNamespace != null): "Module provided null symbol namespace";
+		assert (symbolNamespace != null): "Module supplied null symbol namespace";
 		requiredDVConstraints = dataFactory.createDVConstraints();
+	}
+
+	public void verify(final DVConstraints dvConstraints, final Map<String, Expression> hypotheses,
+			final Expression consequent)
+	throws VerifyException {
+		assert (dvConstraints != null): "Supplied DV constraints are null";
+		assert (hypotheses != null): "Supplied hypotheses are null";
+		assert (consequent != null): "Supplied consequent is null";
 		this.hypotheses = hypotheses;
-		// check proof steps
-		for (final Object proofStep: proof) {
-			checkProofStep(proofStep);
-			if (logger.isTraceEnabled()) {
-				logger.trace("Proof stack:     " + proofStack);
-				logger.trace("Mandatory stack: " + mandatoryStack);
-			}
-		}
-		// check stacks
-		if (proofStack.empty()) {
-			logger.error("Proof stack empty at end of proof; expected precisely one element");
-			throw new VerifyException("Proof stack empty at end of proof");
-		}
-		final Expression proofResult = proofStack.pop();
-		if (!(proofStack.empty() && mandatoryStack.empty())) {
-			logger.error("Proof stacks not empty after popping final result");
-			logger.debug("Mandatory stack: " + mandatoryStack);
-			logger.debug("Proof stack: " + proofStack);
-			throw new VerifyException("Proof stacks not empty after popping final result");
-		}
-		// have we proven what we promised to prove?
-		final Set<Variable> hypVars = new HashSet();
-		for (final Expression hypothesis: hypotheses.values())
-			hypVars.addAll(hypothesis.variables());
-		final Set<Variable> blacklist = new HashSet(hypVars);
-		blacklist.addAll(consequent.variables());
 		try {
+			feed.beginExp();
+			feed.confirmBeginExp();
+			// check proof steps
+			Token token = feed.getToken();
+			while (token.getTokenClass() != Token.Class.END_EXP) {
+				checkProofStep(token);
+				if (logger.isTraceEnabled()) {
+					logger.trace("Proof stack:     " + proofStack);
+					logger.trace("Mandatory stack: " + mandatoryStack);
+				}
+				token = feed.getToken();
+			}
+			// check stacks
+			if (proofStack.empty()) {
+				feed.reject("Proof stack empty at end of proof; expected precisely one element");
+				throw new VerifyException("Proof stack empty at end of proof");
+			}
+			final Expression proofResult = proofStack.pop();
+			if (!(proofStack.empty() && mandatoryStack.empty())) {
+				feed.reject("Proof stacks not empty after popping final result");
+				logger.debug("Mandatory stack: " + mandatoryStack);
+				logger.debug("Proof stack: " + proofStack);
+				throw new VerifyException("Proof stacks not empty after popping final result");
+			}
+			// have we proven what we promised to prove?
+			final Set<Variable> hypVars = new HashSet();
+			for (final Expression hypothesis: hypotheses.values())
+				hypVars.addAll(hypothesis.variables());
+			final Set<Variable> blacklist = new HashSet(hypVars);
+			blacklist.addAll(consequent.variables());
 			if (!expressionFactory.createMatcher().checkVEquality(consequent, proofResult, blacklist)) {
-				logger.error("Consequent of theorem does not match proof result");
+				feed.reject("Consequent of theorem does not match proof result");
 				logger.debug("Consequent:   " + consequent);
 				logger.debug("Proof result: " + proofResult);
 				throw new VerifyException("Consequent does not match proof result");
 			}
+			// do we fulfill all the required DV constraints?
+			dvConstraints.restrict(blacklist);
+			if (logger.isTraceEnabled()) {
+				logger.trace("Final DV check:");
+				logger.trace("Required constraints: " + requiredDVConstraints);
+				logger.trace("Actual constraints:   " + dvConstraints);
+			}
+			final Set<Variable> resultVars = hypVars;
+			resultVars.addAll(proofResult.variables());
+			requiredDVConstraints.restrict(resultVars); // dummies bye bye (are always considered distinct)
+			if (!dvConstraints.contains(requiredDVConstraints)) {
+				feed.reject("Required distinct variable constraints are not a subset of actual distinct "
+						+ "variable constraints");
+				logger.debug("Required constraints: " + requiredDVConstraints);
+				logger.debug("Actual constraints:   " + dvConstraints);
+				throw new VerifyException("Required distinct variable constraints are not a subset of "
+						+ "actual distinct variable constraints");
+			}
+			feed.confirmEndExp();
+		} catch (NullPointerException e) {
+			logger.error("Unexpected end of input while scanning proof");
+			throw new VerifyException("Unexpected end of input", e);
+		} catch (ScannerException e) {
+			throw new VerifyException("Feed error", e);
 		} catch (UnifyException e) {
-			logger.error("Attempt to prove result by illegal dummy assignment", e);
+			try {
+				feed.reject("Attempt to prove result by illegal dummy assignment");
+			} catch (ScannerException ignored) {
+				logger.error("Attempt to prove result by illegal dummy assignment");
+			}
 			logger.debug("Source expression: " + e.getSource());
 			logger.debug("Target expression: " + e.getTarget());
 			throw new VerifyException("Attempt to prove result by illegal dummy assignment", e);
-		}
-		// do we fulfill all the required DV constraints?
-		dvConstraints.restrict(blacklist);
-		if (logger.isTraceEnabled()) {
-			logger.trace("Final DV check:");
-			logger.trace("Required constraints: " + requiredDVConstraints);
-			logger.trace("Actual constraints:   " + dvConstraints);
-		}
-		final Set<Variable> resultVars = hypVars;
-		resultVars.addAll(proofResult.variables());
-		requiredDVConstraints.restrict(resultVars); // dummies bye bye (are always considered distinct)
-		if (!dvConstraints.contains(requiredDVConstraints)) {
-			logger.error("Required distinct variable constraints are not a subset of actual distinct variable constraints");
-			logger.debug("Required constraints: " + requiredDVConstraints);
-			logger.debug("Actual constraints:   " + dvConstraints);
-			throw new VerifyException("Required distinct variable constraints are not a subset of actual distinct variable constraints");
+		} catch (ExpressionException e) {
+			throw new VerifyException("Unable to scan expression", e);
 		}
 	}
 
-	private void checkProofStep(final Object proofStep) throws VerifyException {
+	private void checkProofStep(final Token token) throws ExpressionException, ScannerException, VerifyException {
 		// expression?
-		if (proofStep instanceof Expression) {
-			mandatoryStack.push((Expression) proofStep);
+		if (token.getTokenClass() == Token.Class.BEGIN_EXP) {
+			feed.putToken(token);
+			mandatoryStack.push(expressionFactory.createExpression(module, feed));
 			if (logger.isDebugEnabled())
 				logger.debug("Proof object: " + mandatoryStack.peek());
 			return;
 		}
-		assert (proofStep instanceof String): "Wrong proof step type";
-		final String label = (String) proofStep;
+		assert (token.getTokenClass() == Token.Class.ATOM): "Wrong token class";
+		final String label = token.getTokenString();
 		// hypothesis?
 		if (hypotheses.containsKey(label)) {
 			if (!mandatoryStack.empty()) {
-				logger.error("Proof step is a hypothesis but mandatory variable stack is not empty.");
-				logger.error("(Remember to place mandatory terms after the hypotheses!)");
-				logger.error("Proof step:      " + label);
+				feed.reject("Proof step " + label + " is a hypothesis but mandatory variable stack is not "
+						+ "empty. (Remember to place mandatory terms after the hypotheses!)");
 				logger.debug("Proof stack:     " + proofStack);
 				logger.debug("Mandatory stack: " + mandatoryStack);
-				throw new VerifyException("Proof step is a hypothesis but mandatory variable stack is not empty.");
+				throw new VerifyException("Proof step is a hypothesis but mandatory variable stack is not "
+						+ "empty.");
 			}
 			proofStack.push(hypotheses.get(label));
 			if (logger.isDebugEnabled())
 				logger.debug("Proof object: " + proofStack.peek());
+			feed.confirmLabel();
 			return;
 		}
 		// label must be symbol now
@@ -223,16 +255,18 @@ final class VerifierImpl implements Verifier {
 		if (logger.isDebugEnabled())
 			logger.debug("Proof object: " + symbol);
 		if (symbol == null) {
-			logger.error("Proof step is neither a symbol nor a hypothesis: " + label);
+			feed.reject("Proof step is neither a symbol nor a hypothesis: " + label);
 			throw new VerifyException("Proof step is neither a symbol nor a hypothesis");
 		}
 		// variable?
 		if (symbol.isVariable()) {
 			mandatoryStack.push(expressionFactory.createExpression((Variable) symbol));
+			feed.confirmVar();
 			return;
 		}
 		// Aha, Statement!
 		checkStatement((Statement) symbol);
+		feed.confirmStatement();
 	}
 
 	private void checkStatement(final Statement statement) throws VerifyException {
@@ -246,10 +280,16 @@ final class VerifierImpl implements Verifier {
 		proofStack.push(substituter.substitute(statement.getConsequent()));
 	}
 
-	private void assignMandatoryVariables(final List<Variable> mandatoryVars, final Map<Variable, Expression> varAssignments) throws VerifyException {
+	private void assignMandatoryVariables(final List<Variable> mandatoryVars,
+			final Map<Variable, Expression> varAssignments)
+	throws VerifyException {
 		final int size = mandatoryStack.size();
 		if (mandatoryVars.size() != size) {
-			logger.error("Statement has wrong number of mandatory variables in proof.");
+			try {
+				feed.reject("Statement has wrong number of mandatory variables in proof");
+			} catch (ScannerException ignored) {
+				logger.error("Statement has wrong number of mandatory variables in proof");
+			}
 			logger.debug("Required number of variables: " + mandatoryVars.size());
 			logger.debug("Terms present:                " + size);
 			throw new VerifyException("Statement has wrong number of mandatory variables");
@@ -260,7 +300,11 @@ final class VerifierImpl implements Verifier {
 			final Kind varKind = var.getKind();
 			final Kind exprKind = expr.getKind();
 			if (!varKind.equals(exprKind)) {
-				logger.error("Kind mismatch");
+				try {
+					feed.reject("Kind mismatch");
+				} catch (ScannerException ignored) {
+					logger.error("Kind mismatch");
+				}
 				logger.debug("Affected expression: " + expr);
 				logger.debug("Kind of expression:  " + exprKind);
 				logger.debug("Required kind:       " + varKind);
@@ -271,11 +315,16 @@ final class VerifierImpl implements Verifier {
 		mandatoryStack.clear();
 	}
 
-	private void assignHypotheses(final List<Expression> hypotheses, final Substituter substituter) throws VerifyException {
+	private void assignHypotheses(final List<Expression> hypotheses, final Substituter substituter)
+	throws VerifyException {
 		final int size = hypotheses.size();
 		final int start = proofStack.size() - size;
 		if (start < 0) {
-			logger.error("Too few hypotheses on stack");
+			try {
+				feed.reject("Too few hypotheses on stack");
+			} catch (ScannerException ignored) {
+				logger.error("Too few hypotheses on stack");
+			}
 			logger.debug("Hypotheses missing: " + -start);
 			throw new VerifyException("Too few hypotheses on stack");
 		}
@@ -284,14 +333,20 @@ final class VerifierImpl implements Verifier {
 				substituter.unify(hypotheses.get(i), proofStack.get(start + i));
 			proofStack.setSize(start);
 		} catch (UnifyException e) {
-			logger.error("Unification error while popping hypotheses from proof stack", e);
+			try {
+				feed.reject("Unification error while popping hypotheses from proof stack: " + e.getMessage());
+			} catch (ScannerException ignored) {
+				logger.error("Unification error while popping hypotheses from proof stack: " + e.getMessage());
+			}
 			logger.debug("Source expression: " + e.getSource());
 			logger.debug("Target expression: " + e.getSource());
 			throw new VerifyException("Unification error while popping hypotheses from proof stack", e);
 		}
 	}
 
-	private void updateRequiredConstraints(final DVConstraints dvConstraints, final Map<Variable, Expression> varAssignments) throws VerifyException {
+	private void updateRequiredConstraints(final DVConstraints dvConstraints,
+			final Map<Variable, Expression> varAssignments)
+	throws VerifyException {
 		for (Variable[] constraint: dvConstraints) {
 			assert (constraint.length == 2): "Invalid constraint length";
 			assert (varAssignments.containsKey(constraint[0]) && varAssignments.containsKey(constraint[1]))
@@ -300,8 +355,12 @@ final class VerifierImpl implements Verifier {
 			final Set<Variable> varSet2 = varAssignments.get(constraint[1]).variables();
 			try {
 				requiredDVConstraints.addProduct(varSet1, varSet2);
-			} catch (DataException e) {
-				logger.error("Distinct variable constraint violation", e);
+			} catch (ConstraintException e) {
+				try {
+					feed.reject("Distinct variable constraint violation: " + e.getMessage());
+				} catch (ScannerException ignored) {
+					logger.error("Distinct variable constraint violation: " + e.getMessage());
+				}
 				logger.debug("First variable set:  " + varSet1);
 				logger.debug("Second variable set: " + varSet2);
 				logger.debug("Current required DV: " + requiredDVConstraints);
