@@ -58,13 +58,17 @@ final class ImportCommand extends AbstractCommand {
 			feed.beginExp();
 			feed.confirmBeginExp();
 			final Parameter parameter = dataFactory.createParameter(module, feed);
-			dataFactory.createParameterLoader(parameter, getModule()).importParameter();
+			try {
+				dataFactory.createParameterLoader(parameter, getModule()).importParameter();
+			} catch (DataException e) {
+				throw new CommandException("Unable to import parameter " + parameter, e);
+			}
 			feed.endExp();
 			feed.confirmEndCmd();
 		} catch (ScannerException e) {
 			throw new CommandException("Feed error", e);
 		} catch (DataException e) {
-			throw new CommandException("Unable to import parameter", e);
+			throw new CommandException("Unable create new parameter for module " + module, e);
 		}
 	}
 

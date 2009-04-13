@@ -22,6 +22,7 @@
 
 package jhilbert.scanners.impl;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStream;
@@ -42,10 +43,16 @@ public final class ScannerFactory extends jhilbert.scanners.ScannerFactory {
 		return new StreamTokenFeed(in);
 	}
 
-	public @Override IOTokenFeed createTokenFeed(final BufferedReader in, final BufferedWriter out) {
+	public @Override @Deprecated IOTokenFeed createTokenFeed(final BufferedReader in, final BufferedWriter out) {
 		assert (in != null): "Supplied input reader is null";
 		assert (out != null): "Supplied output writer is null";
 		return new IOTokenFeed(in, out);
+	}
+
+	public @Override MediaWikiTokenFeed createTokenFeed(final InputStream in, final BufferedOutputStream out) {
+		assert (in != null): "Supplied input stream is null";
+		assert (out != null): "Supplied output stream is null";
+		return new MediaWikiTokenFeed(in, out);
 	}
 
 }

@@ -22,6 +22,7 @@
 
 package jhilbert.scanners;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStream;
@@ -29,7 +30,7 @@ import java.io.InputStream;
 import jhilbert.data.Module;
 
 /**
- * A factory class for creating {@link TokenScanner}s and {@link CommandScanner}s.
+ * A factory class for creating {@link TokenFeed}s.
  */
 public abstract class ScannerFactory {
 
@@ -57,15 +58,25 @@ public abstract class ScannerFactory {
 	 *
 	 * @throws ScannerException if the scanner cannot be created.
 	 */
-	public abstract TokenFeed createTokenFeed(final InputStream in) throws ScannerException;
+	public abstract TokenFeed createTokenFeed(InputStream in) throws ScannerException;
 
 	/**
 	 * Creates a new {@link TokenFeed} from the specified input and
 	 * output buffers (for server operation).
+	 * FIXME: not needed now that c/s conversation is binary
 	 *
 	 * @param in input reader.
 	 * @param out output writer.
 	 */
-	public abstract TokenFeed createTokenFeed(final BufferedReader in, final BufferedWriter out);
+	public @Deprecated abstract TokenFeed createTokenFeed(BufferedReader in, BufferedWriter out);
+
+	/**
+	 * Creates a new {@link TokenFeed} from the specified input and output
+	 * streams (for server operation).
+	 *
+	 * @param in input stream.
+	 * @param out buffered output stream.
+	 */
+	public abstract TokenFeed createTokenFeed(InputStream in, BufferedOutputStream out);
 
 }

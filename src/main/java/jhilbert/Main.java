@@ -65,6 +65,11 @@ public final class Main {
 	private static final int DAEMON_PORT = 3141;
 
 	/**
+	 * MediaWiki API default location.
+	 */
+	private static final String MEDIAWIKI_API = "http://127.0.0.1:80/w/api.php";
+
+	/**
 	 * Default location for hashstore.
 	 */
 	private static final String HASHSTORE_DEFAULT_PATH = "/var/local/lib/jhilbert/hashstore";
@@ -73,6 +78,11 @@ public final class Main {
 	 * Hashstore location.
 	 */
 	private static String hashstorePath;
+
+	/**
+	 * Is DAEMON?
+	 */
+	private static boolean isDaemon;
 
 	/**
 	 * Static initialiser.
@@ -93,7 +103,7 @@ public final class Main {
 	 * @throws Exception if anything out of the ordinary happens.
 	 */
 	public static void main(String... args) throws Exception {
-		boolean startDaemon = false;
+		isDaemon = false;
 		hashstorePath = null;
 		try {
 			String inputFileName = null;
@@ -108,14 +118,14 @@ public final class Main {
 						hashstorePath = HASHSTORE_DEFAULT_PATH;
 					}
 				} else if (arg.equals("-d")) {
-					startDaemon = true;
+					isDaemon = true;
 				} else if (arg.equals("--license")) {
 					showLicense();
 				} else {
 					inputFileName = arg;
 				}
 			}
-			if (startDaemon == true) {
+			if (isDaemon == true) {
 				startDaemon();
 				return;
 			}
@@ -129,6 +139,7 @@ public final class Main {
 				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
 			CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
 			logger.info("File processed successfully");
+			System.in.read();
 			return;
 		} catch (JHilbertException e) {
 			logger.fatal("Exiting due to unrecoverable error", e);
@@ -226,6 +237,23 @@ public final class Main {
 	 */
 	public static String getHashstorePath() {
 		return hashstorePath;
+	}
+
+	/**
+	 * Is JHilbert being used as a daemon?
+	 *
+	 * @return <code>true</code> if JHilbert is being used as a daemin,
+	 * 	<code>false</code> otherwise.
+	 */
+	public static boolean isDaemon() {
+		return isDaemon;
+	}
+
+	/**
+	 * Retrieves the MediaWiki API location.
+	 */
+	public static String getMediaWikiApi() {
+		return MEDIAWIKI_API; // FIXME: Make this configurable
 	}
 
 }

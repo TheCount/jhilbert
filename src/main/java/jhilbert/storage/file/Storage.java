@@ -71,6 +71,10 @@ public final class Storage extends jhilbert.storage.Storage {
 		return false;
 	}
 
+	protected @Override String getCanonicalName(final String locator) {
+		return locator;
+	}
+
 	protected synchronized @Override Module retrieveModule(final String locator, final long revision)
 	throws StorageException {
 		// bottleneck alert: the file storage implementation is not really meant for multithreading use
@@ -150,6 +154,14 @@ public final class Storage extends jhilbert.storage.Storage {
 
 	protected @Override void storeModule(final Module module, final String locator, long version) {
 		throw new UnsupportedOperationException("Storing not supported in this implementation");
+	}
+
+	protected @Override void eraseModule(final String locator, final long version) {
+		throw new UnsupportedOperationException("Erasing not supportted in this implementation");
+	}
+
+	protected @Override long getCurrentRevision(final String locator) {
+		return -1;
 	}
 
 }

@@ -58,13 +58,17 @@ final class ParameterCommand extends AbstractCommand {
 			feed.beginExp();
 			feed.confirmBeginExp();
 			final Parameter parameter = dataFactory.createParameter(module, feed);
-			dataFactory.createParameterLoader(parameter, module).loadParameter();
+			try {
+				dataFactory.createParameterLoader(parameter, module).loadParameter();
+			} catch (DataException e) {
+				throw new CommandException("Unable to load parameter " + parameter, e);
+			}
 			feed.endExp();
 			feed.confirmEndCmd();
 		} catch (ScannerException e) {
 			throw new CommandException("Feed error", e);
 		} catch (DataException e) {
-			throw new CommandException("Unable to load parameter", e);
+			throw new CommandException("Unable to create new parameter for module " + module, e);
 		}
 	}
 

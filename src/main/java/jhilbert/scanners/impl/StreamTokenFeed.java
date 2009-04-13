@@ -127,6 +127,7 @@ final class StreamTokenFeed extends AbstractTokenFeed {
 	public @Override void confirmEndCmd() {
 		if (logger.isDebugEnabled())
 			logger.debug("Command complete");
+		resetContext();
 	}
 
 }

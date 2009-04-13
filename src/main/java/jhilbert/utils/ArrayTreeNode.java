@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ public class ArrayTreeNode<E> implements TreeNode<E>, Serializable {
 	public ArrayTreeNode() {
 		super();
 		value = null;
-		children = new ArrayList();
+		children = new ArrayList(2); // HUGE memory eater if left at 10
 	}
 
 	/**
@@ -73,7 +73,7 @@ public class ArrayTreeNode<E> implements TreeNode<E>, Serializable {
 	public ArrayTreeNode(final E value) {
 		assert (value != null): "Supplied value is null";
 		this.value = value;
-		children = new ArrayList();
+		children = new ArrayList(2); // HUGE memory eater if left at 10
 	}
 
 	public E getValue() {

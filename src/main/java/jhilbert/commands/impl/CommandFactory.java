@@ -39,11 +39,6 @@ import java.util.Map;
  */
 public final class CommandFactory extends jhilbert.commands.CommandFactory {
 
-	/**
-	 * Finish command.
-	 */
-	private static final String FINISH_CMD = "FINI";
-
 	// default constructed
 	
 	public @Override void processCommands(final Module module, final TokenFeed tokenFeed) throws CommandException {
@@ -73,8 +68,6 @@ public final class CommandFactory extends jhilbert.commands.CommandFactory {
 				if (token == null)
 					return;
 				final String command = token.getTokenString();
-				if (FINISH_CMD.equals(command))
-					return;
 				if (!commandMap.containsKey(command)) {
 					tokenFeed.reject("Command " + command + " unknown");
 					throw new CommandException("Command unknown");
@@ -83,7 +76,16 @@ public final class CommandFactory extends jhilbert.commands.CommandFactory {
 				commandMap.get(command).execute();
 			}
 		} catch (ScannerException e) {
-			throw new CommandException("Feed error", e);
+			throw new CommandException(e.getScanner().getContextString() + "Feed failure: " + e.getMessage(), e);
+		} catch (CommandException e) {
+			final Throwable t = e.getCause();
+			String erradd;
+			if (t == null) {
+				erradd = "(cause unknown)";
+			} else {
+				erradd = t.getMessage();
+			}
+			throw new CommandException(tokenFeed.getContextString() + " " + e.getMessage() + ": " + erradd, e);
 		}
 	}
 

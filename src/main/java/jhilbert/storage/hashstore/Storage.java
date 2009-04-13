@@ -167,7 +167,11 @@ public final class Storage extends jhilbert.storage.Storage {
 	}
 
 	public @Override boolean isVersioned() {
-		return false; // FIXME
+		return false;
+	}
+
+	protected @Override String getCanonicalName(final String locator) {
+		return locator;
 	}
 
 	protected @Override Module retrieveModule(final String locator, final long version) throws StorageException {
@@ -226,6 +230,22 @@ public final class Storage extends jhilbert.storage.Storage {
 		} catch (IOException e) {
 			throw new StorageException("I/O error while storing module", e);
 		}
+	}
+
+	protected @Override synchronized void eraseModule(final String locator, final long version)
+	throws StorageException {
+		assert (locator != null): "Supplied locator is null";
+		assert (version >= -1): "Invalid revision number supplied";
+		final File file = new File(l2p(locator));
+		if (!file.exists())
+			return;
+		if (!file.delete())
+			throw new StorageException("Unable to erase module " + locator + " at hashstore path " 
+					+ l2p(locator));
+	}
+
+	protected @Override long getCurrentRevision(final String locator) {
+		return -1;
 	}
 
 }

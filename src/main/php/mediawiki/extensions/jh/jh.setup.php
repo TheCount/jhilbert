@@ -30,7 +30,7 @@ if(!defined('MEDIAWIKI')) {
  * jh - enables access to the JHilbert verifier
  *
  * To activate this extension, add the following into your LocalSettings.php file:
- * require_once('$IP/extensions/JHilbert.setup.php');
+ * require_once("$IP/extensions/jh/jh.setup.php");
  *
  * @ingroup Extensions
  * @author  Alexander Klauer <Graf.Zahl@gmx.net>
@@ -38,13 +38,7 @@ if(!defined('MEDIAWIKI')) {
  * @license http://www.gnu.org/copyleft/gpl.html GNU General Public License, Version 3 or later
  */
 
-if (defined('MW_SUPPORTS_PARSERFIRSTCALLINIT')) {
-	$wgHooks['ParserFirstCallInit'][] = 'efJHSetup';
-} else {
-	$wgExtensionFunctions[] = 'efJHSetup';
-}
-$wgHooks['ArticleSave'][] = 'efJHArticleSave';
-
+// credits
 $wgExtensionCredits['parserhook'][] = array(
 	'name'		=> 'jh',
 	'version'	=> '4',
@@ -53,22 +47,58 @@ $wgExtensionCredits['parserhook'][] = array(
 	'description'	=> 'Tag to communicate with the JHilbert verifier'
 );
 
+// Hooks
+if (defined('MW_SUPPORTS_PARSERFIRSTCALLINIT')) {
+	$wgHooks['ParserFirstCallInit'][] = 'efJHSetup';
+} else {
+	$wgExtensionFunctions[] = 'efJHSetup';
+}
+$wgHooks['ArticleDelete'][] = 'efJHArticleDelete';
+$wgHooks['ArticleMergeComplete'][] = 'efJHArticleMergeComplete';
+$wgHooks['ParserBeforeTidy'][] = 'efJHParserBeforeTidy';
+$wgHooks['TitleMoveComlete'][] = 'efJHTitleMoveComplete';
+
+// Server location, see jhilbert.Main java
+define('JH_DAEMON_IP', '127.0.0.1');
+define('JH_DAEMON_PORT', 3141);
+
+// Render modes
 define('JH_RENDER_NOTHING', 0);
 define('JH_RENDER_MODULE', 1);
 define('JH_RENDER_INTERFACE', 2);
 
-define('JH_DAEMON_PORT', 3141);
+// Commands, must match definitons in jhilbert.Server java
+define('JH_COMMAND_QUIT', chr(0x00));
+define('JH_COMMAND_MOD', chr(0x01));
+define('JH_COMMAND_IFACE', chr(0x02));
+define('JH_COMMAND_TEXT', chr(0x03));
+define('JH_COMMAND_FINISH', chr(0x10));
+define('JH_COMMAND_DEL', chr(0x20));
 
-define('JH_COMMAND_MODULE', "MODL\r\n");
-define('JH_COMMAND_INTERFACE', "IFCE %s\r\n");
+// Server responses, must match definitions in jhilbert.Server java
+define('JH_RESPONSE_GOODBYE', 0x00);
+define('JH_RESPONSE_OK', 0x20);
+define('JH_RESPONSE_MORE', 0x30);
+define('JH_RESPONSE_CLIENT_ERR', 0x40);
+define('JH_RESPONSE_SERVER_ERR', 0x50);
 
-$wgJHContext = array();
+// context variables
+$wgJHContext = array(
+		'socket'	=> FALSE, // JHilbert daemon socket
+		'renderMode'	=> FALSE, // whether we render a proof or an interface module
+		'textMode'	=> FALSE  // whether we are in text mode
+	);
 
+/**
+ * Sets up the JHilbert <jh> tag.
+ *
+ * @return <code>TRUE</code> on success, <code>FALSE</code> on failure.
+ */
 function efJHSetup() {
 	global $wgParser;
 	global $wgTitle;
 	global $wgJHContext;
-	global $wgHooks;
+	// Are we rendering a page?
 	if (!isset($wgTitle))
 		return FALSE;
 	// check for the JH namespaces
@@ -84,49 +114,6 @@ function efJHSetup() {
 		$wgJHContext['renderMode'] = JH_RENDER_INTERFACE;
 	} else {
 		$wgJHContext['renderMode'] = JH_RENDER_NOTHING;
-	}
-	// open comm channel with JHilbert server
-	if ($wgJHContext['renderMode'] !== JH_RENDER_NOTHING) {
-		$wgJHContext['socket'] = fsockopen('localhost', JH_DAEMON_PORT, $errno, $errstr, 10);
-		if ($wgJHContext['socket'] === FALSE) {
-			error_log("Unable to connect to JHilbert server (errno=$errno, errmsg=$errstr)", E_NOTICE);
-			return FALSE;
-		}
-		$wgJHContext['finished'] = FALSE;
-		register_shutdown_function('efJHCloseSocket');
-		if (!stream_set_timeout($wgJHContext['socket'], 60)) {
-			error_log('Unable to set socket timeout on JHilbert server socket', E_NOTICE);
-			return FALSE;
-		}
-		$hello = fgets($wgJHContext['socket']);
-		if ($hello === FALSE) {
-			error_log('Unable to receive JHilbert server hello', E_NOTICE);
-			return FALSE;
-		}
-		$hello = trim($hello);
-		if (($hello < 200) || ($hello >= 300)) {
-			error_log("JHilbert server communications error (server msg=$hello)", E_NOTICE);
-			return FALSE;
-		}
-		if ($wgJHContext['renderMode'] === JH_RENDER_MODULE) {
-			$rc = fputs($wgJHContext['socket'], JH_COMMAND_MODULE);
-		} else {
-			$rc = fputs($wgJHContext['socket'], sprintf(JH_COMMAND_INTERFACE, $wgTitle->getPrefixedDBKey()));
-		}
-		if ($rc === FALSE) {
-			error_log('Unable to initiate JHilbert server parsing', E_NOTICE);
-			return FALSE;
-		}
-		$response = fgets($wgJHContext['socket']);
-		if ($response === FALSE) {
-			error_log('Unable to receive JHilbert server response', E_NOTICE);
-			return FALSE;
-		}
-		$response = trim($response);
-		if (($response < 200) || ($response >= 400)) {
-			error_log("JHilbert server parsing communications error (server msg=$response)", E_NOTICE);
-			return FALSE;
-		}
 	}
 	// set parser hook
 	$wgParser->setHook('jh', 'efJHRender');

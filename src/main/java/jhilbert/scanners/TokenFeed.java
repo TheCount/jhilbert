@@ -240,7 +240,7 @@ public interface TokenFeed extends Scanner<Token> {
 	public void confirmFunctor(Functor functor) throws ScannerException;
 
 	/**
-	 * Convenience method to confirm a {@link Statement}.
+	 * Convenience method to confirm a {@link jhilbert.data.Statement}.
 	 *
 	 * @throws ScannerException if confirmation fails.
 	 */

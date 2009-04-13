@@ -1,6 +1,6 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2009 Alexander Klauer
+    Copyright © 2008, 2009 Alexander Klauer
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,15 +36,15 @@ import jhilbert.scanners.TokenFeed;
 import jhilbert.storage.Storage;
 import jhilbert.storage.StorageException;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.InputStreamReader;
+import java.io.BufferedOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
 import java.net.Socket;
 import java.net.SocketException;
+
+import java.nio.charset.Charset;
 
 import org.apache.log4j.Logger;
 
@@ -52,6 +52,110 @@ import org.apache.log4j.Logger;
  * JHilbert server thread.
  * This class contains only the outer shell of the server implementation.
  * Module and Interface conversation is handled by an appropriate feed.
+ *
+ * Client and server converse by exchanging <em>messages</em>. Each message
+ * consists of:
+ * <ol>
+ *   <li>
+ *     Three bytes indicating the total message length in bytes, minus three
+ *     (i.e. the message length without those three bytes). The three bytes
+ *     are to be interpreted as an integer in network byte order. In
+ *     particular, the message size is limited to roughly 16MB.
+ *   </li>
+ *   <li>
+ *     A command byte (client) or a response byte (server).
+ *   </li>
+ *   <li>
+ *     Possibly further data whose interpretation depends on the command byte
+ *     or the response byte.
+ *   </li>
+ * </ol>
+ *
+ * The server may use the following response bytes:
+ * <ul>
+ *   <li>
+ *     <code>0x00</code>: GOODBYE
+ *     No further data. Sent as a response to a QUIT command.
+ *   </li>
+ *   <li>
+ *     <code>0x20</code>: OK
+ *     May be followed by an UTF-8 encoded text string. Used to indicate that
+ *     a command issued by the client was completed successfully.
+ *     An OK command is sent by the server upon connection before receiving
+ *     any data from the client.
+ *   </li>
+ *   <li>
+ *     <code>0x30</code>: MORE
+ *     May be followed by an UTF-8 encoded text string. Used to indicate that
+ *     a command issued by the client was initiated, but further input from
+ *     the client is required to complete the command successfully.
+ *   </li>
+ *   <li>
+ *     <code>0x40</code>: CLIENT ERROR
+ *     Followed by an UTF-8 encoded error message. Used to indicate that a
+ *     command issued by the client cannot be completed due to an error on
+ *     behalf of the client.
+ *   </li>
+ *   <li>
+ *     <code>0x50</code>: SERVER ERROR
+ *     Followed by an UTF-8 encoded error message. Used to indicate that a
+ *     command issued by the client cannot be completed due to a server side
+ *     error.
+ *   </li>
+ * </ul>
+ * All other response bytes are reserved for future use.
+ *
+ * The client may use the following command bytes:
+ * <ul>
+ *   <li>
+ *     <code>0x00</code>: QUIT
+ *     No further data. The server will respond with GOODBYE and close the
+ *     connection.
+ *   </li>
+ *   <li>
+ *     <code>0x01</code>: MOD
+ *     No further data. Used to indicate that the client wants to stream
+ *     JHilbert proof module text to the server. The server will respond
+ *     with MORE. This command is illegal if the last server response was
+ *     MORE.
+ *   </li>
+ *   <li>
+ *     <code>0x02</code>: IFACE
+ *     Followed by a UTF-8 encoded interface name which in turn is followed
+ *     by an integral revision number, encoded in 8 bytes in network byte
+ *     order. Used to indicate that the client wants to stream JHilbert
+ *     interface module text to the server. The server will respond with MORE
+ *     or with CLIENT ERROR.
+ *     This command is illegal if the last server response was MORE.
+ *   </li>
+ *   <li>
+ *     <code>0x03</code>: TEXT
+ *     Followed by UTF-8 encoded JHilbert text. The server will respond with
+ *     MORE, CLIENT ERROR or SERVER ERROR. The accompanying text will be valid
+ *     HTML snippets to be output by the client. This command is only legal if
+ *     the last server response was MORE and the previous client command was
+ *     TEXT, MOD or IFACE.
+ *   </li>
+ *   <li>
+ *     <code>0x10</code>: FINISH
+ *     No further data. Used to indicate that all JHilbert text has been sent.
+ *     The server will respond with OK, CLIENT ERROR or SERVER ERROR. The
+ *     accompanying text will be valid HTML snippets to be output by the
+ *     client. This command is only legal if the last server response was MORE
+ *     and the previous client command was TEXT, MOD or IFACE.
+ *   </li>
+ *   <li>
+ *     <code>0x20</code>: DEL
+ *     Followed by a UTF-8 encoded interface name which in turn is followed
+ *     by an integral revision number, encoded in 8 bytes in network byte
+ *     order. The server will delete the thus specified module from its
+ *     storage and respond with OK on success. On error it will respond with
+ *     CLIENT ERROR or SERVER ERROR. The accompanying text will be valid HTML
+ *     snippets to be output by the client. This command is illegal if the
+ *     last server response was MORE.
+ *   </li>
+ * </ul>
+ * All other command bytes are reserved for further use.
  */
 public class Server extends Thread {
 
@@ -71,84 +175,175 @@ public class Server extends Thread {
 	private static final String ENCODING = "UTF-8";
 
 	/**
+	 * Charset.
+	 */
+	public static final Charset CHARSET = Charset.forName(ENCODING);
+
+	/**
 	 * Default socket timeout, in milliseconds.
 	 */
 	private static final int TIMEOUT = 5000;
 
 	/**
-	 * Server welcome message.
+	 * Maximum message size.
 	 */
-	private static final String WELCOME_MSG = "201 JHilbert " + Main.VERSION + " ready\r\n";
+	private static final int MAX_MSG_SIZE = (1 << 24) - 1;
 
 	/**
-	 * Server goodbye message.
+	 * Welcome message.
 	 */
-	private static final String GOODBYE_MSG = "202 Goodbye\r\n";
+	private static final String WELCOME_MSG = "JHilbert version " + Main.VERSION + " ready";
 
 	/**
-	 * Module OK message.
+	 * Proof module successfully parsed.
 	 */
-	private static final String COMPLETE_MSG = "203 Module OK\r\n";
+	private static final String PROOF_MSG = "Proof module parsed successfully";
 
 	/**
-	 * Module stored message.
+	 * Interface module successfully parsed.
 	 */
-	private static final String STORED_MSG = "204 Interface module stored\r\n";
-
-	/**
-	 * Start module message.
-	 */
-	private static final String MODULE_MSG = "301 Start sending module tokens, finish with FINI\r\n";
-
-	/**
-	 * Start interface message.
-	 */
-	private static final String INTERFACE_MSG = "302 Start sending interface tokens, finish with FINI\r\n";
+	private static final String INTERFACE_MSG = "Interface module parsed successfully";
 
 	/**
 	 * Unknown command message.
 	 */
-	private static final String UNKNOWN_MSG = "401 Unknown command\r\n";
+	private static final String UNKNOWN_MSG = "Unknown command";
 
 	/**
-	 * Bad interface name message.
+	 * Bad interface message.
 	 */
-	private static final String BAD_IFACE_MSG = "402 Bad interface name\r\n";
+	private static final String BAD_IFACE_MSG = "Bad interface";
 
 	/**
-	 * No module to store.
+	 * Deletion failed message.
 	 */
-	private static final String NO_MODULE_MSG = "403 No module to store\r\n";
+	private static final String DELETION_FAILED_MSG = "Deletion failed";
 
 	/**
-	 * Bad module.
+	 * Goodbye response code.
 	 */
-	private static final String BAD_MODULE_MSG = "404 Only interface modules can be stored\r\n";
+	public static final byte GOODBYE_RC = 0x00;
 
 	/**
-	 * Unable to save module message.
+	 * OK response code.
 	 */
-	private static final String SAVE_FAILED_MSG = "501 Storing the module failed\r\n";
+	public static final byte OK_RC = 0x20;
 
 	/**
-	 * Module command.
+	 * Need more response code.
 	 */
-	private static final String MOD_CMD = "MODL";
+	public static final byte MORE_RC = 0x30;
 
 	/**
-	 * Interface command.
+	 * Client error response code.
 	 */
-	private static final String IFACE_CMD = "IFCE";
+	public static final byte CLIENT_ERR_RC = 0x40;
 
 	/**
-	 * Store command.
+	 * Server error respknse code.
 	 */
-	private static final String STORE_CMD = "STOR";
+	public static final byte SERVER_ERR_RC = 0x50;
 
 	/**
 	 * Quit command.
 	 */
-	private static final String QUIT_CMD = "QUIT";
+	public static final byte QUIT_CMD = 0x00;
+
+	/**
+	 * Module command.
+	 */
+	public static final byte MOD_CMD = 0x01;
+
+	/**
+	 * Interface command.
+	 */
+	public static final byte IFACE_CMD = 0x02;
+
+	/**
+	 * JHilbert text command.
+	 */
+	public static final byte TEXT_CMD = 0x03;
+
+	/**
+	 * Finish command.
+	 */
+	public static final byte FINISH_CMD = 0x10;
+
+	/**
+	 * Delete command.
+	 */
+	public static final byte DEL_CMD = 0x20;
+
+	/**
+	 * Reads a long from the specified byte array at the specified
+	 * position in network byte order.
+	 *
+	 * @param a input array.
+	 * @param pos position in the byte array.
+	 *
+	 * @return decoded long.
+	 */
+	public static long decodeLong(final byte[] a, int pos) {
+		assert (a != null): "Supplied byte array is null";
+		assert ((pos >= 0) && (pos <= a.length - 8)): "Bad array position";
+		long result = 0;
+		for (int i = 0; i != 8; ++i) {
+			result <<= 8;
+			result |= a[pos++] & 0xff;
+		}
+		return result;
+	}
+
+	/**
+	 * Reads the size of the next message from the specified
+	 * {@link InputStream}.
+	 *
+	 * @param in input stream.
+	 *
+	 * @return the message size, or <code>-1</code> if the end of the
+	 * 	stream has been reached.
+	 *
+	 * @throws IOException on error.
+	 */
+	public static int readMessageSize(final InputStream in) throws IOException {
+		assert (in != null): "Supplied input stream is null";
+		final byte[] buf = new byte[3];
+		int rc = in.read(buf);
+		if (rc < 3)
+			return -1;
+		int result = 0;
+		for (int i = 0; i != 3; ++i) {
+			result <<= 8;
+			result |= buf[i] & 0xff;
+		}
+		return result;
+	}
+
+	/**
+	 * Leave answer on the specified {@link BufferedOutputStream} with the
+	 * specified return code.
+	 * The message is sent in UTF-8 format.
+	 *
+	 * @param out output stream.
+	 * @param rc return code.
+	 * @param msg message.
+	 *
+	 * @throws IOException on error.
+	 */
+	public static void writeAnswer(final BufferedOutputStream out, final byte rc, final String msg) throws IOException {
+		assert (out != null): "Supplied output stream is null";
+		assert (msg != null): "Supplied message is null";
+		final byte[] msgBytes = msg.getBytes(CHARSET);
+		final int size = msgBytes.length + 1;
+		if (size >= MAX_MSG_SIZE)
+			throw new IOException("Message is too large to send (" + size + " bytes)");
+		out.write(size >>> 16);
+		out.write(size >>> 8);
+		out.write(size);
+		out.write(rc);
+		out.write(msgBytes);
+		out.flush();
+	}
 
 	/**
 	 * Creates a new server thread object on the specified
@@ -170,69 +365,89 @@ public class Server extends Thread {
 	 * Runs the JHilbert server thread.
 	 */
 	public @Override void run() {
-		BufferedWriter out = null;
-		Module module = null;
-		String param = null;
 		try {
-			final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(),
-						ENCODING));
-			out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), ENCODING));
+			final InputStream in = socket.getInputStream();
+			final BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
 			// send welcome
-			out.write(WELCOME_MSG, 0, WELCOME_MSG.length());
-			out.flush();
+			writeAnswer(out, OK_RC, WELCOME_MSG);
 			// execute commands
 			for(;;) {
-				final String command = in.readLine();
-				if (command == null) {
-					logger.warn("EOF from client on port " + socket.getPort());
+				int msgSize = readMessageSize(in);
+				if (msgSize <= -1) {
+					logger.warn("EOF from client while reading message size");
 					return;
 				}
-				if ("".equals(command))
-					continue;
-				// which command?
-				if (QUIT_CMD.equals(command)) {
-					out.write(GOODBYE_MSG, 0, GOODBYE_MSG.length());
+				if (msgSize == 0) {
+					logger.warn("Zero message size");
 					return;
-				} else if (MOD_CMD.equals(command)) {
-					out.write(MODULE_MSG, 0, MODULE_MSG.length());
-					out.flush();
-					module = DataFactory.getInstance().createModule("", -1);
-					final TokenFeed tokenFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
-					CommandFactory.getInstance().processCommands(module, tokenFeed);
-					out.write(COMPLETE_MSG, 0, COMPLETE_MSG.length());
-					out.flush();
-				} else if (command.startsWith(IFACE_CMD)) {
-					param = command.substring(IFACE_CMD.length() + 1);
-					if (!Token.VALID_ATOM.matcher(param).matches()) {
-						out.write(BAD_IFACE_MSG, 0, BAD_IFACE_MSG.length());
-						out.flush();
-						module = null;
-						continue;
-					}
-					out.write(INTERFACE_MSG, 0, INTERFACE_MSG.length());
-					out.flush();
-					module = DataFactory.getInstance().createModule(param, -1);
-					final TokenFeed tokenFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
-					CommandFactory.getInstance().processCommands(module, tokenFeed);
-					out.write(COMPLETE_MSG, 0, COMPLETE_MSG.length());
-					out.flush();
-				} else if (STORE_CMD.equals(command)) {
-					if (module == null) {
-						out.write(NO_MODULE_MSG, 0, NO_MODULE_MSG.length());
-						out.flush();
-						continue;
-					}
-					if ("".equals(module.getName())) {
-						out.write(BAD_MODULE_MSG, 0, BAD_MODULE_MSG.length());
-						out.flush();
-						continue;
-					}
-					Storage.getInstance().saveModule(module, param, -1);
-					out.write(STORED_MSG, 0, STORED_MSG.length());
-					out.flush();
-				} else {
-					out.write(UNKNOWN_MSG, 0, UNKNOWN_MSG.length());
-					out.flush();
+				}
+				int command = in.read();
+				if (command == -1) {
+					logger.warn("EOF from client while reading command");
+					return;
+				}
+				final byte[] msg = new byte[--msgSize];
+				if (in.read(msg) < msgSize) {
+					logger.warn("EOF from client while reading message");
+					return;
+				}
+				switch (command) {
+					case QUIT_CMD:
+						writeAnswer(out, GOODBYE_RC, "");
+						return;
+					case MOD_CMD:
+						final Module proofModule = DataFactory.getInstance().createModule("", -1);
+						final TokenFeed proofFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
+						try {
+							CommandFactory.getInstance().processCommands(proofModule, proofFeed);
+							writeAnswer(out, OK_RC, PROOF_MSG);
+						} catch (CommandException e) {
+							writeAnswer(out, CLIENT_ERR_RC, e.getMessage());
+						}
+						break;
+					case IFACE_CMD:
+						if (msgSize <= 8) {
+							writeAnswer(out, CLIENT_ERR_RC, BAD_IFACE_MSG);
+							break;
+						}
+						final String param = new String(msg, 0, msgSize - 8, CHARSET);
+						if (!Token.VALID_ATOM.matcher(param).matches()) {
+							writeAnswer(out, CLIENT_ERR_RC, BAD_IFACE_MSG);
+							break;
+						}
+						final long version = decodeLong(msg, msgSize - 8);
+						final Module interfaceModule = DataFactory.getInstance().createModule(param, version);
+						final TokenFeed interfaceFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
+						try {
+							CommandFactory.getInstance().processCommands(interfaceModule, interfaceFeed);
+							writeAnswer(out, OK_RC, INTERFACE_MSG);
+						} catch (CommandException e) {
+							writeAnswer(out, CLIENT_ERR_RC, e.getMessage());
+						}
+						break;
+					case DEL_CMD:
+						if (msgSize <= 8) {
+							writeAnswer(out, CLIENT_ERR_RC, DELETION_FAILED_MSG);
+							break;
+						}
+						final String locator = new String(msg, 0, msgSize - 8, CHARSET);
+						if (!Token.VALID_ATOM.matcher(locator).matches()) {
+							writeAnswer(out, CLIENT_ERR_RC, DELETION_FAILED_MSG);
+							break;
+						}
+						final long revision = decodeLong(msg, msgSize - 8);
+						try {
+							Storage.getInstance().deleteModule(locator, revision);
+							writeAnswer(out, OK_RC, "");
+						} catch (StorageException e) {
+							writeAnswer(out, SERVER_ERR_RC, e.getMessage());
+						}
+						break;
+					case FINISH_CMD: // be lenient and forgive a misplaced finish command
+						writeAnswer(out, OK_RC, "");
+						break;
+					default:
+						writeAnswer(out, CLIENT_ERR_RC, UNKNOWN_MSG);
 				}
 			}
 		} catch (UnsupportedEncodingException e) {
@@ -240,19 +455,9 @@ public class Server extends Thread {
 		} catch (SocketException e) {
 			logger.error("Socket error on port " + socket.getPort(), e);
 		} catch (IOException e) {
-			logger.error("IO error", e);
-		} catch (CommandException e) {
-			logger.error("Command error", e);
+			logger.error("I/O error", e);
 		} catch (DataException e) {
 			logger.error("Unable to create module", e);
-		} catch (StorageException e) {
-			// out is definitely initialized here
-			try {
-				out.write(SAVE_FAILED_MSG, 0, SAVE_FAILED_MSG.length());
-				socket.close();
-			} catch (IOException ee) {
-				logger.error("Unable to finish conversation with client", ee);
-			}
 		} finally {
 			try {
 				socket.close();
