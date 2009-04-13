@@ -103,7 +103,7 @@ function efJHSetup() {
 		return FALSE;
 	// check for the JH namespaces
 	if (!(defined('NS_INTERFACE') && defined('NS_INTERFACE_TALK') && defined('NS_USER_MODULE') && defined('NS_USER_MODULE_TALK') && defined('NS_USER_INTERFACE') && defined('NS_USER_INTERFACE_TALK'))) {
-		error_log('Special JHilbert namespaces not defined', E_NOTICE);
+		error_log('Special JHilbert namespaces not defined');
 		return FALSE;
 	}
 	// set render mode

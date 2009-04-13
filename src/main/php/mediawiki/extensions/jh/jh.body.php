@@ -55,7 +55,6 @@ function efJHReadBytes($socket, $length, &$bytes) {
 		}
 		$bytes .= $read;
 		$length -= strlen($read);
-		error_log('Length remaining: ' . $length); // FIXME
 	}
 	if ($length > 0)
 		return "EOF before $length bytes could be read";
@@ -168,7 +167,6 @@ function efJHGetClientSocketInTextMode() {
 		return 'No render mode has been set';
 	switch($renderMode) {
 	case JH_RENDER_MODULE:
-		error_log('Writing MODULE command'); // FIXME
 		$result = efJHWriteCommand($socket, JH_COMMAND_MOD);
 		if ($result !== TRUE)
 			return $result;
@@ -182,7 +180,6 @@ function efJHGetClientSocketInTextMode() {
 	case JH_RENDER_INTERFACE:
 		if (!is_object($wgTitle))
 			return 'Title not available';
-		error_log('Writing INTERFACE command');
 		$result = efJHWriteCommand($socket, JH_COMMAND_IFACE, $wgTitle->getPrefixedDBKey(), -1);
 			/* Always send -1 as version number. JHilbert storage will obtain the
 			 * correct version number through the API */
@@ -237,7 +234,6 @@ function efJHCloseSocket() {
 	$socket = $wgJHContext['socket'];
 	if ($socket === FALSE)
 		return;
-	error_log('Writing QUIT command'); // FIXME
 	$result = efJHWriteCommand($socket, JH_COMMAND_QUIT);
 	if ($result !== TRUE)
 		return $result;
@@ -271,7 +267,6 @@ function efJHRender($input, $args, &$parser) {
 	$socket = efJHGetClientSocketInTextMode();
 	if (!is_resource($socket))
 		return '<span class="error">' . htmlspecialchars($socket) . "</span>\n";
-	error_log('Writing TEXT command'); // FIXME
 	$result = efJHWriteCommand($socket, JH_COMMAND_TEXT, $input);
 	if ($result !== TRUE)
 		return '<span class="error">' . htmlspecialchars($result) . "</span>\n";
@@ -306,7 +301,6 @@ function efJHParserBeforeTidy(&$parser, &$text) {
 		$text .= '<span class="error">' . htmlspecialchars($socket) . '</span>';
 		return TRUE;
 	}
-	error_log('Writing FINISH command'); // FIXME
 	$result = efJHWriteCommand($socket, JH_COMMAND_FINISH);
 	if ($result !== TRUE) {
 		$text .= '<span class="error">' . htmlspecialchars($result) . '</span>';
