@@ -91,7 +91,7 @@ public interface TokenFeed extends Scanner<Token> {
 	public static final String LOCATOR = "locator";
 
 	/**
-	 * String conformation message.
+	 * String confirmation message.
 	 */
 	public static final String STRING = "string";
 

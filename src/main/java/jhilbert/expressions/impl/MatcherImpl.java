@@ -119,13 +119,10 @@ final class MatcherImpl implements Matcher {
 				return false;
 			final Variable sourceVariable = (Variable) sourceTerm;
 			final Variable targetVariable = (Variable) targetTerm;
-			if (!translationMap.containsKey(sourceVariable)) {
-				if (sourceVariable.isDummy() && blacklist.contains(targetVariable)) {
-					logger.error("Attempt to map dummy variable to blacklisted variable");
-					throw new UnifyException("Attempt to map dummy variable to blacklisted variable", source, target);
-				}
+			if (blacklist.contains(targetVariable))
+				return (sourceVariable == targetVariable);
+			if (!translationMap.containsKey(sourceVariable))
 				translationMap.put(sourceVariable, targetVariable);
-			}
 			return targetVariable.equals(translationMap.get(sourceVariable));
 		}
 		if (targetTerm.isVariable())

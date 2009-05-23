@@ -180,9 +180,9 @@ final class VerifierImpl implements Verifier {
 			final Set<Variable> blacklist = new HashSet(hypVars);
 			blacklist.addAll(consequent.variables());
 			if (!expressionFactory.createMatcher().checkVEquality(consequent, proofResult, blacklist)) {
-				feed.reject("Consequent of theorem does not match proof result");
 				logger.debug("Consequent:   " + consequent);
 				logger.debug("Proof result: " + proofResult);
+				feed.reject("Consequent of theorem does not match proof result");
 				throw new VerifyException("Consequent does not match proof result");
 			}
 			// do we fulfill all the required DV constraints?

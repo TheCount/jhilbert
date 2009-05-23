@@ -24,6 +24,7 @@ package jhilbert.expressions.impl;
 
 import java.io.Serializable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -92,12 +93,7 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 
 				case BEGIN_EXP: // subexpression
 				tokenFeed.confirmBeginExp();
-				final Functor functor = setFunctor(module, tokenFeed, tokenFeed.getAtom());
-				tokenFeed.confirmFunctor(functor);
-				for (final Kind inputKind: functor.getInputKinds())
-					addExpression(new ExpressionImpl(module, tokenFeed), inputKind);
-				tokenFeed.endExp();
-				tokenFeed.confirmEndExp();
+				parseSubexpression(module, tokenFeed);
 				break;
 
 				default:
@@ -121,43 +117,69 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 			logger.trace("Expression complete: " + toString());
 	}
 
+	private void parseSubexpression(final Module module, final TokenFeed tokenFeed) throws ExpressionException, ScannerException {
+		Functor functor = null;
+		final Namespace<? extends Functor> functorNamespace = module.getFunctorNamespace();
+		final List<ExpressionImpl> children = new ArrayList();
+		outer:for (;;) {
+			final Token token = tokenFeed.getToken();
+			switch (token.getTokenClass()) {
+				case ATOM:
+				// attempt to read functor
+				if (functor == null) {
+					functor = functorNamespace.getObjectByString(token.getTokenString());
+					if (functor != null) {
+						tokenFeed.confirmFunctor(functor);
+						break;
+					}
+				}
+				// NO BREAK!
+
+				case BEGIN_EXP:
+				tokenFeed.putToken(token);
+				children.add(new ExpressionImpl(module, tokenFeed));
+				break;
+
+				case END_EXP:
+				break outer;
+
+				default:
+				throw new AssertionError("This cannot happen");
+			}
+		}
+		// final sanity checks
+		if (functor == null) {
+			tokenFeed.reject("No functor found in expression");
+			throw new ExpressionException("No functor found in expression");
+		}
+		final int size = children.size();
+		final List<? extends Kind> inputKinds = functor.getInputKinds();
+		if (size != inputKinds.size()) {
+			tokenFeed.reject("Place count mismatch: expected " + size + " arguments to " + functor);
+			throw new PlaceCountMismatchException("Place count mismatch: expected " + size);
+		}
+		for (int i = 0; i != size; ++i) {
+			if (!children.get(i).getKind().equals(inputKinds.get(i))) {
+				tokenFeed.reject("Kind mismatch after argument " + i + ": expected " + inputKinds.get(i) + ", got " + children.get(i).getKind());
+				throw new KindMismatchException("Kind mismatch after argument " + i);
+			}
+		}
+		supplant(functor, children);
+		tokenFeed.confirmEndExp();
+	}
+
 	private void setVariable(final Module module, final TokenFeed tokenFeed, final String varName)
 	throws ExpressionException {
 		final Symbol sym = module.getSymbolNamespace().getObjectByString(varName);
 		if (sym == null) {
 			try {
-				tokenFeed.reject("Symbol not found");
+				tokenFeed.reject("Symbol " + varName + " not found");
 			} catch (ScannerException ignored) {
 				// ignored
 			}
-			throw new ExpressionException("Symbol not found");
+			throw new ExpressionException("Symbol " + varName + " not found");
 		}
 		setValue((Variable) sym);
-	}
-
-	private Functor setFunctor(final Module module, final TokenFeed tokenFeed, final String functorName)
-	throws ExpressionException {
-		final Functor functor = module.getFunctorNamespace().getObjectByString(functorName);
-		if (functor == null) {
-			try {
-				tokenFeed.reject("Term not found");
-			} catch (ScannerException ignored) {
-				// ignored
-			}
-			throw new ExpressionException("Term not found");
-		}
-		setValue(functor);
-		return functor;
-	}
-
-	private void addExpression(final ExpressionImpl expr, final Kind targetKind) throws ExpressionException {
-		if (!expr.getKind().equals(targetKind)) {
-			logger.error("Kind mismatch");
-			logger.debug("Expected kind: " + targetKind);
-			logger.debug("Found kind:    " + expr.getKind());
-			throw new KindMismatchException("Kind mismatch");
-		}
-		addChild(expr);
 	}
 
 	/**

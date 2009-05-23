@@ -26,9 +26,9 @@
 	<groupId>jhilbert</groupId>
 	<artifactId>jhilbert</artifactId>
 	<packaging>bundle</packaging>
-	<version>4</version>
+	<version>6</version>
 	<name>jhilbert</name>
-	<url>http://planetx.cc.vt.edu/AsteroidMeta/JHilbert</url>
+	<url>http://wiki.planetmath.org/AsteroidMeta/JHilbert</url>
 	<build>
 		<plugins>
 			<plugin>

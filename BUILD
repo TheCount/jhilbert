@@ -2,9 +2,9 @@ These are the build instructions for JHilbert.
 
 Prerequisites
 =============
-You'll need the Apache Maven 2 project builder (version 2.0.7 works), see
+You'll need the Apache Maven 2 project builder (version 2.0.9 works), see
 http://maven.apache.org/. You'll also need a Java Development Kit (JDK)
-compatible with Maven which supports Java Generics (Sun JDK 1.5.0_14 works).
+compatible with Maven which supports Java Generics (Sun JDK 6-12-1 works).
 
 Building
 ========

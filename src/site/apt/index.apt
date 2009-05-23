@@ -29,3 +29,8 @@
  JHilbert can be run as a standalone application. However, it is meant to be
 integrated with {{{http://www.mediawiki.org}MediaWiki}} with a specialized
 extension.
+
+ <<Important notice:>> Please update to version 6. Versions 4, 5, and perhaps
+earlier versions have a bug which caused the consequent equality checker to
+ignore non-dummy variables, leading to possibly wrong conclusions in theorems
+with hypotheses. Theorems without hypotheses are not affected.

@@ -42,8 +42,8 @@ import jhilbert.data.Variable;
  * 	with no substitutions necessary whatsoever.
  * <li><strong>Variable equivalence:</strong> When source and target expression
  * 	can be made <em>definition equivalent</em> with a well-formed
- * 	translation of variables. In order to avoid unsound replacement of
- * 	dummy variables with non-dummies, a blacklist of
+ * 	translation of dummy variables. In order to avoid unsound replacement
+ * 	of dummy variables with non-dummies, a blacklist of
  * 	not-to-dummy-assignable variables may be specified, causing an
  * 	exception to be thrown if such an assignment would be necessary.
  * </ol>

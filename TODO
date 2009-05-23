@@ -1,4 +1,5 @@
-* client/server structure
+* distrinctions of functors by signature
+* get rid of too many brackets
 * specification and proof of soundness
 * unit tests
 * integration tests

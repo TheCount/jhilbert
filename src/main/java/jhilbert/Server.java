@@ -333,6 +333,8 @@ public class Server extends Thread {
 	public static void writeAnswer(final BufferedOutputStream out, final byte rc, final String msg) throws IOException {
 		assert (out != null): "Supplied output stream is null";
 		assert (msg != null): "Supplied message is null";
+		if (logger.isTraceEnabled())
+			logger.trace("Sending answer code " + rc + " with message: " + msg);
 		final byte[] msgBytes = msg.getBytes(CHARSET);
 		final int size = msgBytes.length + 1;
 		if (size >= MAX_MSG_SIZE)

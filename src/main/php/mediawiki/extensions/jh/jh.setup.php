@@ -41,7 +41,7 @@ if(!defined('MEDIAWIKI')) {
 // credits
 $wgExtensionCredits['parserhook'][] = array(
 	'name'		=> 'jh',
-	'version'	=> '4',
+	'version'	=> '6',
 	'author'	=> 'Alexander Klauer',
 	'url'		=> 'http://www.mathi.uni-heidelberg.de/~alex/jhilbert',
 	'description'	=> 'Tag to communicate with the JHilbert verifier'
@@ -56,7 +56,7 @@ if (defined('MW_SUPPORTS_PARSERFIRSTCALLINIT')) {
 $wgHooks['ArticleDelete'][] = 'efJHArticleDelete';
 $wgHooks['ArticleMergeComplete'][] = 'efJHArticleMergeComplete';
 $wgHooks['ParserBeforeTidy'][] = 'efJHParserBeforeTidy';
-$wgHooks['TitleMoveComlete'][] = 'efJHTitleMoveComplete';
+$wgHooks['TitleMoveComplete'][] = 'efJHTitleMoveComplete';
 
 // Server location, see jhilbert.Main java
 define('JH_DAEMON_IP', '127.0.0.1');
@@ -84,10 +84,13 @@ define('JH_RESPONSE_SERVER_ERR', 0x50);
 
 // context variables
 $wgJHContext = array(
-		'socket'	=> FALSE, // JHilbert daemon socket
-		'renderMode'	=> FALSE, // whether we render a proof or an interface module
-		'textMode'	=> FALSE  // whether we are in text mode
-	);
+	'socket'	=> FALSE, // JHilbert daemon socket
+	'renderMode'	=> FALSE, // whether we render a proof or an interface module
+	'textMode'	=> FALSE  // whether we are in text mode
+);
+
+// messages
+$wgExtensionMessagesFiles['jh'] = dirname(__FILE__) . '/jh.i18n.php';
 
 /**
  * Sets up the JHilbert <jh> tag.
@@ -117,6 +120,7 @@ function efJHSetup() {
 	}
 	// set parser hook
 	$wgParser->setHook('jh', 'efJHRender');
+	wfLoadExtensionMessages('jh');
 	return TRUE;
 }
 

@@ -51,13 +51,13 @@ function efJHReadBytes($socket, $length, &$bytes) {
 		if ($read === FALSE) {
 			$errno = socket_last_error($socket);
 			$errstr = socket_strerror($errno);
-			return "Socket error (errno=$errno, errstr=$errstr)";
+			return wfMsg('sockerr', $errno, $errstr);
 		}
 		$bytes .= $read;
 		$length -= strlen($read);
 	}
 	if ($length > 0)
-		return "EOF before $length bytes could be read";
+		return wfMsg('earlyeof', $length);
 	return TRUE;
 }
 
@@ -77,10 +77,10 @@ function efJHReadMessage($socket, &$rc, &$msg) {
 		return $result;
 	$size = (ord($bytes[0]) << 16) | (ord($bytes[1]) << 8) | (ord($bytes[2]));
 	if ($size === 0)
-		return 'Zero message size';
+		return wfMsg('zeromsgsize');
 	$rc = fgetc($socket);
 	if ($rc === FALSE)
-		return 'Unexpected EOF while reading JHilbert response code';
+		return wfMsg('eofreadingresponse');
 	$rc = ord($rc);
 	$result = efJHReadBytes($socket, $size - 1, $msg);
 	if ($result !== TRUE)
@@ -111,17 +111,17 @@ function efJHWriteCommand($socket, $command, $msg = '', $id = -2) {
 	}
 	$length = strlen($command);
 	if ($length >= (1 << 24))
-		return 'Message is too long';
+		return wfMsg('msgtoolong');
 	$command = chr($length >> 16) . chr($length >> 8) . chr($length) . $command;
 	$length += 3;
 	$result = fwrite($socket, $command, $length);
 	if ($result === FALSE) {
 		$errno = socket_last_error($socket);
 		$errstr = socket_strerror($errno);
-		return "Error sending command (errno=$errno, errstr=$errstr)";
+		return wfMsg('errorsendingcmd', $command, $errno, $errstr);
 	}
 	if ($result !== $length)
-		return 'Not all bytes could be written';
+		return wfMsg('notallbyteswritten');
 	return TRUE;
 }
 
@@ -138,12 +138,12 @@ function efJHGetClientSocket() {
 		return $socket;
 	$socket = fsockopen(JH_DAEMON_IP, JH_DAEMON_PORT, $errno, $errstr, 10);
 	if (!is_resource($socket))
-		return "Unable to open connection to JHilbert server (errno=$errno, errstr=$errstr)";
+		return wfMsg('erroropeningconn', $errno, $errstr);
 	$result = efJHReadMessage($socket, $rc, $msg);
 	if ($result !== TRUE)
-		return $result;
+		return wfMsg('errorinitialmsg', $result);
 	if ($rc !== JH_RESPONSE_OK)
-		return "Error opening connection to JHilbert server (response code=$rc, response=$msg)";
+		return wfMsg('errorinitialresponse', $rc, $msg);
 	$wgJHContext['socket'] = $socket;
 	return $socket;
 }
@@ -159,12 +159,12 @@ function efJHGetClientSocketInTextMode() {
 	global $wgTitle;
 	$socket = efJHGetClientSocket();
 	if (!is_resource($socket))
-		return $socket;
+		return wfMsg('errorgettingsocket', $socket);
 	if ($wgJHContext['textMode'])
 		return $socket;
 	$renderMode = efJHGetCurrentRenderMode();
 	if ($renderMode === FALSE)
-		return 'No render mode has been set';
+		return wfMsg('norendermode');
 	switch($renderMode) {
 	case JH_RENDER_MODULE:
 		$result = efJHWriteCommand($socket, JH_COMMAND_MOD);
@@ -174,12 +174,12 @@ function efJHGetClientSocketInTextMode() {
 		if ($result !== TRUE)
 			return $result;
 		if ($rc !== JH_RESPONSE_MORE)
-			return "Bad JHilbert response (response code=$rc, response=$msg)";
+			return wfMsg('badresponse', $rc, $msg);
 		break;
 
 	case JH_RENDER_INTERFACE:
 		if (!is_object($wgTitle))
-			return 'Title not available';
+			return wfMsg('notitle');
 		$result = efJHWriteCommand($socket, JH_COMMAND_IFACE, $wgTitle->getPrefixedDBKey(), -1);
 			/* Always send -1 as version number. JHilbert storage will obtain the
 			 * correct version number through the API */
@@ -189,11 +189,11 @@ function efJHGetClientSocketInTextMode() {
 		if ($result !== TRUE)
 			return $result;
 		if ($rc !== JH_RESPONSE_MORE)
-			return "Bad JHilbert response (response code=$rc, response=$msg)";
+			return wfMsg('badresponse', $rc, $msg);
 		break;
 
 	default:
-		return 'There is nothing to render';
+		return wfMsg('nothingtorender');
 	}
 	$wgJHContext['textMode'] = TRUE;
 	return $socket;
@@ -219,7 +219,7 @@ function efJHRequestDeletion($locator, $revision) {
 	if ($result !== TRUE)
 		return $result;
 	if ($rc !== JH_RESPONSE_OK)
-		return "Deletion failed (response code=$rc, response=$msg)";
+		return wfMsg('deletionfailed', $rc, $msg);
 	return TRUE;
 }
 
@@ -236,12 +236,12 @@ function efJHCloseSocket() {
 		return;
 	$result = efJHWriteCommand($socket, JH_COMMAND_QUIT);
 	if ($result !== TRUE)
-		return $result;
+		return wfMsg('errorsendingquit', $result);
 	$result = efJHReadMessage($socket, $rc, $msg);
 	if ($result !== TRUE)
-		return $result;
+		return wfMsg('errorreadingquit', $result);
 	if ($rc !== JH_RESPONSE_GOODBYE)
-		return "Unable to quit (response code=$rc, response=$msg)";
+		return wfMsg('errorfinalresponse', $rc, $msg);
 	$result = fclose($socket);
 	$wgJHContext['socket'] = FALSE;
 	$wgJHContext['renderMode'] = FALSE;
@@ -249,7 +249,7 @@ function efJHCloseSocket() {
 	if ($result === FALSE) {
 		$errno = socket_last_error();
 		$errmsg = socket_strerror($errno);
-		return "Unable to close socket (errno=$errno, errmsg=$errmsg)";
+		return wfMsg('errorclosingconn', $errno, $errmsg);
 	}
 	return TRUE;
 }
@@ -266,13 +266,13 @@ function efJHRender($input, $args, &$parser) {
 		return '<pre>' . htmlspecialchars($input) . "</pre>\n";
 	$socket = efJHGetClientSocketInTextMode();
 	if (!is_resource($socket))
-		return '<span class="error">' . htmlspecialchars($socket) . "</span>\n";
+		return '<span class="error">' . wfMsg('notextsocket', htmlspecialchars($socket)) . "</span>\n";
 	$result = efJHWriteCommand($socket, JH_COMMAND_TEXT, $input);
 	if ($result !== TRUE)
-		return '<span class="error">' . htmlspecialchars($result) . "</span>\n";
+		return '<span class="error">' . wfMsg('notextcmd', htmlspecialchars($result)) . "</span>\n";
 	$result = efJHReadMessage($socket, $rc, $msg);
 	if ($result !== TRUE)
-		return '<span class="error">' . htmlspecialchars($result) . "</span>\n";
+		return '<span class="error">' . wfMsg('notextresponse', htmlspecialchars($result)) . "</span>\n";
 	if ($rc !== JH_RESPONSE_MORE)
 		return $msg; // already sanitized by JHilbert server
 	return $msg; // already sanitized by JHilbert server
@@ -285,6 +285,7 @@ function efJHParserBeforeTidy(&$parser, &$text) {
 	global $wgJHContext;
 	if ($wgJHContext['textMode'] !== TRUE)
 		return TRUE; // No JH tags
+	wfLoadExtensionMessages('jh');
 	$renderMode = efJHGetCurrentRenderMode();
 	if ($renderMode === FALSE) {
 		$text .= '<span class="error">No render mode set. This should not happen.</span>';
@@ -329,16 +330,12 @@ function efJHParserBeforeTidy(&$parser, &$text) {
  * ArticleDelete hook.
  */
 function efJHArticleDelete(&$article, &$user, &$reason, &$error) {
-	/* $pageID = $article->getID();
-	if ($pageID <= 0) {
-		$error = "Invalid page ID (id=$pageID)";
-		return FALSE;
-	} */
 	$title = $article->getTitle();
 	$titleKey = $title->getPrefixedDBKey();
 	$rev = $title->getFirstRevision();
 	if ($rev === NULL)
 		return TRUE;
+	wfLoadExtensionMessages('jh');
 	$revID = $rev->getId();
 	for (; $revID !== FALSE; $revID = $title->getNextRevisionID($revID)) {
 		$result = efJHRequestDeletion($titleKey, $revID);
@@ -347,17 +344,6 @@ function efJHArticleDelete(&$article, &$user, &$reason, &$error) {
 			return FALSE;
 		}
 	}
-	/* $dbr = wfGetDB(DB_SLAVE);
-	$result = $dbr->select('revision', 'rev_id', "rev_page=$pageID");
-	while ($row = $dbr->fetchObject($result)) {
-		$result2 = efJHRequestDeletion($title, $row->rev_id);
-		if ($result2 !== TRUE) {
-			$error = $result2;
-			$dbr->freeResult($result);
-			return FALSE;
-		}
-	}
-	$dbr->freeResult($result); */
 	efJHCloseSocket(); // don't care for errors
 	return TRUE;
 }
@@ -370,6 +356,7 @@ function efJHArticleMergeComplete($targetTitle, $destTitle) {
 	$rev = $destTitle->getFirstRevision();
 	if ($rev === NULL)
 		return;
+	wfLoadExtensionMessages('jh');
 	$revID = $rev->getId();
 	for (; $revID !== FALSE; $revID = $destTitle->getNextRevisionID($revID))
 		efJHRequestDeletion($titleKey, $revID); // FIXME: can't do anything if something goes wrong
@@ -384,6 +371,7 @@ function efJHTitleMoveComplete(&$title, &$newtitle, &$user, $oldid, $newid) {
 	$rev = $newtitle->getFirstRevision();
 	if ($rev === NULL)
 		return;
+	wfLoadExtensionMessages('jh');
 	$revID = $rev->getId();
 	for (; $revID !== FALSE; $revID = $newtitle->getNextRevisionID($revID))
 		efJHRequestDeletion($titleKey, $revID); // FIXME: can't do anything if something goes wrong

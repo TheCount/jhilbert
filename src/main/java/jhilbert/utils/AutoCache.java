@@ -151,6 +151,17 @@ public class AutoCache<K, V> extends AbstractMap<K, V> implements Map<K, V>, Clo
 		this.backingMap = new HashMap(backingMap);
 	}
 
+	/**
+	 * Clean up collected entries.
+	 */
+	private void cleanup() {
+		final Iterator<Map.Entry<K, SoftReference<V>>> i = backingMap.entrySet().iterator();
+		while (i.hasNext()) {
+			if (i.next().getValue().get() == null)
+				i.remove();
+		}
+	}
+
 	public @Override void clear() {
 		backingMap.clear();
 	}
@@ -159,9 +170,8 @@ public class AutoCache<K, V> extends AbstractMap<K, V> implements Map<K, V>, Clo
 		final SoftReference<V> ref = backingMap.get(key);
 		if (ref == null)
 			return false;
-		final V value = ref.get();
-		if (value == null) {
-			backingMap.remove(key);
+		if (ref.get() == null) {
+			cleanup();
 			return false;
 		}
 		return true;
@@ -177,7 +187,7 @@ public class AutoCache<K, V> extends AbstractMap<K, V> implements Map<K, V>, Clo
 			return null;
 		final V value = ref.get();
 		if (value == null)
-			backingMap.remove(key);
+			cleanup();
 		return value;
 	}
 

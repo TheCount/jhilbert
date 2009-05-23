@@ -25,7 +25,7 @@ package jhilbert.storage;
 import jhilbert.JHilbertException;
 
 /**
- * Throws when a {@link Storage} operation fails.
+ * Thrown when a {@link Storage} operation fails.
  */
 public class StorageException extends JHilbertException {
 

@@ -52,7 +52,7 @@ public final class Main {
 	/**
 	 * Version.
 	 */
-	public static final int VERSION = 4;
+	public static final int VERSION = 6;
 
 	/**
 	 * Logger.
@@ -139,7 +139,6 @@ public final class Main {
 				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
 			CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
 			logger.info("File processed successfully");
-			System.in.read();
 			return;
 		} catch (JHilbertException e) {
 			logger.fatal("Exiting due to unrecoverable error", e);
