@@ -15,9 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    You may contact the author on these Wiki pages:
-    http://planetx.cc.vt.edu/AsteroidMeta//GrafZahl (preferred)
-    http://en.wikisource.org/wiki/User_talk:GrafZahl
+    You may contact the author on this Wiki page:
+    http://www.wikiproofs.de/w/index.php?title=User_talk:GrafZahl
 */
 
 package jhilbert.scanners.impl;

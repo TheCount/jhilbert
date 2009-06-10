@@ -3,7 +3,7 @@ GHilbert
 JHilbert started as an implementation of GHilbert by Raph Levien.
 Unfortunately, as of September 2008, the GHilbert project appears to be on
 standby. See
-* http://planetx.cc.vt.edu/AsteroidMeta/Ghilbert
+* http://wiki.planetmath.org/AsteroidMeta/Ghilbert
 * http://www.ghilbert.org/ (defunct as of September 2008)
 
 metamath
@@ -15,6 +15,6 @@ accompanied by proofs that can be verified by a computer program."
 Metamath is accompanied by a large database of theorems, based on ZFC set
 theory or quantum logic. See
 * http://us.metamath.org/index.html
-* http://planetx.cc.vt.edu/AsteroidMeta/metamath
+* http://wiki.planetmath.org/AsteroidMeta/metamath
 
 Please let me know if there is any acknowledgement missing from this file.
