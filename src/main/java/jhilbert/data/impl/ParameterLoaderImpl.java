@@ -459,11 +459,9 @@ final class ParameterLoaderImpl implements ParameterLoader {
 			for (final Variable variable: arguments)
 				children.add(expressionFactory.createExpression(variable));
 			try {
-				final Expression parameterExpression
-					= translator.translate(expressionFactory.createExpression(parameterDefinition,
-						parameterChildren));
+				final Expression parameterExpression = expressionFactory.createExpression(parameterDefinition, parameterChildren);
 				final Expression expression = expressionFactory.createExpression(definition, children);
-				substituter.unify(parameterExpression, expression);
+				substituter.crossUnify(parameterExpression, expression, translator);
 			} catch (UnifyException e) {
 				logger.error("Definition " + definition + " not unifiable with " + parameterDefinition, e);
 				logger.debug("Source: " + e.getSource());

@@ -103,7 +103,7 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 		switch (c) {
 			case '\n':
 			case '\r':
-				return "<br />\n";
+				return "<br />";
 			case '\t':
 				return "&#9;";
 			case ' ':

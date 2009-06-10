@@ -16,9 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    You may contact the author on these Wiki pages:
-    http://planetx.cc.vt.edu/AsteroidMeta//GrafZahl (preferred)
-    http://en.wikisource.org/wiki/User_talk:GrafZahl
+    You may contact the author on this Wiki page:
+    http://www.wikiproofs.de/w/index.php?title=User_talk:GrafZahl
 //-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -26,9 +25,9 @@
 	<groupId>jhilbert</groupId>
 	<artifactId>jhilbert</artifactId>
 	<packaging>bundle</packaging>
-	<version>6</version>
+	<version>7</version>
 	<name>jhilbert</name>
-	<url>http://wiki.planetmath.org/AsteroidMeta/JHilbert</url>
+	<url>http://www.wikiproofs.de</url>
 	<build>
 		<plugins>
 			<plugin>

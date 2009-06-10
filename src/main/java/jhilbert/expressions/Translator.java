@@ -24,6 +24,7 @@ package jhilbert.expressions;
 
 import java.util.Map;
 
+import jhilbert.data.Functor;
 import jhilbert.data.Variable;
 
 /**
@@ -56,6 +57,13 @@ public interface Translator {
 	 * 	for which no mapping exists.
 	 */
 	public Variable translate(final Variable variable) throws ExpressionException;
+
+	/**
+	 * Returns the functor map provided to this <code>Translator</code>.
+	 *
+	 * @return the functor map.
+	 */
+	public Map<Functor, Functor> getFunctorMap();
 
 	/**
 	 * Returns the current variable map of this <code>Translator</code>.

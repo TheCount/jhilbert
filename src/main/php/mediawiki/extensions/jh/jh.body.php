@@ -16,9 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    You may contact the author on these Wiki pages:
-    http://planetx.cc.vt.edu/AsteroidMeta//GrafZahl (preferred)
-    http://en.wikisource.org/wiki/User_talk:GrafZahl
+    You may contact the author on this Wiki page:
+    http://www.wikiproofs.de/w/index.php?title=User_talk:GrafZahl
  */
 
 // FIXME FIXME FIXME: Do wrap this stuff up in a class...
@@ -267,15 +266,13 @@ function efJHRender($input, $args, &$parser) {
 	$socket = efJHGetClientSocketInTextMode();
 	if (!is_resource($socket))
 		return '<span class="error">' . wfMsg('notextsocket', htmlspecialchars($socket)) . "</span>\n";
-	$result = efJHWriteCommand($socket, JH_COMMAND_TEXT, $input);
+	$result = efJHWriteCommand($socket, JH_COMMAND_TEXT, trim($input, "\r\n"));
 	if ($result !== TRUE)
 		return '<span class="error">' . wfMsg('notextcmd', htmlspecialchars($result)) . "</span>\n";
 	$result = efJHReadMessage($socket, $rc, $msg);
 	if ($result !== TRUE)
 		return '<span class="error">' . wfMsg('notextresponse', htmlspecialchars($result)) . "</span>\n";
-	if ($rc !== JH_RESPONSE_MORE)
-		return $msg; // already sanitized by JHilbert server
-	return $msg; // already sanitized by JHilbert server
+	return '<div class="jhilbert">' . $msg . '</div>'; // already sanitized by JHilbert server
 }
 
 /**

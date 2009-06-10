@@ -155,6 +155,7 @@ public final class Storage extends jhilbert.storage.Storage {
 			final Matcher matcher = PATTERN.matcher(text);
 			while(matcher.find()) {
 				final String match = matcher.group();
+				jhText.append('\n');
 				jhText.append(match, 4, match.length() - 5); // strip tags
 			}
 			// parse text

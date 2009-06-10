@@ -15,9 +15,8 @@
 ~~  You should have received a copy of the GNU General Public License
 ~~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ~~
-~~  You may contact the author on these Wiki pages:
-~~  http://planetx.cc.vt.edu/AsteroidMeta//GrafZahl (preferred)
-~~  http://en.wikisource.org/wiki/User_talk:GrafZahl
+~~  You may contact the author on this Wiki page:
+~~  http://www.wikiproofs.de/w/index.php?title=User_talk:GrafZahl
  -----
  JHilbert
  -----
@@ -26,11 +25,10 @@
 
  JHilbert is a verifier for collaborative theorem proving.
 
- JHilbert can be run as a standalone application. However, it is meant to be
-integrated with {{{http://www.mediawiki.org}MediaWiki}} with a specialized
-extension.
+ JHilbert can be run as a standalone application. However, it was written
+to drive {{{http://www.wikiproofs.de}}}, a Wiki project dedicated to creating
+a free repository of instantly verified proofs.
 
- <<Important notice:>> Please update to version 6. Versions 4, 5, and perhaps
-earlier versions have a bug which caused the consequent equality checker to
-ignore non-dummy variables, leading to possibly wrong conclusions in theorems
-with hypotheses. Theorems without hypotheses are not affected.
+ <<Important notice:>> Please update to version 7. Version 6 and perhaps
+earlier versions have a bug where the exported definition checker would be
+called at an inappropriate time, rendering it ineffective.

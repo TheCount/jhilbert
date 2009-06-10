@@ -22,6 +22,7 @@
 
 package jhilbert.expressions.impl;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,9 @@ import jhilbert.data.Term;
 import jhilbert.data.Variable;
 
 import jhilbert.expressions.Expression;
+import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.Substituter;
+import jhilbert.expressions.Translator;
 import jhilbert.expressions.UnifyException;
 
 import org.apache.log4j.Logger;
@@ -161,6 +164,42 @@ final class SubstituterImpl implements Substituter {
 			logger.debug("Source expression: " + e.getSource());
 			logger.debug("Target expression: " + e.getTarget());
 			throw new UnifyException("Unification error after unfolding definition", source, target, e);
+		}
+	}
+
+	private Expression totalUnfold(Expression expr) { // recursively unfold expression
+		// unfold head
+		for (;;) {
+			final Term term = expr.getValue();
+			if (term.isVariable()) {
+				// strictly speaking, definitions unfolding to a single variable are permissible by the
+				// spec, so this check must NOT be moved outside the loop
+				return expr;
+			}
+			final Functor functor = (Functor) term;
+			if (functor.definitionDepth() == 0)
+				break;
+			expr = ((Definition) functor).unfold(expr.getChildren());
+		}
+		// unfold children
+		final List<Expression> children = expr.getChildren();
+		final int numChildren = children.size();
+		final List<ExpressionImpl> newChildren = new ArrayList(numChildren);
+		for (int i = 0; i != numChildren; ++i)
+			newChildren.add((ExpressionImpl) totalUnfold(children.get(i)));
+		((ExpressionImpl) expr).supplant((Functor) expr.getValue(), newChildren);
+		return expr;
+	}
+
+	public void crossUnify(final Expression source, final Expression target, final Translator translator) throws UnifyException {
+		assert (source != null): "Supplied source expression is null";
+		assert (target != null): "Supplied target expression is null";
+		assert (translator != null): "Supplied translator is null";
+		try {
+			unify(translator.translate(totalUnfold(source)), target);
+		} catch (ExpressionException e) {
+			logger.error("Unable to translate " + source);
+			throw new UnifyException("Source translation error", source, target, e);
 		}
 	}
 

@@ -118,6 +118,10 @@ final class TranslatorImpl implements Translator {
 		return variableMap.get(variable);
 	}
 
+	public Map<Functor, Functor> getFunctorMap() {
+		return functorMap;
+	}
+
 	public Map<Variable, Variable> getVariableMap() {
 		return variableMap;
 	}

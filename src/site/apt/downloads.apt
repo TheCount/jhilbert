@@ -16,8 +16,7 @@
 ~~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ~~
 ~~  You may contact the author on these Wiki pages:
-~~  http://planetx.cc.vt.edu/AsteroidMeta//GrafZahl (preferred)
-~~  http://en.wikisource.org/wiki/User_talk:GrafZahl
+~~  http://www.wikiproofs.de/w/index.php?title=User_talk:GrafZahl
  ---
  JHilbert downloads
  ---
@@ -27,6 +26,8 @@
 JAR archives
 
  * Current development version: {{{./jhilbert-devel.jar}jhilbert-devel.jar}}
+
+ * Version 7: {{{./jhilbert-7.jar}jhilbert-7.jar}}
 
  * Version 6: {{{./jhilbert-6.jar}jhilbert-6.jar}} 
 
@@ -43,6 +44,8 @@ JAR archives
 Source (tarballs and zip archives)
 
  * Current development version: {{{./jhilbert-devel.tar.bz2}jhilbert-devel.tar.bz2}}, {{{./jhilbert-devel.zip}jhilbert-devel.zip}}
+
+ * Version 7: {{{./jhilbert-7.tar.bz2}jhilbert-7.tar.bz2}}, {{{./jhilbert-7.zip}jhilbert-7.zip}}
 
  * Version 6: {{{./jhilbert-6.tar.bz2}jhilbert-6.tar.bz2}}, {{{./jhilbert-6.zip}jhilbert-6.zip}}
 

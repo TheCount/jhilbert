@@ -75,4 +75,18 @@ public interface Substituter {
 	 */
 	public void unify(Expression source, Expression target) throws UnifyException;
 
+	/**
+	 * This is a special method to unify cross-module expressions.
+	 * Source expressions are completely unfolded before translated and
+	 * unified. This is necessary for definition compatibility.
+	 *
+	 * @param source source expression.
+	 * @param target target expression.
+	 * @param translator module translator.
+	 *
+	 * @throws UnifyException if the unfolded expressions cannot be
+	 * 	unified with {@link #unify(Expression, Expression)}.
+	 */
+	public void crossUnify(Expression source, Expression target, Translator translator) throws UnifyException;
+
 }
