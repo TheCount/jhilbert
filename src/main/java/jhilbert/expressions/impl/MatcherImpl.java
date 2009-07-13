@@ -23,6 +23,7 @@ package jhilbert.expressions.impl;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
 import java.util.Set;
@@ -75,91 +76,95 @@ final class MatcherImpl implements Matcher {
 	public boolean checkDEquality(final Expression source, final Expression target) {
 		assert (source != null): "Supplied source is null";
 		assert (target != null): "Supplied target is null";
-		final Term sourceTerm = source.getValue();
-		final Term targetTerm = target.getValue();
+		final Expression unfoldedSource = ExpressionImpl.totalUnfold(source);
+		final Expression unfoldedTarget = ExpressionImpl.totalUnfold(target);
+		final Term sourceTerm = unfoldedSource.getValue();
+		final Term targetTerm = unfoldedTarget.getValue();
+		if (sourceTerm != targetTerm)
+			return false;
 		if (sourceTerm.isVariable())
-			return sourceTerm.equals(targetTerm);
-		if (targetTerm.isVariable())
-			return false;
-		final List<Expression> sourceChildren = source.getChildren();
-		final List<Expression> targetChildren = target.getChildren();
-		label:
-		if (sourceTerm.equals(targetTerm)) {
-			final int size = sourceChildren.size();
-			assert (size == targetChildren.size()): "Place count mismatch";
-			for (int i = 0; i != size; ++i)
-				if (!checkDEquality(sourceChildren.get(i), targetChildren.get(i)))
-					break label; // no backup needed as this method does not alter the translation map
 			return true;
-		}
-		final Functor sourceFunctor = (Functor) sourceTerm;
-		final Functor targetFunctor = (Functor) targetTerm;
-		final int sourceDepth = sourceFunctor.definitionDepth();
-		final int targetDepth = targetFunctor.definitionDepth();
-		if ((sourceDepth == 0) && (targetDepth == 0))
-			return false;
-		if (sourceDepth == targetDepth)
-			return checkDEquality(((Definition) sourceFunctor).unfold(sourceChildren),
-				((Definition) targetFunctor).unfold(targetChildren));
-		if (sourceDepth < targetDepth)
-			return checkDEquality(source, ((Definition) targetFunctor).unfold(targetChildren));
-		else
-			return checkDEquality(((Definition) sourceFunctor).unfold(sourceChildren), target);
+		final List<Expression> sourceChildren = unfoldedSource.getChildren();
+		final List<Expression> targetChildren = unfoldedTarget.getChildren();
+		final int size = sourceChildren.size();
+		assert (size == targetChildren.size()): "Place count mismatch";
+		for (int i = 0; i != size; ++i)
+			if (!checkDEquality(sourceChildren.get(i), targetChildren.get(i)))
+				return false;
+		return true;
 	}
 
 	public boolean checkVEquality(final Expression source, final Expression target, final Set<Variable> blacklist) throws UnifyException {
-		assert (source != null): "Supplied source is null";
-		assert (target != null): "Supplied target is null";
-		assert (blacklist != null): "Supplied blacklist is null";
+		assert (source != null): "Supplied source expression is null";
+		assert (target != null): "Supplied target expression is null";
+		assert (blacklist != null): "Supplied variable blacklist is null";
+		if (logger.isTraceEnabled()) {
+			logger.trace("VEquality check:");
+			logger.trace("Source expression: " + source);
+			logger.trace("Target expression: " + target);
+		}
+		final Expression unfoldedSource = ExpressionImpl.totalUnfold(source);
+		final Expression unfoldedTarget = ExpressionImpl.totalUnfold(target);
+		if (logger.isTraceEnabled()) {
+			logger.trace("Unfolded source:   " + unfoldedSource);
+			logger.trace("Unfolded target:   " + unfoldedTarget);
+			logger.trace("Blacklist:         " + blacklist);
+		}
+		if (!checkVEqualityHelper(unfoldedSource, unfoldedTarget, blacklist))
+			return false;
+		if (logger.isTraceEnabled()) {
+			logger.trace("First stage equality check succeeded");
+			logger.trace("Translation map: " + translationMap);
+		}
+		// check if translation map is one-to-one
+		final Set<Variable> keySet = translationMap.keySet();
+		final Set<Variable> valueSet = new HashSet(translationMap.values());
+		if (keySet.size() == valueSet.size()) {
+			if (logger.isTraceEnabled())
+				logger.trace("Second stage equality check succeeded");
+			return true;
+		}
+		logger.debug("Translation map not one-to-one after VEquality check");
+		return false;
+	}
+
+	private boolean checkVEqualityHelper(final Expression source, final Expression target, final Set<Variable> blacklist) throws UnifyException {
+		if (logger.isTraceEnabled()) {
+			logger.trace("Now comparing: ");
+			logger.trace("Source: " + source);
+			logger.trace("Target: " + target);
+		}
 		final Term sourceTerm = source.getValue();
 		final Term targetTerm = target.getValue();
 		if (sourceTerm.isVariable()) {
+			final Variable sourceVariable = (Variable) sourceTerm;
+			// simple variable equality
+			if (blacklist.contains(sourceVariable) && (sourceTerm == targetTerm)) {
+				return true;
+			}
 			if (!targetTerm.isVariable())
 				return false;
-			final Variable sourceVariable = (Variable) sourceTerm;
 			final Variable targetVariable = (Variable) targetTerm;
-			if (blacklist.contains(targetVariable))
-				return (sourceVariable == targetVariable);
-			if (!translationMap.containsKey(sourceVariable))
-				translationMap.put(sourceVariable, targetVariable);
-			return targetVariable.equals(translationMap.get(sourceVariable));
+			if (blacklist.contains(sourceVariable) || blacklist.contains(targetVariable))
+				throw new UnifyException("Cannot map " + sourceVariable + " to " + targetVariable + " due to blacklist " + blacklist, source, target);
+			if (translationMap.containsKey(sourceVariable))
+				return (translationMap.get(sourceVariable) == targetVariable);
+			if (logger.isTraceEnabled())
+				logger.trace("Adding mapping " + sourceVariable + " -> " + targetVariable + " to translation map");
+			translationMap.put(sourceVariable, targetVariable);
+			return true;
 		}
-		if (targetTerm.isVariable())
+		// complex expression equality
+		if (sourceTerm != targetTerm)
 			return false;
 		final List<Expression> sourceChildren = source.getChildren();
 		final List<Expression> targetChildren = target.getChildren();
-		try {
-			label:
-			if (sourceTerm.equals(targetTerm)) {
-				final Map<Variable, Variable> backup = new HashMap(translationMap);
-				final int size = sourceChildren.size();
-				assert (size == targetChildren.size()): "Place count mismatch";
-				for (int i = 0; i != size; ++i)
-					if (!checkVEquality(sourceChildren.get(i), targetChildren.get(i), blacklist)) {
-						translationMap = backup;
-						break label;
-					}
-				return true;
-			}
-			final Functor sourceFunctor = (Functor) sourceTerm;
-			final Functor targetFunctor = (Functor) targetTerm;
-			final int sourceDepth = sourceFunctor.definitionDepth();
-			final int targetDepth = targetFunctor.definitionDepth();
-			if ((sourceDepth == 0) && (targetDepth == 0))
+		final int size = sourceChildren.size();
+		assert (size == targetChildren.size()): "Place count mismatch";
+		for (int i = 0; i != size; ++i)
+			if (!checkVEqualityHelper(sourceChildren.get(i), targetChildren.get(i), blacklist))
 				return false;
-			if (sourceDepth == targetDepth)
-				return checkVEquality(((Definition) sourceFunctor).unfold(sourceChildren),
-					((Definition) targetFunctor).unfold(targetChildren), blacklist);
-			if (sourceDepth < targetDepth)
-				return checkVEquality(source, ((Definition) targetFunctor).unfold(targetChildren), blacklist);
-			else
-				return checkVEquality(((Definition) sourceFunctor).unfold(sourceChildren), target, blacklist);
-		} catch (UnifyException e) {
-			logger.error("Invalid dummy assignment", e);
-			logger.debug("Source expression: " + e.getSource());
-			logger.debug("Target expression: " + e.getTarget());
-			throw new UnifyException("Invalid dummy assignment", source, target, e);
-		}
+		return true;
 	}
 
 	public boolean checkVEquality(final Expression source, final Expression target) {

@@ -27,6 +27,8 @@ JAR archives
 
  * Current development version: {{{./jhilbert-devel.jar}jhilbert-devel.jar}}
 
+ * Version 8: {{{./jhilbert-8.jar}jhilbert-8.jar}}
+
  * Version 7: {{{./jhilbert-7.jar}jhilbert-7.jar}}
 
  * Version 6: {{{./jhilbert-6.jar}jhilbert-6.jar}} 
@@ -44,6 +46,8 @@ JAR archives
 Source (tarballs and zip archives)
 
  * Current development version: {{{./jhilbert-devel.tar.bz2}jhilbert-devel.tar.bz2}}, {{{./jhilbert-devel.zip}jhilbert-devel.zip}}
+
+ * Version 8: {{{./jhilbert-8.tar.bz2}jhilbert-8.tar.bz2}}, {{{./jhilbert-8.zip}jhilbert-8.zip}}
 
  * Version 7: {{{./jhilbert-7.tar.bz2}jhilbert-7.tar.bz2}}, {{{./jhilbert-7.zip}jhilbert-7.zip}}
 

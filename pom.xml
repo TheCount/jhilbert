@@ -25,7 +25,7 @@
 	<groupId>jhilbert</groupId>
 	<artifactId>jhilbert</artifactId>
 	<packaging>bundle</packaging>
-	<version>7</version>
+	<version>8</version>
 	<name>jhilbert</name>
 	<url>http://www.wikiproofs.de</url>
 	<build>

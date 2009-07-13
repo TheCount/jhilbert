@@ -60,7 +60,7 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 	private static final Logger logger = Logger.getLogger(ExpressionImpl.class);
 
 	/**
-	 * Default constructor, for serialisation use only!
+	 * Default constructor, for serialisation or supplanting use only!
 	 */
 	public ExpressionImpl() {
 		super();
@@ -259,6 +259,31 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 				.append(childExp.toString());
 		result.append(')');
 		return result.toString();
+	}
+
+	static Expression totalUnfold(Expression expr) { // recursively unfold expression
+		// unfold head
+		for (;;) {
+			final Term term = expr.getValue();
+			if (term.isVariable()) {
+				// strictly speaking, definitions unfolding to a single variable are permissible by the
+				// spec, so this check must NOT be moved outside the loop
+				return expr;
+			}
+			final Functor functor = (Functor) term;
+			if (functor.definitionDepth() == 0)
+				break;
+			expr = ((Definition) functor).unfold(expr.getChildren());
+		}
+		// unfold children
+		final List<Expression> children = expr.getChildren();
+		final int numChildren = children.size();
+		final List<ExpressionImpl> newChildren = new ArrayList(numChildren);
+		for (int i = 0; i != numChildren; ++i)
+			newChildren.add((ExpressionImpl) totalUnfold(children.get(i)));
+		final ExpressionImpl result = new ExpressionImpl();
+		result.supplant((Functor) expr.getValue(), newChildren);
+		return result;
 	}
 
 }

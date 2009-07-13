@@ -26,9 +26,9 @@
  JHilbert is a verifier for collaborative theorem proving.
 
  JHilbert can be run as a standalone application. However, it was written
-to drive {{{http://www.wikiproofs.de}}}, a Wiki project dedicated to creating
-a free repository of instantly verified proofs.
+to drive {{{http://www.wikiproofs.de}Wikiproofs}}, a Wiki project dedicated to
+creating a free repository of instantly verified proofs.
 
- <<Important notice:>> Please update to version 7. Version 6 and perhaps
-earlier versions have a bug where the exported definition checker would be
-called at an inappropriate time, rendering it ineffective.
+ <<Important notice:>> Please update to version 8. Version 7 and perhaps
+earlier versions have serious bugs in the consequent/proof result comparison
+code.

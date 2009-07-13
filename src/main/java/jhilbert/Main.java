@@ -40,8 +40,10 @@ import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
 
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 /**
  * Main class.
@@ -51,7 +53,7 @@ public final class Main {
 	/**
 	 * Version.
 	 */
-	public static final int VERSION = 7;
+	public static final int VERSION = 8;
 
 	/**
 	 * Logger.
@@ -89,7 +91,8 @@ public final class Main {
 	 * Initialises the logger.
 	 */
 	static {
-		BasicConfigurator.configure();
+		BasicConfigurator.configure(new ConsoleAppender(
+					new PatternLayout("%d{yyyy-MM-dd HH:mm:ss} [%t] %-5p %c - %m%n")));
 		logger = Logger.getRootLogger();
 		logger.setLevel(Level.INFO);
 	}
