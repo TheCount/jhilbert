@@ -2,16 +2,20 @@ package jhilbert;
 
 import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
 import jhilbert.data.DVConstraints;
+import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Definition;
 import jhilbert.data.Functor;
 import jhilbert.data.Kind;
 import jhilbert.data.Module;
+import jhilbert.data.Parameter;
 import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
 import jhilbert.expressions.Expression;
@@ -38,10 +42,12 @@ public class AppTest extends TestCase
     }
 
     private Module mainModule;
+	private DataFactory dataFactory;
 
 	protected void setUp() throws Exception {
 		BasicConfigurator.configure(new NullAppender());
-		mainModule = DataFactory.getInstance().createModule("");
+		dataFactory = DataFactory.getInstance();
+		mainModule = dataFactory.createModule("");
 	}
 
 	private void process(String proofModule) throws ScannerException,
@@ -51,7 +57,17 @@ public class AppTest extends TestCase
         CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
 	}
     
-    public void testEmptyFile() throws Exception
+	private void importInterface(String interfaceText) throws DataException,
+	ScannerException, UnsupportedEncodingException, CommandException {
+		Module parameterModule = dataFactory.createModule("test.jhi", -1);
+		final TokenFeed tokenFeed = ScannerFactory
+		    .getInstance().createTokenFeed(new ByteArrayInputStream(interfaceText .getBytes("UTF-8")));
+		CommandFactory.getInstance().processCommands(parameterModule, tokenFeed);
+		Parameter parameter = dataFactory.createParameter("TEST", "test.jhi", new ArrayList(), "");
+		dataFactory.createParameterLoader(parameter, parameterModule, mainModule).importParameter();
+	}
+
+	public void testEmptyFile() throws Exception
     {
         process("");
     }
@@ -67,23 +83,23 @@ public class AppTest extends TestCase
 	}
 
     public void testDefineKind() throws Exception {
-    	DataFactory.getInstance().createKind("formula", mainModule.getKindNamespace());
+    	dataFactory.createKind("formula", mainModule.getKindNamespace());
     	Kind kind = mainModule.getKindNamespace().getObjectByString("formula");
     	assertEquals("formula", kind.getNameString());
 	}
     
     public void testDefineTerm() throws Exception {
-    	Kind formula = DataFactory.getInstance().createKind("formula", mainModule.getKindNamespace());
-    	DataFactory.getInstance().createFunctor("!", formula, Arrays.asList(formula), mainModule.getFunctorNamespace());
+    	Kind formula = dataFactory.createKind("formula", mainModule.getKindNamespace());
+    	dataFactory.createFunctor("!", formula, Arrays.asList(formula), mainModule.getFunctorNamespace());
 		
 		Functor not = mainModule.getFunctorNamespace().getObjectByString("!");
 		assertEquals("!", not.getNameString());
 	}
 
 	public void testAbbreviation() throws Exception {
-    	Kind formula = DataFactory.getInstance().createKind("formula", mainModule.getKindNamespace());
-    	DataFactory.getInstance().createFunctor("!", formula, Arrays.asList(formula), mainModule.getFunctorNamespace());
-		DataFactory.getInstance().createFunctor("->", formula, Arrays.asList(formula, formula), mainModule.getFunctorNamespace());
+    	Kind formula = dataFactory.createKind("formula", mainModule.getKindNamespace());
+    	dataFactory.createFunctor("!", formula, Arrays.asList(formula), mainModule.getFunctorNamespace());
+		dataFactory.createFunctor("->", formula, Arrays.asList(formula, formula), mainModule.getFunctorNamespace());
 
 		process("var (formula p q)");
     	process("def ((| p q) ((! p) -> q))");
@@ -94,30 +110,27 @@ public class AppTest extends TestCase
 	}
 	
 	public void testDefineStatement() throws Exception {
-    	Kind formula = DataFactory.getInstance().createKind("formula", mainModule.getKindNamespace());
-		Functor implies = DataFactory.getInstance().
+    	Kind formula = dataFactory.createKind("formula", mainModule.getKindNamespace());
+		Functor implies = dataFactory.
 		    createFunctor("->", formula, Arrays.asList(formula, formula), mainModule.getFunctorNamespace());
     	
-    	Variable p = DataFactory.getInstance().createVariable("p", formula, mainModule.getSymbolNamespace());
-    	Variable q = DataFactory.getInstance().createVariable("q", formula, mainModule.getSymbolNamespace());
+    	Variable p = dataFactory.createVariable("p", formula, mainModule.getSymbolNamespace());
+    	Variable q = dataFactory.createVariable("q", formula, mainModule.getSymbolNamespace());
     	Expression pExpression = ExpressionFactory.getInstance().createExpression(p);
     	Expression qExpression = ExpressionFactory.getInstance().createExpression(q);
     	Expression pImpliesQ = ExpressionFactory.getInstance().
     	    createExpression(implies, Arrays.asList(pExpression, qExpression));
 
-    	DVConstraints emptyConstraints = DataFactory.getInstance().createDVConstraints();
-		DataFactory.getInstance().createStatement("applyModusPonens", emptyConstraints, 
+    	DVConstraints emptyConstraints = dataFactory.createDVConstraints();
+		dataFactory.createStatement("applyModusPonens", emptyConstraints, 
 				Arrays.asList(pExpression, pImpliesQ), qExpression, mainModule.getSymbolNamespace());
 		
 		Symbol applyModusPonens = mainModule.getSymbolNamespace().getObjectByString("applyModusPonens");
 		assertEquals("applyModusPonens", applyModusPonens.getNameString());
 	}
 	
-//	public void testImportInterface() throws Exception {
-//		Module module = DataFactory.getInstance().createModule("test.jhi", -1);
-//		String interfaceText = "kind (formula)";
-//		final TokenFeed tokenFeed = ScannerFactory
-//	        .getInstance().createTokenFeed(new ByteArrayInputStream(interfaceText .getBytes("UTF-8")));
-//	    CommandFactory.getInstance().processCommands(module, tokenFeed);
-//	}
+	public void testImportInterface() throws Exception {
+		importInterface("kind (formula)");
+	}
+
 }

@@ -344,5 +344,23 @@ public abstract class DataFactory {
 	 */
 	public abstract ParameterLoader createParameterLoader(final Parameter parameter, final Module module)
 	throws DataException;
+	
+	/**
+	 * Creates a new {@link ParameterLoader} to load the specified
+	 * {@link Parameter} into the specified {@link Module}. Rather than
+	 * fetch the parameter's module from the default location (for example,
+	 * a file named by the parameter's locator), fetch it from parameterModule.
+	 * 
+	 * @param parameter parameter to load/import/export.
+	 * @param module module to load/import/export parameter into.
+	 * @param parameterModule contents of parameter's module.
+	 *
+	 * @return the new parameter loader.
+	 *
+	 * @throws DataException if the parameter module cannot be loaded.
+	 */
+	public abstract ParameterLoader createParameterLoader(
+			final Parameter parameter, final Module parameterModule, final Module module)
+	throws DataException;
 
 }

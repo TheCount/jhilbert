@@ -57,6 +57,16 @@ final class ParameterLoaderImpl implements ParameterLoader {
 	 * Data factory.
 	 */
 	private static final jhilbert.data.DataFactory dataFactory = jhilbert.data.DataFactory.getInstance();
+	
+	private static Module loadModule(String locator, long revision) throws DataException {
+		try {
+			return Storage.getInstance().loadModule(locator, revision);
+		} catch (StorageException e) {
+			logger.error("Unable to load module " + locator, e);
+			logger.debug("Requested revision: " + revision);
+			throw new DataException("Unable to load module " + locator, e);
+		}
+	}
 
 	/**
 	 * Parameter.
@@ -158,38 +168,37 @@ final class ParameterLoaderImpl implements ParameterLoader {
 	 * @throws DataException if the parameter module cannot be loaded.
 	 */
 	ParameterLoaderImpl(final Parameter parameter, final Module module) throws DataException {
+		this(parameter, loadModule(parameter.getLocator(), parameter.getRevision()), module);
+	}
+
+	ParameterLoaderImpl(final Parameter parameter, final Module parameterModule,
+			final Module module) throws DataException {
 		assert (parameter != null): "Supplied parameter is null";
 		assert (module != null): "Supplied module is null";
-		try {
-			this.parameter = parameter;
-			parameterList = parameter.getParameterList();
-			prefix = parameter.getPrefix();
-			this.module = module;
-			parameterIndex = module.getParameters().size();
-			kindNamespace = module.getKindNamespace();
-			functorNamespace = module.getFunctorNamespace();
-			symbolNamespace = module.getSymbolNamespace();
-			parameterModule = Storage.getInstance().loadModule(parameter.getLocator(), parameter.getRevision());
-			if (parameterList.size() != parameterModule.getParameters().size()) {
-				logger.error("Wrong parameter count in parameter " + parameter.getName());
-				logger.debug("Expected number of parameters: " + parameterModule.getParameters().size());
-				logger.debug("Found number of parameters:    " + parameterList.size());
-				throw new DataException("Wrong parameter count");
-			}
-			parameterKindNamespace = parameterModule.getKindNamespace();
-			parameterFunctorNamespace = parameterModule.getFunctorNamespace();
-			parameterSymbolNamespace = parameterModule.getSymbolNamespace();
-			kindMap = new IdentityHashMap();
-			functorMap = new IdentityHashMap();
-			statementMap = new IdentityHashMap();
-			expressionFactory = ExpressionFactory.getInstance();
-			translator = expressionFactory.createTranslator(kindMap, functorMap);
-			substituter = expressionFactory.createSubstituter(new IdentityHashMap());
-		} catch (StorageException e) {
-			logger.error("Unable to load module " + parameter.getLocator(), e);
-			logger.debug("Requested revision: " + parameter.getRevision());
-			throw new DataException("Unable to load module " + parameter.getLocator(), e);
+		this.parameter = parameter;
+		parameterList = parameter.getParameterList();
+		prefix = parameter.getPrefix();
+		this.module = module;
+		parameterIndex = module.getParameters().size();
+		kindNamespace = module.getKindNamespace();
+		functorNamespace = module.getFunctorNamespace();
+		symbolNamespace = module.getSymbolNamespace();
+		this.parameterModule = parameterModule;
+		if (parameterList.size() != this.parameterModule.getParameters().size()) {
+			logger.error("Wrong parameter count in parameter " + parameter.getName());
+			logger.debug("Expected number of parameters: " + parameterModule.getParameters().size());
+			logger.debug("Found number of parameters:    " + parameterList.size());
+			throw new DataException("Wrong parameter count");
 		}
+		parameterKindNamespace = this.parameterModule.getKindNamespace();
+		parameterFunctorNamespace = this.parameterModule.getFunctorNamespace();
+		parameterSymbolNamespace = this.parameterModule.getSymbolNamespace();
+		kindMap = new IdentityHashMap();
+		functorMap = new IdentityHashMap();
+		statementMap = new IdentityHashMap();
+		expressionFactory = ExpressionFactory.getInstance();
+		translator = expressionFactory.createTranslator(kindMap, functorMap);
+		substituter = expressionFactory.createSubstituter(new IdentityHashMap());
 	}
 
 	public void loadParameter() throws DataException {

@@ -154,4 +154,13 @@ public final class DataFactory extends jhilbert.data.DataFactory {
 		return new ParameterLoaderImpl(parameter, module);
 	}
 
+	public @Override ParameterLoaderImpl createParameterLoader(
+			final Parameter parameter, final Module parameterModule, final Module module)
+	throws DataException {
+		assert (parameter != null): "Supplied parameter is null";
+		assert (parameterModule != null): "Supplied parameterModule is null";
+		assert (module != null): "Supplied module is null";
+		return new ParameterLoaderImpl(parameter, parameterModule, module);
+	}
+
 }
