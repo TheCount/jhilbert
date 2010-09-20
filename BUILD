@@ -17,3 +17,8 @@ when you run it for the first time. You can also generate site documentation
 in target/site/ by running
 	mvn site
 The site documentation is still *very* sparse (as of September 2008).
+
+The JAR is a runnable jar.  For example,
+	java -jar target/jhilbert-8.jar
+will print a usage message.
+
