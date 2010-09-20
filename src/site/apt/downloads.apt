@@ -1,0 +1,64 @@
+~~  JHilbert, a verifier for collaborative theorem proving
+~~
+~~  Copyright © 2008, 2009 Alexander Klauer
+~~
+~~  This program is free software: you can redistribute it and/or modify
+~~  it under the terms of the GNU General Public License as published by
+~~  the Free Software Foundation, either version 3 of the License, or
+~~  (at your option) any later version.
+~~
+~~  This program is distributed in the hope that it will be useful,
+~~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+~~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+~~  GNU General Public License for more details.
+~~
+~~  You should have received a copy of the GNU General Public License
+~~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+~~
+~~  You may contact the author on this Wiki page:
+~~  http://www.wikiproofs.de/w/index.php?title=User_talk:GrafZahl
+ ---
+ JHilbert downloads
+ ---
+ Alexander Klauer
+ ---
+
+JAR archives
+
+ * Current development version: {{{./jhilbert-devel.jar}jhilbert-devel.jar}}
+
+ * Version 8: {{{./jhilbert-8.jar}jhilbert-8.jar}}
+
+ * Version 7: {{{./jhilbert-7.jar}jhilbert-7.jar}}
+
+ * Version 6: {{{./jhilbert-6.jar}jhilbert-6.jar}} 
+
+ * Version 5: {{{./jhilbert-5.jar}jhilbert-5.jar}}
+
+ * Version 4: {{{./jhilbert-4.jar}jhilbert-4.jar}}
+
+ * Version 3: {{{./jhilbert-3.jar}jhilbert-3.jar}}
+
+ * Version 2: {{{./jhilbert-2.jar}jhilbert-2.jar}}
+
+ * Version 1: {{{./jhilbert-1.jar}jhilbert-1.jar}}
+
+Source (tarballs and zip archives)
+
+ * Current development version: {{{./jhilbert-devel.tar.bz2}jhilbert-devel.tar.bz2}}, {{{./jhilbert-devel.zip}jhilbert-devel.zip}}
+
+ * Version 8: {{{./jhilbert-8.tar.bz2}jhilbert-8.tar.bz2}}, {{{./jhilbert-8.zip}jhilbert-8.zip}}
+
+ * Version 7: {{{./jhilbert-7.tar.bz2}jhilbert-7.tar.bz2}}, {{{./jhilbert-7.zip}jhilbert-7.zip}}
+
+ * Version 6: {{{./jhilbert-6.tar.bz2}jhilbert-6.tar.bz2}}, {{{./jhilbert-6.zip}jhilbert-6.zip}}
+
+ * Version 5: {{{./jhilbert-5.tar.bz2}jhilbert-5.tar.bz2}}, {{{./jhilbert-5.zip}jhilbert-5.zip}}
+
+ * Version 4: {{{./jhilbert-4.tar.bz2}jhilbert-4.tar.bz2}}, {{{./jhilbert-4.zip}jhilbert-4.zip}}
+
+ * Version 3: {{{./jhilbert-3.tar.bz2}jhilbert-3.tar.bz2}}, {{{./jhilbert-3.zip}jhilbert-3.zip}}
+
+ * Version 2: {{{./jhilbert-2.tar.bz2}jhilbert-2.tar.bz2}}, {{{./jhilbert-2.zip}jhilbert-2.zip}}
+
+ * Version 1: {{{./jhilbert-1.tar.bz2}jhilbert-1.tar.bz2}}, {{{./jhilbert-1.zip}jhilbert-1.zip}}

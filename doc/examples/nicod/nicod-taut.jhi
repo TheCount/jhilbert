@@ -1,0 +1,8 @@
+# Nicod's propositional calculus
+# Tautology
+
+param (NICOD-AX nicod/nicod-ax () ())
+
+var (wff p)
+
+stmt (taut () () (| (| (| p p) (| p p)) (| p p)))

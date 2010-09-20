@@ -1,0 +1,7 @@
+# Nicod identity
+
+param (NICOD-AX nicod/nicod-ax () ())
+
+var (wff p q r s t u)
+
+stmt (id () () (| t (| t t)))

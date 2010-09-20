@@ -1,0 +1,15 @@
+# Proof of Nicod tautology
+
+import (NICOD-AX nicod/nicod-ax () ())
+import (NICOD-ID nicod/nicod-id (NICOD-AX) ())
+import (NICOD-PERM nicod/nicod-perm (NICOD-AX) ())
+
+var (wff p)
+
+thm (nicod-taut () () (| (| (| p p) (| p p)) (| p p)) (
+	(| p p) id
+	(| p p) (| (| p p) (| p p)) perm
+	rule
+))
+
+export (NICOD-TAUT nicod/nicod-taut (NICOD-AX) nicod-)

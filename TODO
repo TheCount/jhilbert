@@ -1,0 +1,8 @@
+* distrinctions of functors by signature
+* get rid of too many brackets
+* specification and proof of soundness
+* unit tests
+* integration tests
+* The ParameterLoader code is quite ugly.
+* The VerifierImpl code is slighly awkward
+* No proper separation of syntax and semantics

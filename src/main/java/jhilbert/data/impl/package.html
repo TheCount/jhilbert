@@ -1,0 +1,14 @@
+<body>
+<strong>Warning:</strong> The {@link jhilbert.data.impl.AbstractName#equals}
+and {@link jhilbert.data.impl.AbstractName#hashCode} fulfill the contract
+specified in {@link java.lang.Object} only if the
+{@link jhilbert.data.impl.NamespaceImpl#identify} method has not been used
+before on the instances involved. In JHilbert, the
+{@link jhilbert.data.impl.NamespaceImpl#identify} method is only ever used on
+{@link jhilbert.data.impl.KindImpl}. Normally you'd use a
+{@link jhilbert.data.impl.NamespaceImpl} instance instead of the java
+collections framework to circumvent problems arising from the contract
+violation. If you don't, make sure you use {@link java.util.IdentityHashMap} or
+{@link jhilbert.utils.IdentityHashSet} when using
+{@link jhilbert.data.impl.KindImpl} instances as keys or elements.
+</body>

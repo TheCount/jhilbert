@@ -1,0 +1,16 @@
+# Nicod's propositional Calculus
+# Basic definitions
+
+# well-formed formulas
+kind (wff)
+var (wff p q r s t)
+
+# Sheffer stroke (Non-formal I)
+term (wff (| wff wff))
+def ((- p) (| p p))
+
+# Detachment (Non-formal II)
+stmt (rule () (p (| p (| r q))) q)
+
+# Axiom (Formal III)
+stmt (prop () () (| (| p (| q r)) (| (| t (| t t)) (| (| s q) (- (| p s))))))
