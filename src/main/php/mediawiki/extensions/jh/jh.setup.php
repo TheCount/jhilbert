@@ -40,7 +40,7 @@ if(!defined('MEDIAWIKI')) {
 // credits
 $wgExtensionCredits['parserhook'][] = array(
 	'name'		=> 'jh',
-	'version'	=> '8',
+	'version'	=> '9',
 	'author'	=> 'Alexander Klauer',
 	'url'		=> 'http://www.mathi.uni-heidelberg.de/~alex/jhilbert',
 	'description'	=> 'Tag to communicate with the JHilbert verifier'

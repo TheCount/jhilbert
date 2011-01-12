@@ -34,6 +34,7 @@ import java.util.Set;
 
 import jhilbert.data.DataException;
 import jhilbert.data.Definition;
+import jhilbert.data.DVConstraints;
 import jhilbert.data.Functor;
 import jhilbert.data.Kind;
 import jhilbert.data.Term;
@@ -61,9 +62,19 @@ final class DefinitionImpl extends AbstractFunctor implements Definition, Serial
 	private static final Logger logger = Logger.getLogger(DefinitionImpl.class);
 
 	/**
+	 * DV constraints.
+	 */
+	private final DVConstraints dvConstraints;
+
+	/**
 	 * Definition args.
 	 */
 	private final LinkedHashSet<Variable> arguments;
+
+	/**
+	 * Dummy variables.
+	 */
+	private final Set<Variable> dummyVariables;
 
 	/**
 	 * List of input kinds.
@@ -85,7 +96,9 @@ final class DefinitionImpl extends AbstractFunctor implements Definition, Serial
 	 */
 	public DefinitionImpl() {
 		super();
+		dvConstraints = null;
 		arguments = null;
+		dummyVariables = null;
 		inputKindList = null;
 		definiens = null;
 		definitionDepth = -1;
@@ -93,17 +106,20 @@ final class DefinitionImpl extends AbstractFunctor implements Definition, Serial
 
 	/**
 	 * Creates a new <code>DefinitionImpl</code> with the specified name,
-	 * argument list and definiens.
+	 * DV constraints, argument list and definiens.
 	 *
 	 * @param name name of new definition.
+	 * @param dvConstraints new DV constraints for definition, or
+	 * 	<code>null</code> if there are no new constraints.
 	 * @param argList argument list.
 	 * @param definiens definiens of the new definition.
 	 *
 	 * @throws DataException if <code>argList</code> contains the same
 	 * 	entry more than once.
 	 */
-	DefinitionImpl(final String name, final List<Variable> argList, final Expression definiens) throws DataException {
-		this(name, null, -1, argList, definiens);
+	DefinitionImpl(final String name, final DVConstraintsImpl dvConstraints, final List<Variable> argList,
+			final Expression definiens) throws DataException {
+		this(name, null, -1, dvConstraints, argList, definiens);
 	}
 
 	/**
@@ -113,13 +129,17 @@ final class DefinitionImpl extends AbstractFunctor implements Definition, Serial
 	 * @param name name of new definition.
 	 * @param orig original definition.
 	 * @param parameterIndex index of parameter of <code>orig</code>.
+	 * @param dvConstraints new DV constraints for definition, or
+	 * 	<code>null</code> if there are no new constraints.
 	 * @param argList argument list.
 	 * @param definiens definiens of the new definition.
 	 *
 	 * @throws DataException if <code>argList</code> contains the same
 	 * 	entry more than once.
 	 */
-	DefinitionImpl(final String name, final DefinitionImpl orig, final int parameterIndex, final List<Variable> argList, final Expression definiens) throws DataException {
+	DefinitionImpl(final String name, final DefinitionImpl orig, final int parameterIndex,
+			final DVConstraintsImpl dvConstraints, final List<Variable> argList, final Expression definiens)
+	throws DataException {
 		super(name, orig, parameterIndex);
 		assert (argList != null): "Supplied argument list is null";
 		assert (definiens != null): "Supplied definiens is null";
@@ -132,7 +152,7 @@ final class DefinitionImpl extends AbstractFunctor implements Definition, Serial
 		}
 		final Anonymiser anonymiser = ExpressionFactory.getInstance().createAnonymiser(namedSet);
 		// calculate arguments and input kinds
-		// FIXME: arguments should result in an unmodifiable set... but I'm too lazy ti implement unmodifiedLinkedHashSet()
+		// FIXME: arguments should result in an unmodifiable set... but I'm too lazy to implement unmodifiedLinkedHashSet()
 		arguments = new LinkedHashSet();
 		final List<Kind> tempList = new ArrayList(argList.size());
 		for (final Variable var: argList) {
@@ -148,6 +168,30 @@ final class DefinitionImpl extends AbstractFunctor implements Definition, Serial
 			definitionDepth = 1;
 		else
 			definitionDepth = ((Functor) term).definitionDepth() + 1;
+		// calculate DV constraints
+		if (dvConstraints == null)
+			this.dvConstraints = new DVConstraintsImpl();
+		else {
+			this.dvConstraints = anonymiser.anonymise(dvConstraints);
+			final Set<Variable> scope = this.definiens.variables();
+			scope.addAll(arguments);
+			this.dvConstraints.restrict(scope);
+		}
+		for (final Variable[] va: this.definiens.dvConstraints())
+			this.dvConstraints.add(va); // FIXME: inefficient
+		final Set<Variable> dummyVariablesTemp = new HashSet();
+		if (!term.isVariable()) {
+			final Functor functor = (Functor) term;
+			if (functor.definitionDepth() != 0) {
+				dummyVariablesTemp.addAll(((Definition) functor).getDummyVariables());
+			}
+		}
+		dummyVariablesTemp.addAll(anonymiser.getDummyVariables());
+		dummyVariables = Collections.unmodifiableSet(dummyVariablesTemp);
+	}
+
+	public Set<Variable> getDummyVariables() {
+		return dummyVariables;
 	}
 
 	public LinkedHashSet<Variable> getArguments() {
@@ -182,6 +226,10 @@ final class DefinitionImpl extends AbstractFunctor implements Definition, Serial
 
 	public List<Kind> getInputKinds() {
 		return inputKindList;
+	}
+
+	public DVConstraints getDVConstraints() {
+		return dvConstraints;
 	}
 
 }

@@ -94,15 +94,19 @@ public final class DataFactory extends jhilbert.data.DataFactory {
 		}
 	}
 
-	public @Override DefinitionImpl createDefinition(final String name, final Definition orig, final int parameterIndex, final List<Variable> argList,
-		final Expression definiens, final Namespace<? extends Functor> namespace)
+	public @Override DefinitionImpl createDefinition(final String name, final Definition orig,
+			final int parameterIndex, final DVConstraints dvConstraints, final List<Variable> argList,
+			final Expression definiens, final Namespace<? extends Functor> namespace)
 	throws DataException {
 		assert (name != null): "Supplied name is null";
 		assert ((orig == null) || (orig instanceof DefinitionImpl)): "Implementation type error";
+		assert ((dvConstraints == null) || (dvConstraints instanceof DVConstraintsImpl)):
+			"Implementation type error";
 		assert (argList != null): "Supplied argument list is null";
 		assert (definiens != null): "Supplied definiens is null";
 		assert (namespace != null): "Supplied namespace is null";
-		final DefinitionImpl result = new DefinitionImpl(name, (DefinitionImpl) orig, parameterIndex, argList, definiens);
+		final DefinitionImpl result = new DefinitionImpl(name, (DefinitionImpl) orig, parameterIndex,
+				(DVConstraintsImpl) dvConstraints, argList, definiens);
 		namespace.registerObject(result);
 		return result;
 	}
@@ -118,8 +122,9 @@ public final class DataFactory extends jhilbert.data.DataFactory {
 		return new DVConstraintsImpl(namespace, tokenFeed);
 	}
 
-	public @Override StatementImpl createStatement(final String name, final Statement orig, final int parameterIndex, final DVConstraints dv,
-		final List<Expression> hypotheses, final Expression consequent, final Namespace<? extends Symbol> namespace)
+	public @Override StatementImpl createStatement(final String name, final Statement orig, final int parameterIndex,
+			final DVConstraints dv,	final List<Expression> hypotheses, final Expression consequent,
+			final Namespace<? extends Symbol> namespace)
 	throws DataException {
 		assert (name != null): "Supplied name is null";
 		assert ((orig == null) || (orig instanceof StatementImpl)): "Implementation type error";
@@ -127,7 +132,8 @@ public final class DataFactory extends jhilbert.data.DataFactory {
 		assert (hypotheses != null): "Supplied hypotheses are null";
 		assert (consequent != null): "Supplied consequent is null";
 		assert (namespace != null): "Supplied namespace is null";
-		final StatementImpl result = new StatementImpl(name, (StatementImpl) orig, parameterIndex, dv, hypotheses, consequent);
+		final StatementImpl result = new StatementImpl(name, (StatementImpl) orig, parameterIndex, dv, hypotheses,
+				consequent);
 		namespace.registerObject(result);
 		return result;
 	}

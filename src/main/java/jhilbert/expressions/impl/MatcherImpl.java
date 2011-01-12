@@ -76,8 +76,8 @@ final class MatcherImpl implements Matcher {
 	public boolean checkDEquality(final Expression source, final Expression target) {
 		assert (source != null): "Supplied source is null";
 		assert (target != null): "Supplied target is null";
-		final Expression unfoldedSource = ExpressionImpl.totalUnfold(source);
-		final Expression unfoldedTarget = ExpressionImpl.totalUnfold(target);
+		final Expression unfoldedSource = source.totalUnfold();
+		final Expression unfoldedTarget = target.totalUnfold();
 		final Term sourceTerm = unfoldedSource.getValue();
 		final Term targetTerm = unfoldedTarget.getValue();
 		if (sourceTerm != targetTerm)
@@ -103,8 +103,8 @@ final class MatcherImpl implements Matcher {
 			logger.trace("Source expression: " + source);
 			logger.trace("Target expression: " + target);
 		}
-		final Expression unfoldedSource = ExpressionImpl.totalUnfold(source);
-		final Expression unfoldedTarget = ExpressionImpl.totalUnfold(target);
+		final Expression unfoldedSource = source.totalUnfold();
+		final Expression unfoldedTarget = target.totalUnfold();
 		if (logger.isTraceEnabled()) {
 			logger.trace("Unfolded source:   " + unfoldedSource);
 			logger.trace("Unfolded target:   " + unfoldedTarget);
@@ -137,16 +137,17 @@ final class MatcherImpl implements Matcher {
 		final Term sourceTerm = source.getValue();
 		final Term targetTerm = target.getValue();
 		if (sourceTerm.isVariable()) {
-			final Variable sourceVariable = (Variable) sourceTerm;
 			// simple variable equality
-			if (blacklist.contains(sourceVariable) && (sourceTerm == targetTerm)) {
+			if (sourceTerm == targetTerm)
 				return true;
-			}
+			final Variable sourceVariable = (Variable) sourceTerm;
 			if (!targetTerm.isVariable())
 				return false;
 			final Variable targetVariable = (Variable) targetTerm;
 			if (blacklist.contains(sourceVariable) || blacklist.contains(targetVariable))
 				throw new UnifyException("Cannot map " + sourceVariable + " to " + targetVariable + " due to blacklist " + blacklist, source, target);
+			if (!sourceVariable.isDummy() && targetVariable.isDummy())
+				return false;
 			if (translationMap.containsKey(sourceVariable))
 				return (translationMap.get(sourceVariable) == targetVariable);
 			if (logger.isTraceEnabled())

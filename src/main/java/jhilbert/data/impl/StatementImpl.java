@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import jhilbert.data.ConstraintException;
 import jhilbert.data.DVConstraints;
 import jhilbert.data.Statement;
 import jhilbert.data.Variable;
@@ -94,8 +95,12 @@ final class StatementImpl extends SymbolImpl implements Statement, Serializable 
 	 * @param dv disjoint variable constraints.
 	 * @param hypotheses {@link List} of hypotheses.
 	 * @param consequent consequent of new statement.
+	 *
+	 * @throws ConstraintException if expressions with invalid DV constraints have been used.
 	 */
-	StatementImpl(final String name, final DVConstraints dv, final List<Expression> hypotheses, final Expression consequent) {
+	StatementImpl(final String name, final DVConstraints dv, final List<Expression> hypotheses,
+			final Expression consequent)
+	throws ConstraintException {
 		this(name, null, -1, dv, hypotheses, consequent);
 	}
 
@@ -110,9 +115,12 @@ final class StatementImpl extends SymbolImpl implements Statement, Serializable 
 	 * @param dv disjoint variable constraints.
 	 * @param hypotheses {@link List} of hypotheses.
 	 * @param consequent consequent of new statement.
+	 *
+	 * @throws ConstraintException if expressions with invalid DV constraints have been used.
 	 */
-	StatementImpl(final String name, final StatementImpl orig, final int parameterIndex, final DVConstraints dv, final List<Expression> hypotheses,
-			final Expression consequent) {
+	StatementImpl(final String name, final StatementImpl orig, final int parameterIndex, final DVConstraints dv,
+			final List<Expression> hypotheses, final Expression consequent)
+	throws ConstraintException {
 		super(name, orig, parameterIndex);
 		assert (dv != null): "Supplied DV constraints are null";
 		assert (hypotheses != null): "Supplied hypotheses are null";
@@ -135,13 +143,19 @@ final class StatementImpl extends SymbolImpl implements Statement, Serializable 
 		final Anonymiser anonymiser = ExpressionFactory.getInstance().createAnonymiser(allVars);
 		dvConstraints = anonymiser.anonymise(dv);
 		final List<Expression> unnamedHyps = new ArrayList(hypotheses.size());
-		for (final Expression hyp: hypotheses)
-			unnamedHyps.add(anonymiser.anonymise(hyp));
+		for (final Expression hyp: hypotheses) {
+			final Expression anonymisedHyp = anonymiser.anonymise(hyp);
+			dvConstraints.add(anonymisedHyp.dvConstraints());
+			unnamedHyps.add(anonymisedHyp);
+		}
 		this.hypotheses = Collections.unmodifiableList(unnamedHyps);
 		this.consequent = anonymiser.anonymise(consequent);
+		dvConstraints.add(this.consequent.dvConstraints());
 		final List<Variable> unnamedMandVars = new ArrayList(namedMandVars.size());
-		for (final Variable namedMandVar: namedMandVars)
-			unnamedMandVars.add(anonymiser.anonymise(namedMandVar));
+		for (final Variable namedMandVar: namedMandVars) {
+			if (!namedMandVar.isDummy())
+				unnamedMandVars.add(anonymiser.anonymise(namedMandVar));
+		}
 		this.mandatoryVariables = Collections.unmodifiableList(unnamedMandVars);
 	}
 

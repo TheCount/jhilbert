@@ -29,6 +29,7 @@ import jhilbert.commands.CommandException;
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Definition;
+import jhilbert.data.DVConstraints;
 import jhilbert.data.Functor;
 import jhilbert.data.Module;
 import jhilbert.data.Namespace;
@@ -71,16 +72,35 @@ final class DefinitionCommand extends AbstractCommand {
 		assert (symbolNamespace != null): "Module provided null symbol namespace";
 		final Namespace<? extends Functor> functorNamespace = module.getFunctorNamespace();
 		assert (functorNamespace != null): "Module provided null functor namespace";
+		final DataFactory dataFactory = DataFactory.getInstance();
+		assert (dataFactory != null): "Null data factory";
 		final TokenFeed feed = getFeed();
+		DVConstraints dvConstraints = null;
 		try {
 			feed.beginExp();
 			feed.confirmBeginExp();
+			// FIXME: Optional DV constraints. This is really ugly.
+			// FIXME FIXME: Doesn't work with the current feed implementation
+			//Token beginExp = feed.getToken();
+			//if (beginExp.getTokenClass() != Token.Class.BEGIN_EXP) {
+			//	feed.putToken(beginExp);
+			//	feed.beginExp(); // throws exception
+			//}
+			//Token token = feed.getToken();
+			//feed.putToken(token);
+			//feed.putToken(beginExp);
+			//if (token.getTokenClass() != Token.Class.ATOM) {
+				// DV constraints follow
+			//	dvConstraints = dataFactory.createDVConstraints(symbolNamespace, feed);
+			//}
+			// End FIXME FIXME
+			// End FIXME
 			feed.beginExp();
 			feed.confirmBeginExp();
 			final String name = feed.getAtom();
 			feed.confirmDef();
 			final List<Variable> arguments = new ArrayList();
-			Token token = feed.getToken();
+			/**/ Token /**/ token = feed.getToken();
 			while (token.getTokenClass() == Token.Class.ATOM) {
 				final Symbol symbol = symbolNamespace.getObjectByString(token.getTokenString());
 				if (symbol == null) {
@@ -98,7 +118,7 @@ final class DefinitionCommand extends AbstractCommand {
 			feed.confirmEndExp();
 			final Expression definiens = ExpressionFactory.getInstance().createExpression(module, feed);
 			feed.endExp();
-			DataFactory.getInstance().createDefinition(name, arguments, definiens, functorNamespace);
+			dataFactory.createDefinition(name, dvConstraints, arguments, definiens, functorNamespace);
 			feed.confirmEndCmd();
 		} catch (ClassCastException e) {
 			try {

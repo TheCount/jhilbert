@@ -21,8 +21,10 @@
 
 package jhilbert.verifier.impl;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +43,7 @@ import jhilbert.data.Variable;
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.ExpressionFactory;
+import jhilbert.expressions.Matcher;
 import jhilbert.expressions.Substituter;
 import jhilbert.expressions.UnifyException;
 
@@ -178,27 +181,59 @@ final class VerifierImpl implements Verifier {
 				hypVars.addAll(hypothesis.variables());
 			final Set<Variable> blacklist = new HashSet(hypVars);
 			blacklist.addAll(consequent.variables());
-			if (!expressionFactory.createMatcher().checkVEquality(consequent, proofResult, blacklist)) {
+			for (final Iterator<Variable> i = blacklist.iterator(); i.hasNext();) {
+				if (i.next().isDummy())
+					i.remove();
+			}
+			final Matcher matcher = expressionFactory.createMatcher();
+			if (!matcher.checkVEquality(consequent, proofResult, blacklist)) {
 				logger.debug("Consequent:   " + consequent);
 				logger.debug("Proof result: " + proofResult);
 				feed.reject("Consequent of theorem does not match proof result");
 				throw new VerifyException("Consequent does not match proof result");
 			}
 			// do we fulfill all the required DV constraints?
-			dvConstraints.restrict(blacklist);
+			final DVConstraints actualDVConstraints = dataFactory.createDVConstraints();
+			final Map<Variable, Variable> assignmentMap = matcher.getAssignmentMap();
+			for (final Variable[] dv: dvConstraints) {
+				Variable var0 = assignmentMap.get(dv[0]);
+				Variable var1 = assignmentMap.get(dv[1]);
+				if (var0 == null)
+					var0 = dv[0];
+				if (var1 == null)
+					var1 = dv[1];
+				actualDVConstraints.add(var0, var1);
+			}
+			for (final Expression hypothesis: hypotheses.values()) {
+				for (final Variable[] dv: hypothesis.dvConstraints()) {
+					Variable var0 = assignmentMap.get(dv[0]);
+					Variable var1 = assignmentMap.get(dv[1]);
+					if (var0 == null)
+						var0 = dv[0];
+					if (var1 == null)
+						var1 = dv[1];
+					 actualDVConstraints.add(var0, var1);
+				}
+			}
+			for (final Variable[] dv: consequent.dvConstraints()) {
+				Variable var0 = assignmentMap.get(dv[0]);
+				Variable var1 = assignmentMap.get(dv[1]);
+				if (var0 == null)
+					var0 = dv[0];
+				if (var1 == null)
+					var1 = dv[1];
+				actualDVConstraints.add(var0, var1);
+			}
 			if (logger.isTraceEnabled()) {
 				logger.trace("Final DV check:");
 				logger.trace("Required constraints: " + requiredDVConstraints);
-				logger.trace("Actual constraints:   " + dvConstraints);
+				logger.trace("Actual constraints:   " + actualDVConstraints);
 			}
-			final Set<Variable> resultVars = hypVars;
-			resultVars.addAll(proofResult.variables());
-			requiredDVConstraints.restrict(resultVars); // dummies bye bye (are always considered distinct)
-			if (!dvConstraints.contains(requiredDVConstraints)) {
+			if (!actualDVConstraints.contains(requiredDVConstraints)) {
 				feed.reject("Required distinct variable constraints are not a subset of actual distinct "
 						+ "variable constraints");
 				logger.debug("Required constraints: " + requiredDVConstraints);
-				logger.debug("Actual constraints:   " + dvConstraints);
+				logger.debug("Actual constraints:   " + actualDVConstraints);
 				throw new VerifyException("Required distinct variable constraints are not a subset of "
 						+ "actual distinct variable constraints");
 			}
@@ -219,6 +254,8 @@ final class VerifierImpl implements Verifier {
 			throw new VerifyException("Attempt to prove result by illegal dummy assignment", e);
 		} catch (ExpressionException e) {
 			throw new VerifyException("Unable to scan expression", e);
+		} catch (ConstraintException e) {
+			throw new VerifyException("Illegal DV constraints on statement", e);
 		}
 	}
 
@@ -243,7 +280,7 @@ final class VerifierImpl implements Verifier {
 				throw new VerifyException("Proof step is a hypothesis but mandatory variable stack is not "
 						+ "empty.");
 			}
-			proofStack.push(hypotheses.get(label));
+			proofStack.push(hypotheses.get(label).totalUnfold());
 			if (logger.isDebugEnabled())
 				logger.debug("Proof object: " + proofStack.peek());
 			feed.confirmLabel();
@@ -275,8 +312,14 @@ final class VerifierImpl implements Verifier {
 		assignMandatoryVariables(statement.getMandatoryVariables(), varAssignments);
 		final Substituter substituter = expressionFactory.createSubstituter(varAssignments);
 		assignHypotheses(statement.getHypotheses(), substituter);
+		// FIXME
+		if (logger.isDebugEnabled()) {
+			logger.debug("Statement DV constraints: " + statement.getDVConstraints());
+			logger.debug("Var assignments: " + substituter.getAssignments());
+		}
+		// End FIXME
 		updateRequiredConstraints(statement.getDVConstraints(), substituter.getAssignments());
-		proofStack.push(substituter.substitute(statement.getConsequent()));
+		proofStack.push(substituter.substitute(statement.getConsequent()).totalUnfold());
 	}
 
 	private void assignMandatoryVariables(final List<Variable> mandatoryVars,
@@ -329,7 +372,7 @@ final class VerifierImpl implements Verifier {
 		}
 		try {
 			for (int i = 0; i != size; ++i)
-				substituter.unify(hypotheses.get(i), proofStack.get(start + i));
+				substituter.unify(hypotheses.get(i).totalUnfold(), proofStack.get(start + i));
 			proofStack.setSize(start);
 		} catch (UnifyException e) {
 			try {
@@ -348,10 +391,12 @@ final class VerifierImpl implements Verifier {
 	throws VerifyException {
 		for (Variable[] constraint: dvConstraints) {
 			assert (constraint.length == 2): "Invalid constraint length";
-			assert (varAssignments.containsKey(constraint[0]) && varAssignments.containsKey(constraint[1]))
-				: "Unrestricted contraints in statement";
-			final Set<Variable> varSet1 = varAssignments.get(constraint[0]).variables();
-			final Set<Variable> varSet2 = varAssignments.get(constraint[1]).variables();
+			final Expression exp1 = varAssignments.get(constraint[0]);
+			final Expression exp2 = varAssignments.get(constraint[1]);
+			final Set<Variable> varSet1 = (exp1 == null)? Collections.singleton(constraint[0])
+				: exp1.variables();
+			final Set<Variable> varSet2 = (exp2 == null)? Collections.singleton(constraint[1])
+				: exp2.variables();
 			try {
 				requiredDVConstraints.addProduct(varSet1, varSet2);
 			} catch (ConstraintException e) {

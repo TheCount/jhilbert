@@ -29,6 +29,10 @@
 to drive {{{http://www.wikiproofs.de}Wikiproofs}}, a Wiki project dedicated to
 creating a free repository of instantly verified proofs.
 
- <<Important notice:>> Please update to version 8. Version 7 and perhaps
-earlier versions have serious bugs in the consequent/proof result comparison
-code.
+ <<Important notice:>> Please update to version 9. Version 8 has some bugs in
+the verifier DV constraint/expression matching code. Given the new soundness
+proof at
+{{http://www.wikiproofs.de/w/index.php?title=Wikiproofs:JHilbert definition soundness}},
+the current code appears to be quite a mess. The next version will have a much
+more sophisticated expression parser. I'll take that chance to clean up the
+code on the way.

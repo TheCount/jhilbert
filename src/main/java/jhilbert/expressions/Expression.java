@@ -26,6 +26,8 @@ import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import jhilbert.data.ConstraintException;
+import jhilbert.data.DVConstraints;
 import jhilbert.data.Kind;
 import jhilbert.data.Term;
 import jhilbert.data.Variable;
@@ -54,11 +56,29 @@ public interface Expression extends TreeNode<Term>, Serializable {
 	public List<Expression> getChildren();
 
 	/**
+	 * Returns the {@link DVConstraints} applicable to this
+	 * <code>Expression</code>.
+	 *
+	 * @return applicable DVConstraints
+	 *
+	 * @throws ConstraintException if the DV constraints cannot be met
+	 * 	ever.
+	 */
+	public DVConstraints dvConstraints() throws ConstraintException;
+
+	/**
 	 * Returns the {@link Variable}s occurring in this
 	 * <code>Expression</code>, in order of first appearance.
 	 *
 	 * @return variables occurring in this expression.
 	 */
 	public LinkedHashSet<Variable> variables();
+
+	/**
+	 * Returns the totally unfolded version of this expression.
+	 *
+	 * @return totally unfolded expression.
+	 */
+	public Expression totalUnfold();
 
 }

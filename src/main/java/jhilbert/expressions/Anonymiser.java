@@ -21,6 +21,8 @@
 
 package jhilbert.expressions;
 
+import java.util.Set;
+
 import jhilbert.data.DVConstraints;
 import jhilbert.data.Variable;
 
@@ -67,5 +69,13 @@ public interface Anonymiser {
 	 * @return the anonymised expression.
 	 */
 	public Expression anonymise(Expression expr);
+
+	/**
+	 * Returns the dummy variables which have been created in this
+	 * <code>Anonymiser</code>.
+	 *
+	 * @return dummy variables created in this anonymiser.
+	 */
+	public Set<Variable> getDummyVariables();
 
 }

@@ -325,13 +325,19 @@ final class ParameterLoaderImpl implements ParameterLoader {
 		// functor is a definition
 		final Definition parameterDefinition = (Definition) parameterFunctor;
 		try {
+			// translate DV constraints
+			final DVConstraintsImpl dvConstraints = new DVConstraintsImpl();
+			for (final Variable[] pva: parameterDefinition.getDVConstraints()) {
+				assert (pva.length == 2): "Invalid DV constraint length";
+				dvConstraints.add(translator.translate(pva[0]), translator.translate(pva[1]));
+			}
 			// translate arguments
 			final List<Variable> argList = new ArrayList();
 			for (final Variable parameterVariable: parameterDefinition.getArguments())
 				argList.add(translator.translate(parameterVariable));
 			functorMap.put(parameterFunctor,
 				dataFactory.createDefinition(prefix + parameterFunctor.getNameString(),
-					parameterDefinition, parameterIndex, argList,
+					parameterDefinition, parameterIndex, dvConstraints, argList,
 					translator.translate(parameterDefinition.getDefiniens()), functorNamespace));
 			return true;
 		} catch (ExpressionException e) {
@@ -374,7 +380,7 @@ final class ParameterLoaderImpl implements ParameterLoader {
 			logger.error("Parameter mismatch: object " + nameHere + " not found");
 			logger.debug("Object class: " + name.getClass());
 			logger.debug("Should be defined in the current proof module");
-			throw new DataException("Parameter mismatch: object not found");
+			throw new DataException("Parameter mismatch: object " + nameHere + " not found");
 		}
 		try {
 			nameMap.put(name, (T) objectHere);
@@ -382,7 +388,7 @@ final class ParameterLoaderImpl implements ParameterLoader {
 			logger.error("Object " + nameHere + " is of the wrong type", e);
 			logger.error("Expected type: " + name.getClass());
 			logger.error("Actual type:   " + objectHere.getClass());
-			throw new DataException("Object is of the wrong type", e);
+			throw new DataException("Object " + nameHere + " is of the wrong type", e);
 		}
 		return true;
 	}
@@ -398,7 +404,7 @@ final class ParameterLoaderImpl implements ParameterLoader {
 			logger.debug("Object class:         " + name.getClass());
 			logger.debug("Index:                " + nameIndex);
 			logger.debug("Should be defined in: " + parameterList.get(nameIndex));
-			throw new DataException("Parameter mismatch: object not found");
+			throw new DataException("Parameter mismatch: object " + nameHere + " not found");
 		}
 		try {
 			nameMap.put(name, (T) objectHere);
@@ -449,6 +455,8 @@ final class ParameterLoaderImpl implements ParameterLoader {
 			}
 			final Definition parameterDefinition = (Definition) parameterFunctor;
 			final Definition definition = (Definition) functor;
+			//final DVConstraints parameterDVConstraints = parameterDefinition.getDVConstraints();
+			//final DVConstraints dvConstraints = definition.getDVConstraints();
 			final LinkedHashSet<Variable> parameterArguments = parameterDefinition.getArguments();
 			final LinkedHashSet<Variable> arguments = definition.getArguments();
 			final List<Expression> parameterChildren = new ArrayList(parameterArguments.size());
@@ -458,9 +466,25 @@ final class ParameterLoaderImpl implements ParameterLoader {
 			for (final Variable variable: arguments)
 				children.add(expressionFactory.createExpression(variable));
 			try {
-				final Expression parameterExpression = expressionFactory.createExpression(parameterDefinition, parameterChildren);
+				final Expression parameterExpression = expressionFactory
+					.createExpression(parameterDefinition, parameterChildren);
 				final Expression expression = expressionFactory.createExpression(definition, children);
 				substituter.crossUnify(parameterExpression, expression, translator);
+				final DVConstraints parameterDVConstraints = new DVConstraintsImpl();
+				final Map<Variable, Expression> assignments = substituter.getAssignments();
+				for (final Variable[] pva: parameterExpression.dvConstraints()) {
+					assert (pva.length == 2): "Invalid DV constraint size";
+					parameterDVConstraints.addProduct(assignments.get(translator.translate(pva[0]))
+							.variables(), assignments.get(translator.translate(pva[1]))
+							.variables());
+				}
+				if (!expression.dvConstraints().contains(parameterDVConstraints)) {
+					logger.error("Attempt to satisfy definition with insufficient DV constraints");
+					logger.debug("Available constraints: " + expression.dvConstraints());
+					logger.debug("Required constraints:  " + parameterDVConstraints);
+					throw new DataException("Attempt to satisfy definition with insufficient DV "
+							+ "constraints");
+				}
 			} catch (UnifyException e) {
 				logger.error("Definition " + definition + " not unifiable with " + parameterDefinition, e);
 				logger.debug("Source: " + e.getSource());
