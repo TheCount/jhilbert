@@ -358,6 +358,7 @@ function efJHArticleMergeComplete($targetTitle, $destTitle) {
 	for (; $revID !== FALSE; $revID = $destTitle->getNextRevisionID($revID))
 		efJHRequestDeletion($titleKey, $revID); // FIXME: can't do anything if something goes wrong
 	efJHCloseSocket(); // don't care for errors
+	return TRUE;
 }
 
 /**
@@ -373,6 +374,7 @@ function efJHTitleMoveComplete(&$title, &$newtitle, &$user, $oldid, $newid) {
 	for (; $revID !== FALSE; $revID = $newtitle->getNextRevisionID($revID))
 		efJHRequestDeletion($titleKey, $revID); // FIXME: can't do anything if something goes wrong
 	efJHCloseSocket(); // don't care for errors
+	return TRUE;
 }
 
 ?>

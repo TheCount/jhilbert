@@ -200,6 +200,11 @@ final class DVConstraintsImpl implements DVConstraints, Serializable {
 		}
 	}
 
+	public void add(final DVConstraints dvConstraints) {
+		assert (dvConstraints instanceof DVConstraintsImpl): "Implementation type error";
+		constraintSet.addAll(((DVConstraintsImpl) dvConstraints).constraintSet);
+	}
+
 	public void addProduct(final Set<Variable> varSet1, final Set<Variable> varSet2) throws ConstraintException {
 		assert (varSet1 != null): "First supplied set of variables is null";
 		assert (varSet2 != null): "Second supplied set of variables is null";

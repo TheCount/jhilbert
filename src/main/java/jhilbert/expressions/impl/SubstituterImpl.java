@@ -171,7 +171,7 @@ final class SubstituterImpl implements Substituter {
 		assert (target != null): "Supplied target expression is null";
 		assert (translator != null): "Supplied translator is null";
 		try {
-			unify(translator.translate(ExpressionImpl.totalUnfold(source)), target);
+			unify(translator.translate(source.totalUnfold()), target);
 		} catch (ExpressionException e) {
 			logger.error("Unable to translate " + source);
 			throw new UnifyException("Source translation error", source, target, e);

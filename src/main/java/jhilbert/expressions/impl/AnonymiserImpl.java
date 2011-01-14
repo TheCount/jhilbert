@@ -21,6 +21,7 @@
 
 package jhilbert.expressions.impl;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,15 +36,27 @@ import jhilbert.data.Variable;
 import jhilbert.expressions.Anonymiser;
 import jhilbert.expressions.Expression;
 
+import org.apache.log4j.Logger;
+
 /**
  * {@link Anonymiser} implementation.
  */
 final class AnonymiserImpl implements Anonymiser {
 
 	/**
+	 * Logger for this class.
+	 */
+	private static final Logger logger = Logger.getLogger(AnonymiserImpl.class);
+
+	/**
 	 * Variable to unnamed variable mapping.
 	 */
 	private final Map<Variable, Variable> varMap;
+
+	/**
+	 * Set of dummies.
+	 */
+	private final Set<Variable> dummySet;
 
 	/**
 	 * Data factory.
@@ -59,17 +72,29 @@ final class AnonymiserImpl implements Anonymiser {
 	AnonymiserImpl(final Set<Variable> varSet) {
 		assert (varSet != null): "Supplied set of variables is null";
 		varMap = new HashMap();
+		dummySet = new HashSet();
 		dataFactory = DataFactory.getInstance();
 		for (final Variable var: varSet) {
 			assert (varSet != null): "Set of variables contains null variable";
-			varMap.put(var, dataFactory.createUnnamedVariable(var.getKind()));
+			if (var.isDummy())
+				varMap.put(var, var);
+			else
+				varMap.put(var, dataFactory.createUnnamedVariable(var.getKind()));
 		}
 	}
 
 	public Variable anonymise(final Variable var) {
 		assert (var != null): "Supplied variable is null";
-		if (!varMap.containsKey(var))
-			varMap.put(var, dataFactory.createDummyVariable(var.getKind()));
+		if (!varMap.containsKey(var)) {
+			final Variable dummy = dataFactory.createDummyVariable(var.getKind());
+			if (logger.isDebugEnabled()) {
+				logger.debug("New dummy variable created: " + dummy);
+				if (logger.isTraceEnabled())
+					Thread.dumpStack();
+			}
+			dummySet.add(dummy);
+			varMap.put(var, dummy);
+		}
 		return varMap.get(var);
 	}
 
@@ -97,6 +122,10 @@ final class AnonymiserImpl implements Anonymiser {
 		for (final Expression childExp: expr.getChildren())
 			result.addChild(anonymise(childExp));
 		return result;
+	}
+
+	public Set<Variable> getDummyVariables() {
+		return Collections.unmodifiableSet(dummySet);
 	}
 
 }

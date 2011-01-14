@@ -33,6 +33,7 @@ import java.io.ObjectOutputStream;
 import java.io.OptionalDataException;
 import java.io.RandomAccessFile;
 import java.io.StreamCorruptedException;
+import java.io.UnsupportedEncodingException;
 
 import java.nio.charset.Charset;
 
@@ -124,11 +125,11 @@ public final class Storage extends jhilbert.storage.Storage {
 	 *
 	 * @return hash byte array.
 	 */
-	private static byte[] l2b(final String l) {
+	private static byte[] l2b(final String l) throws UnsupportedEncodingException /* FIXME: 1.5 compat */ {
 		assert (l != null): "Supplied locator is null";
 		synchronized (HASHER) {
 			// FIXME: this may be an congestion point; maybe use a separate hasher for each call...
-			HASHER.update(l.getBytes(HASHER_CHARSET));
+			HASHER.update(l.getBytes(/* FIXME: 1.5 compat HASHER_CHARSET */ "UTF-8"));
 			return HASHER.digest();
 		}
 	}
@@ -140,7 +141,7 @@ public final class Storage extends jhilbert.storage.Storage {
 	 *
 	 * @return hashstore pathname.
 	 */
-	private static String l2p(final String l) {
+	private static String l2p(final String l) throws UnsupportedEncodingException /* FIXME: 1.5 compat */ {
 		assert (l != null): "Supplied locator is null";
 		return n2p(b2n(l2b(l)));
 	}
@@ -235,12 +236,16 @@ public final class Storage extends jhilbert.storage.Storage {
 	throws StorageException {
 		assert (locator != null): "Supplied locator is null";
 		assert (version >= -1): "Invalid revision number supplied";
-		final File file = new File(l2p(locator));
-		if (!file.exists())
-			return;
-		if (!file.delete())
-			throw new StorageException("Unable to erase module " + locator + " at hashstore path " 
-					+ l2p(locator));
+		try {
+			final File file = new File(l2p(locator));
+			if (!file.exists())
+				return;
+			if (!file.delete())
+				throw new StorageException("Unable to erase module " + locator + " at hashstore path " 
+						+ l2p(locator));
+		} catch (UnsupportedEncodingException e) {
+			throw new StorageException("Unable to calculate hash for module to be erased", e);
+		}
 	}
 
 	protected @Override long getCurrentRevision(final String locator) {

@@ -23,6 +23,7 @@ package jhilbert.data;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import jhilbert.expressions.Expression;
 
@@ -53,6 +54,28 @@ public interface Definition extends Functor {
 	 * @see Variable#isDummy
 	 */
 	public Expression getDefiniens();
+
+	/**
+	 * Returns the accumulated DV constraints of this
+	 * <code>Definition</code>.
+	 *
+	 * These are the DV constraints specified by the user, plus the
+	 * constraints accumulated through the definiens.
+	 *
+	 * @return accumulated DV constraints
+	 */
+	public DVConstraints getDVConstraints();
+
+	/**
+	 * Returns the accumulated dummy variables appearing in this
+	 * definition. (That is, the dummy variables from the definiens plus
+	 * the new dummy variables.)
+	 *
+	 * @return accumulated dummy variables.
+	 *
+	 * @see Variable#isDummy
+	 */
+	public Set<Variable> getDummyVariables();
 
 	/**
 	 * Unfolds this <code>Definition</code> with the specified list of

@@ -334,7 +334,7 @@ public class Server extends Thread {
 		assert (msg != null): "Supplied message is null";
 		if (logger.isTraceEnabled())
 			logger.trace("Sending answer code " + rc + " with message: " + msg);
-		final byte[] msgBytes = msg.getBytes(CHARSET);
+		final byte[] msgBytes = msg.getBytes(/* FIXME: 1.5 compat CHARSET */ ENCODING);
 		final int size = msgBytes.length + 1;
 		if (size >= MAX_MSG_SIZE)
 			throw new IOException("Message is too large to send (" + size + " bytes)");
@@ -411,7 +411,7 @@ public class Server extends Thread {
 							writeAnswer(out, CLIENT_ERR_RC, BAD_IFACE_MSG);
 							break;
 						}
-						final String param = new String(msg, 0, msgSize - 8, CHARSET);
+						final String param = new String(msg, 0, msgSize - 8, /* FIXME: 1.5 compat CHARSET */ ENCODING);
 						if (!Token.VALID_ATOM.matcher(param).matches()) {
 							writeAnswer(out, CLIENT_ERR_RC, BAD_IFACE_MSG);
 							break;
@@ -431,7 +431,7 @@ public class Server extends Thread {
 							writeAnswer(out, CLIENT_ERR_RC, DELETION_FAILED_MSG);
 							break;
 						}
-						final String locator = new String(msg, 0, msgSize - 8, CHARSET);
+						final String locator = new String(msg, 0, msgSize - 8, /* FIXME: 1.5 compat CHARSET */ ENCODING);
 						if (!Token.VALID_ATOM.matcher(locator).matches()) {
 							writeAnswer(out, CLIENT_ERR_RC, DELETION_FAILED_MSG);
 							break;

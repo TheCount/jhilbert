@@ -53,7 +53,7 @@ public final class Main {
 	/**
 	 * Version.
 	 */
-	public static final int VERSION = 8;
+	public static final int VERSION = 9;
 
 	/**
 	 * Logger.

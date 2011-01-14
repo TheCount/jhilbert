@@ -26,8 +26,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import jhilbert.data.*;
 
@@ -243,6 +245,10 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 			varSet.add((Variable) term);
 			return;
 		}
+		final Functor functor = (Functor) term;
+		if (functor.definitionDepth() != 0) {
+			varSet.addAll(((Definition) functor).getDummyVariables());
+		}
 		for (final Expression childExp: getChildren())
 			((ExpressionImpl) childExp).variables(varSet);
 	}
@@ -261,8 +267,45 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 		return result.toString();
 	}
 
-	static Expression totalUnfold(Expression expr) { // recursively unfold expression
+	public DVConstraints dvConstraints() throws ConstraintException {
+		final DVConstraints result = DataFactory.getInstance().createDVConstraints();
+		final Term term = getValue();
+		if (term.isVariable())
+			return result;
+		final Functor functor = (Functor) term;
+		if (functor.definitionDepth() == 0) {
+			for (final Expression childExp: getChildren())
+				result.add(childExp.dvConstraints());
+			return result;
+		}
+		final jhilbert.expressions.ExpressionFactory expressionFactory = ExpressionFactory.getInstance();
+		final Definition definition = (Definition) functor;
+		final List<Variable> arguments = new ArrayList(definition.getArguments());
+		final List<Expression> children = getChildren();
+		final Expression unfoldedExpression = definition.unfold(children);
+		result.add(unfoldedExpression.dvConstraints());
+		assert (arguments.size() == children.size()): "args/children count mismatch";
+		final int size = arguments.size();
+		final Map<Variable, Expression> varMap = new HashMap();
+		for (int i = 0; i != size; ++i) {
+			varMap.put(arguments.get(i), children.get(i));
+		}
+		for (final Variable[] dv: definition.getDVConstraints()) {
+			assert (dv.length == 2): "Invalid DV length";
+			Expression exp0 = varMap.get(dv[0]);
+			Expression exp1 = varMap.get(dv[1]);
+			if (exp0 == null)
+				exp0 = expressionFactory.createExpression(dv[0]);
+			if (exp1 == null)
+				exp1 = expressionFactory.createExpression(dv[1]);
+			result.addProduct(exp0.variables(), exp1.variables());
+		}
+		return result;
+	}
+
+	public Expression totalUnfold() { // recursively unfold expression
 		// unfold head
+		Expression expr = this;
 		for (;;) {
 			final Term term = expr.getValue();
 			if (term.isVariable()) {
@@ -280,7 +323,7 @@ final class ExpressionImpl extends ArrayTreeNode<Term> implements Expression, Se
 		final int numChildren = children.size();
 		final List<ExpressionImpl> newChildren = new ArrayList(numChildren);
 		for (int i = 0; i != numChildren; ++i)
-			newChildren.add((ExpressionImpl) totalUnfold(children.get(i)));
+			newChildren.add((ExpressionImpl) children.get(i).totalUnfold());
 		final ExpressionImpl result = new ExpressionImpl();
 		result.supplant((Functor) expr.getValue(), newChildren);
 		return result;

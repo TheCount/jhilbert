@@ -45,12 +45,20 @@ public interface DVConstraints extends Iterable<Variable[]>, Serializable {
 	public void add(Variable... vars) throws ConstraintException;
 
 	/**
+	 * Adds the entire DV constraints specified to these
+	 * <code>DVConstraints</code>.
+	 *
+	 * @param dvConstraints DV constraints to add
+	 */
+	public void add(DVConstraints dvConstraints);
+
+	/**
 	 * Adds the cartesian product of the two specified sets of variables.
 	 *
 	 * @param varSet1 first set.
 	 * @param varSet2 second set.
 	 *
-	 * @throws DataException if the two sets are not disjoint.
+	 * @throws ConstraintException if the two sets are not disjoint.
 	 */
 	public void addProduct(Set<Variable> varSet1, Set<Variable> varSet2) throws ConstraintException;
 

@@ -200,6 +200,8 @@ public abstract class DataFactory {
 	 * argument list and definiens.
 	 *
 	 * @param name name of new definition.
+	 * @param dvConstraints DV constraints of definition, or
+	 * 	<code>null</code> if there are no constraints.
 	 * @param argList argument list.
 	 * @param definiens definiens of the new definition.
 	 * @param namespace namespace in which the new definition will be
@@ -210,10 +212,11 @@ public abstract class DataFactory {
 	 * @throws DataException if <code>argList</code> contains the same
 	 * 	entry more than once.
 	 */
-	public final Definition createDefinition(final String name, final List<Variable> argList, final Expression definiens,
-		final Namespace<? extends Functor> namespace)
+	public final Definition createDefinition(final String name, final DVConstraints dvConstraints,
+			final List<Variable> argList, final Expression definiens,
+			final Namespace<? extends Functor> namespace)
 	throws DataException {
-		return createDefinition(name, null, -1, argList, definiens, namespace);
+		return createDefinition(name, null, -1, dvConstraints, argList, definiens, namespace);
 	}
 
 	/**
@@ -224,6 +227,8 @@ public abstract class DataFactory {
 	 * @param name name of new definition.
 	 * @param orig name this definition should be derived from.
 	 * @param parameterIndex index of the parameter of <code>orig</code>.
+	 * @param dvConstraints DV constraints of definition, or
+	 * 	<code>null</code> if there are no constraints.
 	 * @param argList argument list.
 	 * @param definiens definiens of the new definition.
 	 * @param namespace namespace in which the new definition will be
@@ -234,8 +239,9 @@ public abstract class DataFactory {
 	 * @throws DataException if <code>argList</code> contains the same
 	 * 	entry more than once.
 	 */
-	public abstract Definition createDefinition(String name, Definition orig, int parameterIndex, List<Variable> argList, Expression definiens,
-		Namespace<? extends Functor> namespace)
+	public abstract Definition createDefinition(String name, Definition orig, int parameterIndex,
+			DVConstraints dvConstraints, List<Variable> argList, Expression definiens,
+			Namespace<? extends Functor> namespace)
 	throws DataException;
 
 	/**
@@ -276,6 +282,8 @@ public abstract class DataFactory {
 	 *
 	 * @throws DataException if a statement with the specified name has
 	 * 	already been registered in the specified namespace.
+	 * @throws ConstraintException if the statements contains expressions
+	 * 	with invalid DV constraints.
 	 */
 	public final Statement createStatement(final String name, final DVConstraints dv, final List<Expression> hypotheses, final Expression consequent,
 		final Namespace<? extends Symbol> namespace)
