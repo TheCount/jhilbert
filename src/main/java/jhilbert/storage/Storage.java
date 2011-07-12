@@ -49,6 +49,8 @@ public abstract class Storage {
 				instance = new jhilbert.storage.hashstore.Storage();
 			} else if (jhilbert.Main.isDaemon()) {
 				instance = new jhilbert.storage.mediawiki.Storage();
+			} else if (jhilbert.Main.isWiki()) {
+				instance = new jhilbert.storage.wiki.Storage();
 			} else {
 				instance = new jhilbert.storage.file.Storage();
 			}

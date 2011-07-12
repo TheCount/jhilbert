@@ -22,6 +22,7 @@
 package jhilbert;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import java.net.InetAddress;
@@ -31,11 +32,13 @@ import java.net.UnknownHostException;
 
 import java.util.HashMap;
 
+import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
 
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
 
+import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
 
@@ -86,6 +89,11 @@ public final class Main {
 	private static boolean isDaemon;
 
 	/**
+	 * Are we reading wiki-format pages from files (--wiki)?
+	 */
+	private static boolean isWiki;
+
+	/**
 	 * Static initialiser.
 	 *
 	 * Initialises the logger.
@@ -106,6 +114,7 @@ public final class Main {
 	 */
 	public static void main(String... args) throws Exception {
 		isDaemon = false;
+		isWiki = false;
 		hashstorePath = null;
 		try {
 			String inputFileName = null;
@@ -121,6 +130,8 @@ public final class Main {
 					}
 				} else if (arg.equals("-d")) {
 					isDaemon = true;
+				} else if (arg.equals("--wiki")) {
+					isWiki = true;
 				} else if (arg.equals("--license")) {
 					showLicense();
 				} else {
@@ -135,12 +146,12 @@ public final class Main {
 				printUsage();
 				System.exit(1);
 			}
-			logger.info("Processing file " + inputFileName);
-			final Module mainModule = DataFactory.getInstance().createModule("");
-			final TokenFeed tokenFeed = ScannerFactory
-				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
-			CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
-			logger.info("File processed successfully");
+			if (isWiki) {
+				processWikiFile(inputFileName);
+			}
+			else {
+				processProofModule(inputFileName);
+			}
 			return;
 		} catch (JHilbertException e) {
 			logger.fatal("Exiting due to unrecoverable error", e);
@@ -149,6 +160,42 @@ public final class Main {
 			logger.fatal("Caught unexpected exception");
 			throw e;
 		}
+	}
+
+	private static void processWikiFile(String inputFileName) {
+		if (inputFileName.contains("Interface/")) {
+			logger.info("Processing interface " + inputFileName);
+
+			// TODO: how do we indicate that it is an interface?
+			final Module mainInterface = DataFactory.getInstance().createModule("");
+			final TokenFeed tokenFeed = ScannerFactory
+				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
+			CommandFactory.getInstance().processCommands(mainInterface, tokenFeed);
+			logger.info("File processed successfully");
+		}
+		else if (inputFileName.contains("Main/")) {
+			logger.info("Processing proof module " + inputFileName);
+
+			final Module mainModule = DataFactory.getInstance().createModule("");
+			final TokenFeed tokenFeed = ScannerFactory
+				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
+			CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
+			logger.info("File processed successfully");
+		}
+		else {
+			logger.fatal("Not sure whether file is an interface or a proof module");
+			logger.fatal("File was " + inputFileName);
+		}
+	}
+
+	private static void processProofModule(String inputFileName)
+			throws ScannerException, FileNotFoundException, CommandException {
+		logger.info("Processing file " + inputFileName);
+		final Module mainModule = DataFactory.getInstance().createModule("");
+		final TokenFeed tokenFeed = ScannerFactory
+			.getInstance().createTokenFeed(new FileInputStream(inputFileName));
+		CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
+		logger.info("File processed successfully");
 	}
 
 	/**
@@ -175,6 +222,8 @@ public final class Main {
 		System.out.println("              list, the log level is set to TRACE.");
 		System.out.println();
 		System.out.println("  -d          Start in daemon mode. Creates a JHilbert daemon on port " + DAEMON_PORT);
+		System.out.println();
+		System.out.println("  --wiki      Operate on wiki-formatted pages stored locally in files");
 		System.out.println();
 		System.out.println("  -pPATH      Uses hashstore storage instead of file storage. Useful in daemon");
 		System.out.println("              mode. The PATH is the base directory used for storage. If PATH is");
@@ -248,6 +297,10 @@ public final class Main {
 	 */
 	public static boolean isDaemon() {
 		return isDaemon;
+	}
+
+	public static boolean isWiki() {
+		return isWiki;
 	}
 
 	/**
