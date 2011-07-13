@@ -106,4 +106,6 @@ public interface Module extends Serializable {
 	 */
 	public Namespace<? extends Functor> getFunctorNamespace();
 
+	public boolean isProofModule();
+
 }

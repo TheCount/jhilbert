@@ -182,4 +182,8 @@ final class ModuleImpl implements Module, Serializable {
 		return functorNamespace;
 	}
 
+	public boolean isProofModule() {
+		return "".equals(name);
+	}
+
 }

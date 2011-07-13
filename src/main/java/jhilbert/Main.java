@@ -41,6 +41,7 @@ import jhilbert.data.Module;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
+import jhilbert.scanners.WikiInputStream;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.ConsoleAppender;
@@ -162,14 +163,14 @@ public final class Main {
 		}
 	}
 
-	private static void processWikiFile(String inputFileName) {
+	private static void processWikiFile(String inputFileName)
+	  throws IOException, ScannerException, CommandException {
 		if (inputFileName.contains("Interface/")) {
 			logger.info("Processing interface " + inputFileName);
 
-			// TODO: how do we indicate that it is an interface?
-			final Module mainInterface = DataFactory.getInstance().createModule("");
+			final Module mainInterface = DataFactory.getInstance().createModule(inputFileName);
 			final TokenFeed tokenFeed = ScannerFactory
-				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
+				.getInstance().createTokenFeed(WikiInputStream.create(inputFileName));
 			CommandFactory.getInstance().processCommands(mainInterface, tokenFeed);
 			logger.info("File processed successfully");
 		}
@@ -178,7 +179,7 @@ public final class Main {
 
 			final Module mainModule = DataFactory.getInstance().createModule("");
 			final TokenFeed tokenFeed = ScannerFactory
-				.getInstance().createTokenFeed(new FileInputStream(inputFileName));
+				.getInstance().createTokenFeed(WikiInputStream.create(inputFileName));
 			CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
 			logger.info("File processed successfully");
 		}

@@ -48,7 +48,7 @@ public final class CommandFactory extends jhilbert.commands.CommandFactory {
 		commandMap.put("def", new DefinitionCommand(module, tokenFeed));
 		commandMap.put("kindbind", new KindbindCommand(module, tokenFeed));
 		commandMap.put("var", new VariableCommand(module, tokenFeed));
-		if ("".equals(module.getName())) {
+		if (module.isProofModule()) {
 			// proof module only commands
 			commandMap.put("export", new ExportCommand(module, tokenFeed));
 			commandMap.put("import", new ImportCommand(module, tokenFeed));
