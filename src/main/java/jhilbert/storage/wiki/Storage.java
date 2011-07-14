@@ -24,26 +24,16 @@ package jhilbert.storage.wiki;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InvalidClassException;
 import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OptionalDataException;
-import java.io.StreamCorruptedException;
 
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
-
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
-
 import jhilbert.storage.StorageException;
 
 import org.apache.log4j.Logger;
@@ -121,6 +111,21 @@ if (true) return null;
 
 	protected @Override long getCurrentRevision(final String locator) {
 		return -1;
+	}
+
+	public static String fileName(String jhilbertName) {
+		String[] parts = jhilbertName.split(":");
+		String namespace = parts[0];
+		String underscoredName = parts[1];
+
+		// Can't remember how mediawiki handles multibyte characters here, but
+		// we can fix that later.
+		char first = underscoredName.charAt(0);
+		char second = underscoredName.charAt(1);
+		char third = underscoredName.charAt(2);
+		return namespace + "/" +
+		  first + "/" + second + "/" + third +
+		  "/" + underscoredName;
 	}
 
 }

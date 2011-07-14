@@ -22,7 +22,6 @@
 package jhilbert.utils;
 
 import java.io.Serializable;
-
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.IdentityHashMap;

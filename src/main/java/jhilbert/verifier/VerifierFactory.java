@@ -22,7 +22,6 @@
 package jhilbert.verifier;
 
 import jhilbert.data.Module;
-
 import jhilbert.scanners.TokenFeed;
 
 /**

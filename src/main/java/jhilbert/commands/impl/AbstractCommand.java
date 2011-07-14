@@ -23,9 +23,7 @@ package jhilbert.commands.impl;
 
 import jhilbert.commands.Command;
 import jhilbert.commands.CommandException;
-
 import jhilbert.data.Module;
-
 import jhilbert.scanners.TokenFeed;
 
 /**

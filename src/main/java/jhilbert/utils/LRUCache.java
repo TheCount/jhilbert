@@ -21,8 +21,8 @@
 
 package jhilbert.utils;
 
-import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Least Recently Used (LRU) Cache.

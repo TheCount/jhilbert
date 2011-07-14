@@ -21,18 +21,13 @@
 
 package jhilbert.commands.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import jhilbert.commands.CommandException;
-
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Kind;
 import jhilbert.data.Module;
 import jhilbert.data.Namespace;
 import jhilbert.data.Symbol;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;

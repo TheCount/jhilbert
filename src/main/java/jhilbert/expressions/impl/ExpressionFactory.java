@@ -25,14 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jhilbert.data.Functor;
 import jhilbert.data.Kind;
 import jhilbert.data.Module;
-import jhilbert.data.Functor;
 import jhilbert.data.Variable;
-
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
-
 import jhilbert.scanners.TokenFeed;
 
 /**

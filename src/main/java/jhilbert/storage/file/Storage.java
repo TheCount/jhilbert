@@ -25,8 +25,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.InvalidClassException;
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -35,15 +35,12 @@ import java.io.StreamCorruptedException;
 
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
-
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
-
 import jhilbert.storage.StorageException;
 
 import org.apache.log4j.Logger;

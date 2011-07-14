@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
@@ -23,6 +22,7 @@ import jhilbert.expressions.ExpressionFactory;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
+import jhilbert.storage.wiki.StorageTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -38,7 +38,10 @@ public class AppTest extends TestCase
 
 	public static Test suite()
     {
-        return new TestSuite( AppTest.class );
+		TestSuite suite = new TestSuite();
+		suite.addTestSuite(AppTest.class);
+		suite.addTestSuite(StorageTest.class);
+		return suite;
     }
 
     private Module mainModule;

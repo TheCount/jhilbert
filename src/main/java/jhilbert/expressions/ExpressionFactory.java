@@ -29,7 +29,6 @@ import jhilbert.data.Functor;
 import jhilbert.data.Kind;
 import jhilbert.data.Module;
 import jhilbert.data.Variable;
-
 import jhilbert.scanners.TokenFeed;
 
 /**

@@ -22,7 +22,6 @@
 package jhilbert.data.impl;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,14 +31,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jhilbert.data.DVConstraints;
 import jhilbert.data.DataException;
 import jhilbert.data.Definition;
-import jhilbert.data.DVConstraints;
 import jhilbert.data.Functor;
 import jhilbert.data.Kind;
 import jhilbert.data.Term;
 import jhilbert.data.Variable;
-
 import jhilbert.expressions.Anonymiser;
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionFactory;

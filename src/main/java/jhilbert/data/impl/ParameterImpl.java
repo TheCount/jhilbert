@@ -22,7 +22,6 @@
 package jhilbert.data.impl;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +29,6 @@ import java.util.List;
 import jhilbert.data.DataException;
 import jhilbert.data.Module;
 import jhilbert.data.Parameter;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;

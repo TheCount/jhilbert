@@ -24,10 +24,19 @@ package jhilbert.data.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import jhilbert.data.*;
-
+import jhilbert.data.ConstraintException;
+import jhilbert.data.DVConstraints;
+import jhilbert.data.DataException;
+import jhilbert.data.Definition;
+import jhilbert.data.Functor;
+import jhilbert.data.Kind;
+import jhilbert.data.Module;
+import jhilbert.data.Namespace;
+import jhilbert.data.Parameter;
+import jhilbert.data.Statement;
+import jhilbert.data.Symbol;
+import jhilbert.data.Variable;
 import jhilbert.expressions.Expression;
-
 import jhilbert.scanners.TokenFeed;
 
 /**

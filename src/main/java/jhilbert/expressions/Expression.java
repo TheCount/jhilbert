@@ -22,7 +22,6 @@
 package jhilbert.expressions;
 
 import java.io.Serializable;
-
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -31,7 +30,6 @@ import jhilbert.data.DVConstraints;
 import jhilbert.data.Kind;
 import jhilbert.data.Term;
 import jhilbert.data.Variable;
-
 import jhilbert.utils.TreeNode;
 
 /**

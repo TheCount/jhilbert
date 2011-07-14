@@ -22,19 +22,17 @@
 package jhilbert.data.impl;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import jhilbert.data.ConstraintException;
 import jhilbert.data.DVConstraints;
 import jhilbert.data.Statement;
 import jhilbert.data.Variable;
-
 import jhilbert.expressions.Anonymiser;
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionFactory;

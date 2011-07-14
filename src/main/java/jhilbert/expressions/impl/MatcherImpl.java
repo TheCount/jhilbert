@@ -24,15 +24,12 @@ package jhilbert.expressions.impl;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import jhilbert.data.Definition;
-import jhilbert.data.Functor;
 import jhilbert.data.Term;
 import jhilbert.data.Variable;
-
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.Matcher;
 import jhilbert.expressions.UnifyException;

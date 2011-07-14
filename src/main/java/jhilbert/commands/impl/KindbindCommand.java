@@ -21,15 +21,11 @@
 
 package jhilbert.commands.impl;
 
-import java.util.List;
-
 import jhilbert.commands.CommandException;
-
 import jhilbert.data.DataException;
 import jhilbert.data.Kind;
 import jhilbert.data.Module;
 import jhilbert.data.Namespace;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.TokenFeed;
 

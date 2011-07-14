@@ -22,7 +22,6 @@
 package jhilbert.commands;
 
 import jhilbert.data.Module;
-
 import jhilbert.scanners.TokenFeed;
 
 /**

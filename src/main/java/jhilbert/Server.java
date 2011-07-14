@@ -21,29 +21,24 @@
 
 package jhilbert;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.nio.charset.Charset;
+
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
-
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
-
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;
-
 import jhilbert.storage.Storage;
 import jhilbert.storage.StorageException;
-
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
-import java.net.Socket;
-import java.net.SocketException;
-
-import java.nio.charset.Charset;
 
 import org.apache.log4j.Logger;
 

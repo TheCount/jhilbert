@@ -21,17 +21,15 @@
 
 package jhilbert.commands.impl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import jhilbert.commands.Command;
 import jhilbert.commands.CommandException;
-
 import jhilbert.data.Module;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Command factory implementation.

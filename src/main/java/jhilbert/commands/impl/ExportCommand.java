@@ -21,16 +21,11 @@
 
 package jhilbert.commands.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import jhilbert.commands.CommandException;
-
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
 import jhilbert.data.Parameter;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.TokenFeed;
 

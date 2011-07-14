@@ -24,13 +24,11 @@ package jhilbert.storage.mediawiki;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,15 +38,12 @@ import javax.xml.parsers.SAXParserFactory;
 
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
-
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
-
 import jhilbert.storage.StorageException;
 
 import org.xml.sax.SAXException;

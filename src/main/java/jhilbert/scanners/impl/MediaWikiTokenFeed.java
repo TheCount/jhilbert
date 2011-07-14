@@ -22,14 +22,12 @@
 package jhilbert.scanners.impl;
 
 import java.io.BufferedOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
-
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
 import jhilbert.Server;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 

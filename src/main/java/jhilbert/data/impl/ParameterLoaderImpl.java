@@ -28,8 +28,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jhilbert.data.*;
-
+import jhilbert.data.DVConstraints;
+import jhilbert.data.DataException;
+import jhilbert.data.Definition;
+import jhilbert.data.Functor;
+import jhilbert.data.Kind;
+import jhilbert.data.Module;
+import jhilbert.data.Name;
+import jhilbert.data.Namespace;
+import jhilbert.data.Parameter;
+import jhilbert.data.ParameterLoader;
+import jhilbert.data.Statement;
+import jhilbert.data.Symbol;
+import jhilbert.data.Variable;
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.ExpressionFactory;
@@ -37,7 +48,6 @@ import jhilbert.expressions.Matcher;
 import jhilbert.expressions.Substituter;
 import jhilbert.expressions.Translator;
 import jhilbert.expressions.UnifyException;
-
 import jhilbert.storage.Storage;
 import jhilbert.storage.StorageException;
 

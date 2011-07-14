@@ -22,7 +22,6 @@
 package jhilbert.expressions.impl;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,17 +30,24 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import jhilbert.data.*;
-
+import jhilbert.data.ConstraintException;
+import jhilbert.data.DVConstraints;
+import jhilbert.data.DataFactory;
+import jhilbert.data.Definition;
+import jhilbert.data.Functor;
+import jhilbert.data.Kind;
+import jhilbert.data.Module;
+import jhilbert.data.Namespace;
+import jhilbert.data.Symbol;
+import jhilbert.data.Term;
+import jhilbert.data.Variable;
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.KindMismatchException;
 import jhilbert.expressions.PlaceCountMismatchException;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;
-
 import jhilbert.utils.ArrayTreeNode;
 
 import org.apache.log4j.Logger;

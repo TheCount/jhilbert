@@ -22,7 +22,6 @@
 package jhilbert.scanners.impl;
 
 import jhilbert.data.Functor;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;

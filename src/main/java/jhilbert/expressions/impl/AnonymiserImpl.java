@@ -27,12 +27,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import jhilbert.data.DVConstraints;
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
-import jhilbert.data.DVConstraints;
 import jhilbert.data.Term;
 import jhilbert.data.Variable;
-
 import jhilbert.expressions.Anonymiser;
 import jhilbert.expressions.Expression;
 

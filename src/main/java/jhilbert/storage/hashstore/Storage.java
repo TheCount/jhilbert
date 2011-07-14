@@ -34,16 +34,12 @@ import java.io.OptionalDataException;
 import java.io.RandomAccessFile;
 import java.io.StreamCorruptedException;
 import java.io.UnsupportedEncodingException;
-
 import java.nio.charset.Charset;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import jhilbert.data.Module;
-
 import jhilbert.storage.StorageException;
-
 import jhilbert.utils.FileAccessManager;
 
 import org.apache.log4j.Logger;

@@ -24,20 +24,15 @@ package jhilbert;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import java.util.HashMap;
-
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
-
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;

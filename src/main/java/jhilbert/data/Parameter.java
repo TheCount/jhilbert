@@ -22,7 +22,6 @@
 package jhilbert.data;
 
 import java.io.Serializable;
-
 import java.util.List;
 
 /**

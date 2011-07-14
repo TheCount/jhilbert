@@ -22,6 +22,7 @@
 package jhilbert.scanners.impl;
 
 import java.util.Stack;
+
 import jhilbert.scanners.Scanner;
 import jhilbert.scanners.ScannerException;
 

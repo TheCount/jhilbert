@@ -24,7 +24,6 @@ package jhilbert.data;
 import java.util.List;
 
 import jhilbert.expressions.Expression;
-
 import jhilbert.scanners.TokenFeed;
 
 /**

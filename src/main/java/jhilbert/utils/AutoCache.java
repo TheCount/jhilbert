@@ -22,9 +22,7 @@
 package jhilbert.utils;
 
 import java.io.Serializable;
-
 import java.lang.ref.SoftReference;
-
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.HashMap;

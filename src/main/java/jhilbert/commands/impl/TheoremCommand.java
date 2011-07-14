@@ -27,24 +27,20 @@ import java.util.List;
 import java.util.Map;
 
 import jhilbert.commands.CommandException;
-
 import jhilbert.data.ConstraintException;
+import jhilbert.data.DVConstraints;
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
-import jhilbert.data.DVConstraints;
 import jhilbert.data.Module;
 import jhilbert.data.Namespace;
 import jhilbert.data.Statement;
 import jhilbert.data.Symbol;
-
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.ExpressionFactory;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;
-
 import jhilbert.verifier.Verifier;
 import jhilbert.verifier.VerifierFactory;
 import jhilbert.verifier.VerifyException;

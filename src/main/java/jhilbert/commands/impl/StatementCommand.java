@@ -25,19 +25,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jhilbert.commands.CommandException;
-
 import jhilbert.data.ConstraintException;
+import jhilbert.data.DVConstraints;
 import jhilbert.data.DataException;
 import jhilbert.data.DataFactory;
-import jhilbert.data.DVConstraints;
 import jhilbert.data.Module;
 import jhilbert.data.Namespace;
 import jhilbert.data.Symbol;
-
 import jhilbert.expressions.Expression;
 import jhilbert.expressions.ExpressionException;
 import jhilbert.expressions.ExpressionFactory;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;

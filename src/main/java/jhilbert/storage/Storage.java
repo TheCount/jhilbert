@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 
 import jhilbert.data.Module;
-
 import jhilbert.utils.AutoCache;
 
 /**

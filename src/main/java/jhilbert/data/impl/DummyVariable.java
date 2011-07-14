@@ -22,7 +22,6 @@
 package jhilbert.data.impl;
 
 import java.io.Serializable;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

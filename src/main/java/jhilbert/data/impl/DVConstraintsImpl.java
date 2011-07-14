@@ -22,7 +22,6 @@
 package jhilbert.data.impl;
 
 import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,7 +33,6 @@ import jhilbert.data.DVConstraints;
 import jhilbert.data.Namespace;
 import jhilbert.data.Symbol;
 import jhilbert.data.Variable;
-
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;

@@ -26,8 +26,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStream;
 
-import jhilbert.data.Module;
-
 import jhilbert.scanners.ScannerException;
 
 /**

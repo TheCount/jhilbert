@@ -24,8 +24,6 @@ package jhilbert.verifier;
 import java.util.Map;
 
 import jhilbert.data.DVConstraints;
-import jhilbert.data.Module;
-
 import jhilbert.expressions.Expression;
 
 /**

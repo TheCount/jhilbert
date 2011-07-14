@@ -22,7 +22,6 @@
 package jhilbert.scanners.impl;
 
 import java.io.InputStream;
-import java.io.IOException;
 
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
