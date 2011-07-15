@@ -21,7 +21,6 @@
 
 package jhilbert.storage.wiki;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -91,10 +90,8 @@ public final class Storage extends jhilbert.storage.Storage {
 		} catch (CommandException e) {
 			logger.error("Command failed to execute while loading interface " + locator, e);
 			throw new StorageException("Command failed to execute while loading interface", e);
-		} catch (FileNotFoundException e) {
-			logger.warn("Unable to open library file for writing while creating library for interface " + locator, e);
 		} catch (IOException e) {
-			logger.warn("Unable to write library file while creating library for interface " + locator, e);
+			throw new RuntimeException(e);
 		}
 		return interfaceModule;
 	}
@@ -124,12 +121,23 @@ public final class Storage extends jhilbert.storage.Storage {
 
 		// Can't remember how mediawiki handles multibyte characters here, but
 		// we can fix that later.
-		char first = underscoredName.charAt(0);
-		char second = underscoredName.charAt(1);
-		char third = underscoredName.charAt(2);
+		CharSequence first = underscoredName.subSequence(0, 1);
+		CharSequence second = underscoredName.subSequence(1, 2);
+		CharSequence third = underscoredName.subSequence(2, 3);
 		return namespace + "/" +
-		  first + "/" + second + "/" + third +
-		  "/" + underscoredName.replace("_", " ");
+		  convertCharacter(first) + "/" +
+		  convertCharacter(second) + "/" +
+		  convertCharacter(third) + "/" +
+		  underscoredName.replace("_", " ");
+	}
+
+	public static CharSequence convertCharacter(CharSequence character) {
+		if ("_".equals(character)) {
+			return ".20";
+		}
+		else {
+			return character;
+		}
 	}
 
 }

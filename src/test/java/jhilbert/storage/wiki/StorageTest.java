@@ -13,6 +13,11 @@ public class StorageTest extends TestCase
 		assertEquals("Interface/C/o/o/Cool axioms",
 			Storage.fileName("Interface:Cool_axioms"));
 		assertEquals("Interface/S/e/v/Several spaces to convert",
-				Storage.fileName("Interface:Several_spaces_to_convert"));
+			Storage.fileName("Interface:Several_spaces_to_convert"));
+	}
+
+	public void testShortFirstWord() throws Exception {
+		assertEquals("Interface/K/.20/m/K modal logic",
+			Storage.fileName("Interface:K_modal_logic"));
 	}
 }
