@@ -21,10 +21,9 @@
 
 package jhilbert.storage.wiki;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
@@ -34,6 +33,7 @@ import jhilbert.data.Module;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
+import jhilbert.scanners.WikiInputStream;
 import jhilbert.storage.StorageException;
 
 import org.apache.log4j.Logger;
@@ -69,23 +69,21 @@ public final class Storage extends jhilbert.storage.Storage {
 			logger.debug("Supplied version number: " + revision);
 			throw new StorageException("File based storage does not support versioning");
 		}
-		final File interfaceFile = null;//new File(locator);
-		// create library
-
-                System.out.println("locator is" + locator);
-if (true) return null;
-		Module module;
+		Module interfaceModule;
 		try {
-			module = DataFactory.getInstance().createModule(locator, revision);
+			interfaceModule = DataFactory.getInstance().createInterface(locator, revision);
 		} catch (DataException e) {
 			final AssertionError err = new AssertionError("Bad revision number. This cannot happen");
 			err.initCause(e);
 			throw err;
 		}
 		try {
+			String fileName = fileName(locator);
+			logger.debug("file name is " + fileName);
+			final InputStream interfaceFile = WikiInputStream.create(fileName);
 			final TokenFeed tokenFeed = ScannerFactory.getInstance()
-				.createTokenFeed(new FileInputStream(interfaceFile));
-			CommandFactory.getInstance().processCommands(module, tokenFeed);
+				.createTokenFeed(interfaceFile);
+			CommandFactory.getInstance().processCommands(interfaceModule, tokenFeed);
 		} catch (ScannerException e) {
 			logger.error("Scanner error while scanning interface " + locator, e);
 			logger.debug("Scanner context: " + e.getScanner().getContextString());
@@ -98,7 +96,7 @@ if (true) return null;
 		} catch (IOException e) {
 			logger.warn("Unable to write library file while creating library for interface " + locator, e);
 		}
-		return module;
+		return interfaceModule;
 	}
 
 	protected @Override void storeModule(final Module module, final String locator, long version) {
@@ -113,6 +111,12 @@ if (true) return null;
 		return -1;
 	}
 
+	/**
+	 * Given the name of a file, jhilbertName, as it appears in an import
+	 * or params statement (for example Interface:Some_file), return the
+	 * filename as it is modified by mediawiki and levitation (for example,
+	 * "Interface/S/o/m/Some file").
+	 */
 	public static String fileName(String jhilbertName) {
 		String[] parts = jhilbertName.split(":");
 		String namespace = parts[0];
@@ -125,7 +129,7 @@ if (true) return null;
 		char third = underscoredName.charAt(2);
 		return namespace + "/" +
 		  first + "/" + second + "/" + third +
-		  "/" + underscoredName;
+		  "/" + underscoredName.replace("_", " ");
 	}
 
 }

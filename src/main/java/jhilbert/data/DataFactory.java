@@ -77,6 +77,15 @@ public abstract class DataFactory {
 	 */
 	public abstract Module createModule(String name, long revision) throws DataException;
 
+	public Module createInterface(String name, long revision) throws DataException {
+		assert name != "" : "An interface must have a name";
+		return createModule(name, revision);
+	}
+
+	public Module createProofModule(long revision) throws DataException {
+		return createModule("", revision);
+	}
+
 	/**
 	 * Creates a new {@link Kind} with the specified name in the specified
 	 * kind {@link Namespace}.
