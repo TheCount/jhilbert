@@ -22,6 +22,7 @@ import jhilbert.expressions.ExpressionFactory;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
+import jhilbert.scanners.WikiInputStreamTest;
 import jhilbert.storage.wiki.StorageTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -41,6 +42,7 @@ public class AppTest extends TestCase
 		TestSuite suite = new TestSuite();
 		suite.addTestSuite(AppTest.class);
 		suite.addTestSuite(StorageTest.class);
+		suite.addTestSuite(WikiInputStreamTest.class);
 		return suite;
     }
 

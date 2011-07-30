@@ -20,8 +20,16 @@ public class WikiInputStream extends InputStream {
 	}
 
 	public static InputStream create(String inputFileName) throws IOException {
+		return create(new FileInputStream(inputFileName));
+	}
+
+	public static InputStream create(InputStream inputStream) throws IOException {
+		return new ByteArrayInputStream(read(inputStream).getBytes("UTF-8"));
+	}
+
+	static String read(InputStream inputStream) throws IOException {
 		Pattern PATTERN = Pattern.compile("<jh>.*?</jh>", Pattern.DOTALL);
-		CharSequence contents = readFile(new FileInputStream(inputFileName));
+		CharSequence contents = readFile(inputStream);
 		final StringBuilder jhText = new StringBuilder();
 		final Matcher matcher = PATTERN.matcher(contents);
 		while(matcher.find()) {
@@ -29,7 +37,7 @@ public class WikiInputStream extends InputStream {
 			jhText.append('\n');
 			jhText.append(match, 4, match.length() - 5); // strip tags
 		}
-		return new ByteArrayInputStream(jhText.toString().getBytes("UTF-8"));
+		return jhText.toString();
 	}
 
 	private static CharSequence readFile(InputStream inputStream) throws IOException {
