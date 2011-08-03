@@ -91,7 +91,7 @@ class CharScanner extends AbstractScanner<Char> {
 			return c;
 		} catch (IOException e) {
 			logger.error("I/O error while trying to create character token", e);
-			throw new ScannerException("I/O error", this, e);
+			throw new ScannerException("I/O error: " + e.getMessage(), this, e);
 		}
 	}
 

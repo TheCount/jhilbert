@@ -92,7 +92,7 @@ public final class Storage extends jhilbert.storage.Storage {
 		} catch (SocketTimeoutException e) {
 			throw new StorageException("Timeout while talking to MediaWiki API", e);
 		} catch (IOException e) {
-			throw new StorageException("I/O error", e);
+			throw new StorageException("I/O error" + e.getMessage(), e);
 		} catch (ParserConfigurationException e) {
 			throw new StorageException("Unable to create parser", e);
 		} catch (SAXException e) {

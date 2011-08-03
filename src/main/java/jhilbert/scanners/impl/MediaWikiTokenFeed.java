@@ -244,7 +244,7 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 				appendToContext("</span>");
 			return getNewToken(); // FIXME: Hmm, tail recursion... how smart is the java compiler here?
 		} catch (IOException e) {
-			throw new ScannerException("I/O error", this, e);
+			throw new ScannerException("I/O error" + e.getMessage(), this, e);
 		}
 	}
 
