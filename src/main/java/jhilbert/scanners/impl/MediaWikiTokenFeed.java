@@ -30,6 +30,7 @@ import java.nio.CharBuffer;
 import jhilbert.Server;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
+import jhilbert.utils.Io;
 
 /**
  * A token feed for conversation with MediaWiki.
@@ -166,7 +167,7 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 				if (command == -1)
 					throw new ScannerException("EOF while reading command", this);
 				final byte[] msg = new byte[--msgSize];
-				if (in.read(msg) < msgSize)
+				if (Io.read(in, msg) < msgSize)
 					throw new ScannerException("EOF from client while reading text", this);
 				switch (command) {
 					case Server.QUIT_CMD:

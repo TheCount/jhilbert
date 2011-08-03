@@ -39,6 +39,7 @@ import jhilbert.scanners.Token;
 import jhilbert.scanners.TokenFeed;
 import jhilbert.storage.Storage;
 import jhilbert.storage.StorageException;
+import jhilbert.utils.Io;
 
 import org.apache.log4j.Logger;
 
@@ -302,7 +303,7 @@ public class Server extends Thread {
 	public static int readMessageSize(final InputStream in) throws IOException {
 		assert (in != null): "Supplied input stream is null";
 		final byte[] buf = new byte[3];
-		int rc = in.read(buf);
+		int rc = Io.read(in, buf);
 		if (rc < 3)
 			return -1;
 		int result = 0;
@@ -383,7 +384,7 @@ public class Server extends Thread {
 					return;
 				}
 				final byte[] msg = new byte[--msgSize];
-				if (in.read(msg) < msgSize) {
+				if (Io.read(in, msg) < msgSize) {
 					logger.warn("EOF from client while reading message");
 					return;
 				}
