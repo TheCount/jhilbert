@@ -160,7 +160,7 @@ public final class Main {
 
 	private static void processWikiFile(String inputFileName)
 	  throws IOException, ScannerException, CommandException {
-		if (inputFileName.contains("Interface/")) {
+		if (isInterface(inputFileName)) {
 			logger.info("Processing interface " + inputFileName);
 
 			final Module mainInterface = DataFactory.getInstance().createModule(inputFileName);
@@ -169,7 +169,7 @@ public final class Main {
 			CommandFactory.getInstance().processCommands(mainInterface, tokenFeed);
 			logger.info("File processed successfully");
 		}
-		else if (inputFileName.contains("Main/")) {
+		else if (isProofModule(inputFileName)) {
 			logger.info("Processing proof module " + inputFileName);
 
 			final Module mainModule = DataFactory.getInstance().createModule("");
@@ -182,6 +182,16 @@ public final class Main {
 			logger.fatal("Not sure whether file is an interface or a proof module");
 			logger.fatal("File was " + inputFileName);
 		}
+	}
+
+	public static boolean isProofModule(String fileName) {
+		return fileName.contains("Main/") ||
+		  fileName.contains("User module/");
+	}
+
+	public static boolean isInterface(String fileName) {
+		return fileName.contains("Interface/") ||
+		  fileName.contains("User interface/");
 	}
 
 	private static void processProofModule(String inputFileName)

@@ -124,11 +124,11 @@ public final class Storage extends jhilbert.storage.Storage {
 		CharSequence first = underscoredName.subSequence(0, 1);
 		CharSequence second = underscoredName.subSequence(1, 2);
 		CharSequence third = underscoredName.subSequence(2, 3);
-		return namespace + "/" +
+		return namespace.replace("_", " ") + "/" +
 		  convertCharacter(first) + "/" +
 		  convertCharacter(second) + "/" +
 		  convertCharacter(third) + "/" +
-		  underscoredName.replace("_", " ");
+		  underscoredName.replace("_", " ").replace("/", "\u001c");
 	}
 
 	public static CharSequence convertCharacter(CharSequence character) {

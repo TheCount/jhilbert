@@ -41,6 +41,7 @@ public class AppTest extends TestCase
     {
 		TestSuite suite = new TestSuite();
 		suite.addTestSuite(AppTest.class);
+		suite.addTestSuite(MainTest.class);
 		suite.addTestSuite(StorageTest.class);
 		suite.addTestSuite(WikiInputStreamTest.class);
 		return suite;

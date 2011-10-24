@@ -20,4 +20,12 @@ public class StorageTest extends TestCase
 		assertEquals("Interface/K/.20/m/K modal logic",
 			Storage.fileName("Interface:K_modal_logic"));
 	}
+
+	public void testUserModule() throws Exception {
+		assertEquals("User module/J/o/e/Joe\u001cSandbox",
+			Storage.fileName("User_module:Joe/Sandbox"));
+	}
+	public void testMultibyte() throws Exception {
+		assertEquals("xx", Storage.fileName("Interface:Zermelo–Fra"));
+	}
 }
