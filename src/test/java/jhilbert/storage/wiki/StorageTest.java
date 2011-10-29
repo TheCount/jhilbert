@@ -25,7 +25,9 @@ public class StorageTest extends TestCase
 		assertEquals("User module/J/o/e/Joe\u001cSandbox",
 			Storage.fileName("User_module:Joe/Sandbox"));
 	}
+
 	public void testMultibyte() throws Exception {
-		assertEquals("xx", Storage.fileName("Interface:Zermelo–Fra"));
+		assertEquals("Interface/Z/e/r/Zermelo–Fra",
+			Storage.fileName("Interface:Zermelo–Fra"));
 	}
 }
