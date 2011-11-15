@@ -154,9 +154,10 @@ final class Char {
 
 	/**
 	 * Creates a new <code>Char</code> character with the specified
-	 * codepoint. The codepoint must be a valid UTF-16 codepoint
-	 * (that is, it must be in the range from <code>0</code> to
-	 * <code>65535</code>), or <code>-1</code>, signifying end of input.
+	 * codepoint. Unless the character is in the Basic Multilingual
+	 * Plane (0–0xffff), the word "codepoint" is incorrect, as it might
+	 * be half of a UTF-16 surrogate pair (if surrogate pairs even work).
+	 * codepoint can also be <code>-1</code>, signifying end of input.
 	 *
 	 * @param codepoint codepoint of this <code>Char</code>.
 	 */
@@ -173,12 +174,12 @@ final class Char {
 			this.charClass = Class.NEWLINE;
 		else if (codepoint == Codepoint.HASHMARK.toInt())
 			this.charClass = Class.HASHMARK;
-		else if (!Character.isISOControl(codepoint) && Character.isDefined(codepoint))
-			this.charClass = Class.ATOM;
 		else if (codepoint == Codepoint.EOF.toInt())
 			this.charClass = Class.EOF;
-		else
+		else if (Character.isISOControl(codepoint))
 			this.charClass = Class.INVALID;
+		else
+			this.charClass = Class.ATOM;
 	}
 
 	/**

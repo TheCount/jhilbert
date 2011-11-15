@@ -23,6 +23,7 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
 import jhilbert.scanners.WikiInputStreamTest;
+import jhilbert.scanners.impl.CharTest;
 import jhilbert.storage.wiki.StorageTest;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -44,6 +45,7 @@ public class AppTest extends TestCase
 		suite.addTestSuite(MainTest.class);
 		suite.addTestSuite(StorageTest.class);
 		suite.addTestSuite(WikiInputStreamTest.class);
+		suite.addTestSuite(CharTest.class);
 		return suite;
     }
 
