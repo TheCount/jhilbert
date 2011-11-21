@@ -1,6 +1,9 @@
 /*
     JHilbert, a verifier for collaborative theorem proving
-    Copyright © 2008, 2009 Alexander Klauer
+
+    Copyright © 2008, 2009, 2011 The JHilbert Authors
+      See the AUTHORS file for the list of JHilbert authors.
+      See the commit logs ("git log") for a list of individual contributions.
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
