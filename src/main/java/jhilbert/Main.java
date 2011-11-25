@@ -78,6 +78,11 @@ public final class Main {
 	private static final String HASHSTORE_DEFAULT_PATH = "/var/local/lib/jhilbert/hashstore";
 
 	/**
+	 * Default socket timeout in milliseconds.
+	 */
+	public static final int DEFAULT_SOCKET_TIMEOUT = 5000;
+
+	/**
 	 * Hashstore location.
 	 */
 	private static String hashstorePath;
@@ -86,6 +91,11 @@ public final class Main {
 	 * Is DAEMON?
 	 */
 	private static boolean isDaemon;
+
+	/**
+	 * Daemon socket timeout.
+	 */
+	private static int socketTimeout;
 
 	/**
 	 * Are we reading wiki-format pages from files (--wiki)?
@@ -113,6 +123,7 @@ public final class Main {
 	 */
 	public static void main(String... args) throws Exception {
 		isDaemon = false;
+		socketTimeout = DEFAULT_SOCKET_TIMEOUT;
 		isWiki = false;
 		hashstorePath = null;
 		try {
@@ -129,6 +140,19 @@ public final class Main {
 					}
 				} else if (arg.equals("-d")) {
 					isDaemon = true;
+				} else if (arg.startsWith("-t")) {
+					try {
+						if (arg.length() > 2) {
+							socketTimeout = Integer.parseInt(arg.substring(2));
+						} else {
+							throw new NumberFormatException("Empty digit string");
+						}
+						if (socketTimeout <= 0)
+							throw new NumberFormatException("Positive value required");
+					} catch (NumberFormatException e) {
+						System.err.println("-t: Invalid timeout specified: " + e.getMessage());
+						System.exit(1);
+					}
 				} else if (arg.equals("--wiki")) {
 					isWiki = true;
 				} else if (arg.equals("--license")) {
@@ -230,13 +254,16 @@ public final class Main {
 		System.out.println("              to INFO. If the log level is specified, but not from the above");
 		System.out.println("              list, the log level is set to TRACE.");
 		System.out.println();
-		System.out.println("  -d          Start in daemon mode. Creates a JHilbert daemon on port " + DAEMON_PORT);
+		System.out.println("  -d          Start in daemon mode. Creates a JHilbert daemon on port " + DAEMON_PORT + ".");
 		System.out.println();
-		System.out.println("  --wiki      Operate on wiki-formatted pages stored locally in files");
+		System.out.println("  -tTIMEOUT   Sets the socket timeout in milliseconds. Only meaningful in");
+		System.out.println("              daemon mode. If omitted, a default value of " + DEFAULT_SOCKET_TIMEOUT + " will be used.");
+		System.out.println();
+		System.out.println("  --wiki      Operate on wiki-formatted pages stored locally in files.");
 		System.out.println();
 		System.out.println("  -pPATH      Uses hashstore storage instead of file storage. Useful in daemon");
 		System.out.println("              mode. The PATH is the base directory used for storage. If PATH is");
-		System.out.println("              not specified, it defaults to " + HASHSTORE_DEFAULT_PATH);
+		System.out.println("              not specified, it defaults to " + HASHSTORE_DEFAULT_PATH + ".");
 		System.out.println();
 		System.out.println("  --license   Displays license information and exits.");
 		System.out.println();
@@ -277,7 +304,7 @@ public final class Main {
 			final ServerSocket listener = new ServerSocket(DAEMON_PORT, 50, InetAddress.getByAddress(localHost));
 			for (;;) {
 				final Socket conn = listener.accept();
-				final Server thread = new Server("JHilbert transaction " + ++transactionCounter, conn);
+				final Server thread = new Server("JHilbert transaction " + ++transactionCounter, conn, socketTimeout);
 				thread.start();
 			}
 		} catch (UnknownHostException e) {

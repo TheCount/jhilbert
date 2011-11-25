@@ -178,11 +178,6 @@ public class Server extends Thread {
 	public static final Charset CHARSET = Charset.forName(ENCODING);
 
 	/**
-	 * Default socket timeout, in milliseconds.
-	 */
-	private static final int TIMEOUT = 5000;
-
-	/**
 	 * Maximum message size.
 	 */
 	private static final int MAX_MSG_SIZE = (1 << 24) - 1;
@@ -351,14 +346,28 @@ public class Server extends Thread {
 	 *
 	 * @param name thread name.
 	 * @param socket socket to talk with.
+	 * @param timeout socket timeout.
+	 *
+	 * @throws SocketException if a socket error occurs.
+	 */
+	public Server(final String name, final Socket socket, final int timeout) throws SocketException {
+		super(name);
+		this.socket = socket;
+		socket.setSoTimeout(timeout);
+		socket.setTcpNoDelay(true);
+	}
+
+	/**
+	 * Creates a new server thread object on the specified {@link Socket}.
+	 * The socket timeout is set to the default value {@link #DEFAULT_TIMEOUT}.
+	 *
+	 * @param name thread name.
+	 * @param socket socket to talk with.
 	 *
 	 * @throws SocketException if a socket error occurs.
 	 */
 	public Server(final String name, final Socket socket) throws SocketException {
-		super(name);
-		this.socket = socket;
-		socket.setSoTimeout(TIMEOUT);
-		socket.setTcpNoDelay(true);
+		this(name, socket, Main.DEFAULT_SOCKET_TIMEOUT);
 	}
 
 	/**
