@@ -64,6 +64,10 @@ public class WikiInputStream extends InputStream {
 		return jhText.toString();
 	}
 
+	static String read(String input) throws IOException {
+		return read(new ByteArrayInputStream(input.getBytes("UTF-8")));
+	}
+
 	private static CharSequence readFile(InputStream inputStream) throws IOException {
 		final ByteArrayOutputStream contents = new ByteArrayOutputStream();
 		int nread;
