@@ -52,14 +52,27 @@ public class WikiInputStream extends InputStream {
 	}
 
 	static String read(InputStream inputStream) throws IOException {
-		Pattern PATTERN = Pattern.compile("<jh>.*?</jh>", Pattern.DOTALL);
+		Pattern START_OR_END = Pattern.compile("(<jh>|</jh>)");
 		CharSequence contents = readFile(inputStream);
 		final StringBuilder jhText = new StringBuilder();
-		final Matcher matcher = PATTERN.matcher(contents);
+		final Matcher matcher = START_OR_END.matcher(contents);
+		int startTag = -1;
 		while(matcher.find()) {
-			final String match = matcher.group();
-			jhText.append('\n');
-			jhText.append(match, 4, match.length() - 5); // strip tags
+			final int matchStart = matcher.start();
+			final int matchEnd = matcher.end();
+			final CharSequence matched = contents.subSequence(matchStart, matchEnd);
+			if ("<jh>".equals(matched)) {
+				startTag = matchStart + matched.length();
+			}
+			else {
+				if (startTag == -1) {
+					throw new RuntimeException(
+						"Found </jh> tag without matching <jh> tag");
+				}
+				jhText.append('\n');
+				jhText.append(contents.subSequence(startTag, matchStart));
+				startTag = -1;
+			}
 		}
 		return jhText.toString();
 	}

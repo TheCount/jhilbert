@@ -38,7 +38,26 @@ public class WikiInputStreamTest extends TestCase {
 			"Non-jhilbert <jh>var (</jh> and then <jh>formula p)</jh>"));
 	}
 
-	public void xtestCloseJhWhenNotInJh() throws Exception {
+	public void testCloseJhBeforeJh() throws Exception {
+		try {
+			WikiInputStream.read("</jh>");
+			fail();
+		}
+		catch (Exception expected) {
+			assertEquals("Found </jh> tag without matching <jh> tag",
+				expected.getMessage());
+		}
+	}
+
+	public void testCloseJhWhenAlreadyClosed() throws Exception {
+		try {
+			WikiInputStream.read("<jh></jh></jh>");
+			fail();
+		}
+		catch (Exception expected) {
+			assertEquals("Found </jh> tag without matching <jh> tag",
+				expected.getMessage());
+		}
 	}
 
 }
