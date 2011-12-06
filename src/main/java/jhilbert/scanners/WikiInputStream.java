@@ -34,13 +34,30 @@ import java.util.regex.Pattern;
 
 public class WikiInputStream extends InputStream {
 
-	// This class contains only static methods
-	private WikiInputStream() {
+	InputStream delegate;
+
+	private WikiInputStream(InputStream delegate) {
+		this.delegate = delegate;
 	}
 
 	@Override
 	public int read() throws IOException {
-		throw new RuntimeException("This class contains only static methods");
+		return delegate.read();
+	}
+
+	@Override
+	public void close() throws IOException {
+		delegate.close();
+	}
+
+	@Override
+	public int read(byte[] arg0, int arg1, int arg2) throws IOException {
+		return delegate.read(arg0, arg1, arg2);
+	}
+
+	@Override
+	public int read(byte[] b) throws IOException {
+		return delegate.read(b);
 	}
 
 	public static InputStream create(String inputFileName) throws IOException {
@@ -48,7 +65,8 @@ public class WikiInputStream extends InputStream {
 	}
 
 	public static InputStream create(InputStream inputStream) throws IOException {
-		return new ByteArrayInputStream(read(inputStream).getBytes("UTF-8"));
+		return new WikiInputStream(
+			new ByteArrayInputStream(read(inputStream).getBytes("UTF-8")));
 	}
 
 	static String read(InputStream inputStream) throws IOException {
