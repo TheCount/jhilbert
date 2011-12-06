@@ -24,6 +24,8 @@
 
 package jhilbert.scanners;
 
+import java.io.ByteArrayInputStream;
+
 import junit.framework.TestCase;
 
 public class WikiInputStreamTest extends TestCase {
@@ -58,6 +60,30 @@ public class WikiInputStreamTest extends TestCase {
 			assertEquals("Found </jh> tag without matching <jh> tag",
 				expected.getMessage());
 		}
+	}
+
+	public void testNoErrorsExpected() throws Exception {
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			"Hi, I'm a page.\n<jh>\n</jh>\n".getBytes("UTF-8")));
+		assertEquals(0, wiki.expectedErrors().size());
+	}
+
+	public void testErrorExpectedBeforeFirstStartTag() throws Exception {
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			"{{error expected|it's broke}}\n<jh>\n</jh>\n"
+		    .getBytes("UTF-8")));
+		assertEquals(1, wiki.expectedErrors().size());
+		assertEquals("it's broke", wiki.expectedErrors().get(0));
+	}
+	
+	public void testTwoExpectedErrors() throws Exception {
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+				("{{error expected|it's heavy}}\n" +
+				"{{error expected|it's ugly}}\n")
+			    .getBytes("UTF-8")));
+		assertEquals(2, wiki.expectedErrors().size());
+		assertEquals("it's heavy", wiki.expectedErrors().get(0));
+		assertEquals("it's ugly", wiki.expectedErrors().get(1));
 	}
 
 }

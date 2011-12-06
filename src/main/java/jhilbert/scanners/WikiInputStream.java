@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,9 +41,11 @@ public class WikiInputStream extends InputStream {
 	private InputStream delegate;
 	private Writer buffer;
 	private String contents;
+	private ArrayList<String> expectedErrors;
 
 	private WikiInputStream() {
 		this.buffer = new StringWriter();
+		expectedErrors = new ArrayList();
 	}
 
 	private void finishWriting() throws IOException {
@@ -89,6 +93,7 @@ public class WikiInputStream extends InputStream {
 	private void readWikiText(InputStream input) throws IOException {
 		Pattern START_OR_END = Pattern.compile("(<jh>|</jh>)");
 		CharSequence contents = readFile(input);
+		findExpectedErrors(contents);
 		final Matcher matcher = START_OR_END.matcher(contents);
 		int startTag = -1;
 		while(matcher.find()) {
@@ -122,6 +127,19 @@ public class WikiInputStream extends InputStream {
 			contents.write(buffer, 0, nread);
 		}
 		return contents.toString("UTF-8");
+	}
+
+	private void findExpectedErrors(CharSequence wikiText) {
+		Pattern EXPECTED_ERRORS = Pattern.compile(
+			"\\{\\{\\s*error expected\\s*[|]\\s*([^|}]+)\\s*\\}\\}");
+		Matcher matcher = EXPECTED_ERRORS.matcher(wikiText);
+		while (matcher.find()) {
+			expectedErrors.add(matcher.group(1));
+		}
+	}
+
+	public List<String> expectedErrors() {
+		return expectedErrors;
 	}
 
 }
