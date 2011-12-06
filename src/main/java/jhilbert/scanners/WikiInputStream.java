@@ -55,10 +55,6 @@ public class WikiInputStream extends InputStream {
 		return contents;
 	}
 
-	private WikiInputStream(InputStream delegate) {
-		this.delegate = delegate;
-	}
-
 	@Override
 	public int read() throws IOException {
 		return delegate.read();
