@@ -55,10 +55,6 @@ public class WikiInputStream extends InputStream {
 		return contents;
 	}
 
-	private Appendable getBuffer() {
-		return buffer;
-	}
-
 	private WikiInputStream(InputStream delegate) {
 		this.delegate = delegate;
 	}
@@ -89,13 +85,12 @@ public class WikiInputStream extends InputStream {
 
 	public static WikiInputStream create(InputStream inputStream) throws IOException {
 		WikiInputStream wiki = new WikiInputStream();
-		read(inputStream, wiki.getBuffer());
+		wiki.readWikiText(inputStream);
 		wiki.finishWriting();
 		return wiki;
 	}
 
-	private static void read(InputStream input, final Appendable output)
-			throws IOException {
+	private void readWikiText(InputStream input) throws IOException {
 		Pattern START_OR_END = Pattern.compile("(<jh>|</jh>)");
 		CharSequence contents = readFile(input);
 		final Matcher matcher = START_OR_END.matcher(contents);
@@ -112,8 +107,8 @@ public class WikiInputStream extends InputStream {
 					throw new RuntimeException(
 						"Found </jh> tag without matching <jh> tag");
 				}
-				output.append('\n');
-				output.append(contents.subSequence(startTag, matchStart));
+				buffer.append('\n');
+				buffer.append(contents.subSequence(startTag, matchStart));
 				startTag = -1;
 			}
 		}
