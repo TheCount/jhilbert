@@ -75,7 +75,7 @@ public class WikiInputStreamTest extends TestCase {
 		assertEquals(1, wiki.expectedErrors().size());
 		assertEquals("it's broke", wiki.expectedErrors().get(0));
 	}
-	
+
 	public void testTwoExpectedErrors() throws Exception {
 		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
 				("{{error expected|it's heavy}}\n" +
@@ -84,6 +84,38 @@ public class WikiInputStreamTest extends TestCase {
 		assertEquals(2, wiki.expectedErrors().size());
 		assertEquals("it's heavy", wiki.expectedErrors().get(0));
 		assertEquals("it's ugly", wiki.expectedErrors().get(1));
+	}
+
+	public void testErrorExpectedBetweenTags() throws Exception {
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			("<jh>\n" +
+			"</jh>\n" +
+			"Foo. {{error expected|syntax error}}\n" +
+			"<jh>\n" +
+			"the bad syntax\n" +
+			"</jh>\n")
+			.getBytes("UTF-8")));
+		assertEquals(1, wiki.expectedErrors().size());
+		assertEquals("syntax error", wiki.expectedErrors().get(0));
+	}
+
+	public void testDoNotRecognizeErrorExpectedInJh() throws Exception {
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			("<jh>\n" +
+			"# We would add {{error expected|foo}} if this were really bad\n" +
+			"</jh>\n")
+			.getBytes("UTF-8")));
+		assertEquals(0, wiki.expectedErrors().size());
+	}
+
+	public void testErrorExpectedAfterLastCloseTag() throws Exception {
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			("<jh>\n" +
+			"</jh>\n" +
+			"{{error expected|it's broke}}\n\n")
+		    .getBytes("UTF-8")));
+		assertEquals(1, wiki.expectedErrors().size());
+		assertEquals("it's broke", wiki.expectedErrors().get(0));
 	}
 
 }

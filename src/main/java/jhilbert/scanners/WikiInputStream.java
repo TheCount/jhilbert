@@ -93,15 +93,16 @@ public class WikiInputStream extends InputStream {
 	private void readWikiText(InputStream input) throws IOException {
 		Pattern START_OR_END = Pattern.compile("(<jh>|</jh>)");
 		CharSequence contents = readFile(input);
-		findExpectedErrors(contents);
 		final Matcher matcher = START_OR_END.matcher(contents);
 		int startTag = -1;
+		int startOfNonJh = 0;
 		while(matcher.find()) {
 			final int matchStart = matcher.start();
 			final int matchEnd = matcher.end();
 			final CharSequence matched = contents.subSequence(matchStart, matchEnd);
 			if ("<jh>".equals(matched)) {
 				startTag = matchStart + matched.length();
+				findExpectedErrors(contents.subSequence(startOfNonJh, matchStart));
 			}
 			else {
 				if (startTag == -1) {
@@ -111,8 +112,10 @@ public class WikiInputStream extends InputStream {
 				buffer.append('\n');
 				buffer.append(contents.subSequence(startTag, matchStart));
 				startTag = -1;
+				startOfNonJh = matchStart + matched.length();
 			}
 		}
+		findExpectedErrors(contents.subSequence(startOfNonJh, contents.length()));
 	}
 
 	static String read(String input) throws IOException {
