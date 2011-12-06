@@ -29,12 +29,35 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class WikiInputStream extends InputStream {
 
-	InputStream delegate;
+	private InputStream delegate;
+	private Writer buffer;
+	private String contents;
+
+	private WikiInputStream() {
+		this.buffer = new StringWriter();
+	}
+
+	private void finishWriting() throws IOException {
+		buffer.flush();
+		contents = buffer.toString();
+		delegate = new ByteArrayInputStream(contents.getBytes("UTF-8"));
+		buffer = null;
+	}
+
+	private String getContents() {
+		return contents;
+	}
+
+	private Appendable getBuffer() {
+		return buffer;
+	}
 
 	private WikiInputStream(InputStream delegate) {
 		this.delegate = delegate;
@@ -60,19 +83,21 @@ public class WikiInputStream extends InputStream {
 		return delegate.read(b);
 	}
 
-	public static InputStream create(String inputFileName) throws IOException {
+	public static WikiInputStream create(String inputFileName) throws IOException {
 		return create(new FileInputStream(inputFileName));
 	}
 
-	public static InputStream create(InputStream inputStream) throws IOException {
-		return new WikiInputStream(
-			new ByteArrayInputStream(read(inputStream).getBytes("UTF-8")));
+	public static WikiInputStream create(InputStream inputStream) throws IOException {
+		WikiInputStream wiki = new WikiInputStream();
+		read(inputStream, wiki.getBuffer());
+		wiki.finishWriting();
+		return wiki;
 	}
 
-	static String read(InputStream inputStream) throws IOException {
+	private static void read(InputStream input, final Appendable output)
+			throws IOException {
 		Pattern START_OR_END = Pattern.compile("(<jh>|</jh>)");
-		CharSequence contents = readFile(inputStream);
-		final StringBuilder jhText = new StringBuilder();
+		CharSequence contents = readFile(input);
 		final Matcher matcher = START_OR_END.matcher(contents);
 		int startTag = -1;
 		while(matcher.find()) {
@@ -87,16 +112,15 @@ public class WikiInputStream extends InputStream {
 					throw new RuntimeException(
 						"Found </jh> tag without matching <jh> tag");
 				}
-				jhText.append('\n');
-				jhText.append(contents.subSequence(startTag, matchStart));
+				output.append('\n');
+				output.append(contents.subSequence(startTag, matchStart));
 				startTag = -1;
 			}
 		}
-		return jhText.toString();
 	}
 
 	static String read(String input) throws IOException {
-		return read(new ByteArrayInputStream(input.getBytes("UTF-8")));
+		return create(new ByteArrayInputStream(input.getBytes("UTF-8"))).getContents();
 	}
 
 	private static CharSequence readFile(InputStream inputStream) throws IOException {
