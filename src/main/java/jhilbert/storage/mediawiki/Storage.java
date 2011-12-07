@@ -140,7 +140,6 @@ public final class Storage extends jhilbert.storage.Storage {
 		assert (!"".equals(locator)): "Proof module supplied";
 		assert (revision >= 0): "Invalid version number supplied";
 		try {
-			final String urlEncodedLocator = URLEncoder.encode(locator, ENCODING);
 			final RevisionHandler handler = handleRequest("revids=" + revision + "&prop=revisions&rvprop=content");
 			if (!locator.equals(handler.getPageTitle()))
 				throw new StorageException("Supplied revision " + revision + " does not match supplied title " + locator);
