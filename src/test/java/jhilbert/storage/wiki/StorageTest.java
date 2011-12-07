@@ -50,8 +50,20 @@ public class StorageTest extends TestCase
 			Storage.fileName("User_module:Joe/Sandbox"));
 	}
 
-	public void testMultibyte() throws Exception {
+	public void testMultibyteBoringCase() throws Exception {
 		assertEquals("Interface/Z/e/r/Zermelo–Fra",
 			Storage.fileName("Interface:Zermelo–Fra"));
 	}
+
+	public void testMultibyteInterestingCase() throws Exception {
+		// Haven't verified this against what mediawiki/levitation actually do.
+		assertEquals("Interface/ε/.20/c/ε conjecture",
+			Storage.fileName("Interface:ε_conjecture"));
+	}
+
+//	public void testMultibyteSurrogatePairs() throws Exception {
+//		// Haven't verified this against what mediawiki/levitation actually do.
+//		assertEquals("Interface/𝔸/-/c/𝔸-completeness",
+//			Storage.fileName("Interface:𝔸-completeness"));
+//	}
 }
