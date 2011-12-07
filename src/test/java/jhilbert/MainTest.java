@@ -24,6 +24,13 @@
 
 package jhilbert;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
+import jhilbert.data.DataFactory;
+import jhilbert.data.Module;
+import jhilbert.scanners.WikiInputStream;
 import junit.framework.TestCase;
 import static jhilbert.Main.isInterface;
 import static jhilbert.Main.isProofModule;
@@ -42,6 +49,68 @@ public class MainTest extends TestCase {
 		assertTrue(isProofModule("./Main/L/o/g/Logic"));
 		assertFalse(isProofModule("Interface/L/o/g/Logic"));
 		assertTrue(isProofModule("User module/J/o/e/Joe\u001cSandbox"));
+	}
+
+	private void process(String wikiText) throws IOException,
+			UnsupportedEncodingException, JHilbertException {
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			wikiText.getBytes("UTF-8")));
+		final Module interfaceModule = DataFactory.getInstance().
+				createInterface("foo.jhi");
+		Main.process(wiki, interfaceModule);
+	}
+
+	public void testExpectNoErrorsAndGetNone() throws Exception {
+		process("<jh>\nkind (formula)\n</jh>\n");
+	}
+
+	public void testExpectNoErrorsAndGetOne() throws Exception {
+		try {
+			process("<jh>\nkind ness and peace\n</jh>\n");
+			fail();
+		}
+		catch (JHilbertException e) {
+			assertEquals(" kind ness Feed error: Expected beginning of LISP s-expression",
+					e.getMessage());
+		}
+	}
+
+	public void testExpectErrorAndGetIt() throws Exception {
+		process("{{error expected|Kind not found}}\n" +
+			"<jh>\nterm (formula (true))\n</jh>\n");
+	}
+
+	// Need to follow causes recursively, as long as they are JHilbertExceptions
+//	public void testExpectErrorNested() throws Exception {
+//		process("{{error expected|Proof does not verify: foo}}\n" +
+//			"<jh>\nterm (formula (true))\n</jh>\n");
+//	}
+
+	public void testExpectErrorAndGetAnother() throws Exception {
+		try {
+			process("{{error expected|howzzzat}}\n" +
+				"<jh>\nterm (formula (true))\n</jh>\n");
+			fail();
+		}
+		catch (JHilbertException e) {
+			assertEquals("expected error:\n" +
+				"  howzzzat\n" +
+				"but got:\n" +
+				"   term ( formula Kind not found: (cause unknown)",
+				e.getMessage());
+		}
+	}
+
+	public void testExpectMultipleErrors() throws Exception {
+		try {
+			process("{{error expected|boring file}}\n" +
+				"{{error expected|too much in one file}}\n");
+			fail();
+		}
+		catch (JHilbertException e) {
+			assertEquals("can only expect one error per file currently",
+				e.getMessage());
+		}
 	}
 
 }

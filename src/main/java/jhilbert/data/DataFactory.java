@@ -64,6 +64,17 @@ public abstract class DataFactory {
 		}
 	}
 
+	public final Module createProofModule() {
+		return createModule("");
+	}
+
+	public final Module createInterface(String name) {
+		if (name == null || "".equals(name)) {
+			throw new IllegalArgumentException("must give a name to an interface");
+		}
+		return createModule(name);
+	}
+
 	/**
 	 * Creates a new {@link Module} with the specified name and revision
 	 * number.

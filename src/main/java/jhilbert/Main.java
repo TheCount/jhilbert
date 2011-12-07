@@ -162,28 +162,57 @@ public final class Main {
 	}
 
 	private static void processWikiFile(String inputFileName)
-	  throws IOException, ScannerException, CommandException {
+	  throws IOException, JHilbertException {
 		if (isInterface(inputFileName)) {
 			logger.info("Processing interface " + inputFileName);
 
-			final Module mainInterface = DataFactory.getInstance().createModule(inputFileName);
-			final TokenFeed tokenFeed = ScannerFactory
-				.getInstance().createTokenFeed(WikiInputStream.create(inputFileName));
-			CommandFactory.getInstance().processCommands(mainInterface, tokenFeed);
+			WikiInputStream wiki = WikiInputStream.create(inputFileName);
+			final Module mainInterface = DataFactory.getInstance().
+				createInterface(inputFileName);
+			process(wiki, mainInterface);
 			logger.info("File processed successfully");
 		}
 		else if (isProofModule(inputFileName)) {
 			logger.info("Processing proof module " + inputFileName);
 
-			final Module mainModule = DataFactory.getInstance().createModule("");
-			final TokenFeed tokenFeed = ScannerFactory
-				.getInstance().createTokenFeed(WikiInputStream.create(inputFileName));
-			CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
+			WikiInputStream wiki = WikiInputStream.create(inputFileName);
+			final Module mainModule = DataFactory.getInstance().createProofModule();
+			process(wiki, mainModule);
 			logger.info("File processed successfully");
 		}
 		else {
 			logger.fatal("Not sure whether file is an interface or a proof module");
 			logger.fatal("File was " + inputFileName);
+		}
+	}
+
+	static void process(WikiInputStream wiki, final Module module)
+			throws JHilbertException {
+		String expectedError;
+		if (wiki.expectedErrors().size() > 1) {
+			throw new JHilbertException("can only expect one error per file currently");
+		}
+		else if (wiki.expectedErrors().size() == 1) {
+			expectedError = wiki.expectedErrors().get(0);
+		}
+		else {
+			expectedError = null;
+		}
+
+		final TokenFeed tokenFeed = ScannerFactory.getInstance().createTokenFeed(wiki);
+		try {
+			CommandFactory.getInstance().processCommands(module, tokenFeed);
+		}
+		catch (JHilbertException e) {
+			if (expectedError != null) {
+				if (!e.messageMatches(expectedError)) {
+					throw new JHilbertException("expected error:\n  " + expectedError +
+						"\nbut got:\n  " + e.getMessage());
+				}
+			}
+			else {
+				throw e;
+			}
 		}
 	}
 
@@ -200,7 +229,7 @@ public final class Main {
 	private static void processProofModule(String inputFileName)
 			throws ScannerException, FileNotFoundException, CommandException {
 		logger.info("Processing file " + inputFileName);
-		final Module mainModule = DataFactory.getInstance().createModule("");
+		final Module mainModule = DataFactory.getInstance().createProofModule();
 		final TokenFeed tokenFeed = ScannerFactory
 			.getInstance().createTokenFeed(new FileInputStream(inputFileName));
 		CommandFactory.getInstance().processCommands(mainModule, tokenFeed);
