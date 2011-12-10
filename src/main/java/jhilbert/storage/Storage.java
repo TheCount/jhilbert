@@ -40,7 +40,7 @@ public abstract class Storage {
 	/**
 	 * Instance.
 	 */
-	private static final Storage instance;
+	private static Storage instance;
 
 	/**
 	 * Choose instance.
@@ -71,6 +71,10 @@ public abstract class Storage {
 	 */
 	public static Storage getInstance() {
 		return instance;
+	}
+
+	public static void setInstance(Storage storage) {
+		instance = storage;
 	}
 
 	/**

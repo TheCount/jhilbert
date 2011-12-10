@@ -56,6 +56,9 @@ public class JHilbertException extends Exception {
 		if (expectedError.equals(getMessage())) {
 			return true;
 		}
+		else if (getCause() instanceof JHilbertException) {
+			return ((JHilbertException) getCause()).messageMatches(expectedError);
+		}
 		else if (null != getCause()) {
 			return expectedError.equals(getCause().getMessage());
 		}

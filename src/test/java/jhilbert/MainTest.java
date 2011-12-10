@@ -31,6 +31,8 @@ import java.io.UnsupportedEncodingException;
 import jhilbert.data.DataFactory;
 import jhilbert.data.Module;
 import jhilbert.scanners.WikiInputStream;
+import jhilbert.storage.MemoryStorage;
+import jhilbert.storage.Storage;
 import junit.framework.TestCase;
 import static jhilbert.Main.isInterface;
 import static jhilbert.Main.isProofModule;
@@ -81,10 +83,31 @@ public class MainTest extends TestCase {
 	}
 
 	// Need to follow causes recursively, as long as they are JHilbertExceptions
-//	public void testExpectErrorNested() throws Exception {
-//		process("{{error expected|Proof does not verify: foo}}\n" +
-//			"<jh>\nterm (formula (true))\n</jh>\n");
-//	}
+	public void testExpectErrorNested() throws Exception {
+		MemoryStorage storage = new MemoryStorage();
+		storage.store("Interface:logic",
+			"kind (formula)" +
+			"var (formula p q)" +
+			"term (formula (→ formula formula))" +
+			"stmt (AntecedentIntroduction () () (p → (q → p)))"
+		);
+		Storage.setInstance(storage);
+
+		// Hmm, do we want
+		// {{error expected|Proof does not verify: Consequent does not match proof result}}
+		// to work too?
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			("{{error expected|Consequent does not match proof result}}\n" +
+			"<jh>\n" +
+			"import (LOGIC Interface:logic () ())" +
+			"var (formula r s)\n" +
+			"thm (invalid () () ((r → s) → r) (\n" +
+            "  r s AntecedentIntroduction\n" +
+            "))\n" +
+			"</jh>\n").getBytes("UTF-8")));
+		final Module module = DataFactory.getInstance().createProofModule();
+		Main.process(wiki, module);
+	}
 
 	public void testExpectErrorAndGetAnother() throws Exception {
 		try {
