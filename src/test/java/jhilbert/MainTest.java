@@ -109,6 +109,32 @@ public class MainTest extends TestCase {
 		Main.process(wiki, module);
 	}
 
+	/* Errors have two wordings. One goes in the exception. One is passed
+	   to reject, which is what is shown to the user (in the case of --wiki,
+	   both are currently shown but that might be overkill). */
+	public void testWordingFromReject() throws Exception {
+		MemoryStorage storage = new MemoryStorage();
+		storage.store("Interface:logic",
+			"kind (formula)" +
+			"var (formula p q)" +
+			"term (formula (→ formula formula))" +
+			"stmt (AntecedentIntroduction () () (p → (q → p)))"
+		);
+		Storage.setInstance(storage);
+
+		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
+			("{{error expected|Consequent of theorem does not match proof result}}\n" +
+			"<jh>\n" +
+			"import (LOGIC Interface:logic () ())" +
+			"var (formula r s)\n" +
+			"thm (invalid () () ((r → s) → r) (\n" +
+            "  r s AntecedentIntroduction\n" +
+            "))\n" +
+			"</jh>\n").getBytes("UTF-8")));
+		final Module module = DataFactory.getInstance().createProofModule();
+		Main.process(wiki, module);
+	}
+
 	public void testExpectErrorAndGetAnother() throws Exception {
 		try {
 			process("{{error expected|howzzzat}}\n" +

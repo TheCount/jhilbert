@@ -40,6 +40,7 @@ import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
 import jhilbert.scanners.WikiInputStream;
+import jhilbert.scanners.impl.WikiStreamTokenFeed;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.ConsoleAppender;
@@ -199,13 +200,14 @@ public final class Main {
 			expectedError = null;
 		}
 
-		final TokenFeed tokenFeed = ScannerFactory.getInstance().createTokenFeed(wiki);
+		final WikiStreamTokenFeed tokenFeed = new WikiStreamTokenFeed(wiki);
 		try {
 			CommandFactory.getInstance().processCommands(module, tokenFeed);
 		}
 		catch (JHilbertException e) {
 			if (expectedError != null) {
-				if (!e.messageMatches(expectedError)) {
+				if (!e.messageMatches(expectedError)
+						&& !tokenFeed.hasRejection(expectedError)) {
 					throw new JHilbertException("expected error:\n  " + expectedError +
 						"\nbut got:\n  " + e.getMessage());
 				}

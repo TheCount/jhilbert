@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 /**
  * A token feed for stream I/O.
  */
-final class StreamTokenFeed extends AbstractTokenFeed {
+class StreamTokenFeed extends AbstractTokenFeed {
 
 	/**
 	 * Logger for this class.
