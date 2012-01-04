@@ -193,7 +193,7 @@ class JHilbert {
 			self::writeCommand( self::$socket, self::COMMAND_MOD );
 			self::readMessage( self::$socket, $rc, $msg );
 			if ( $rc !== self::RESPONSE_MORE ) {
-				throw new JHilbertException( wfMessage( 'jhilbert-badresponse', $rc, $msg ) ); // FIXME: define message
+				throw new JHilbertException( wfMessage( 'jhilbert-badresponse', $rc, $msg ) );
 			}
 			self::$socketInTextMode = true;
 		}
@@ -219,7 +219,7 @@ class JHilbert {
 			self::writeCommand( self::$socket, self::COMMAND_IFACE, $wgTitle->getPrefixedDBKey(), -1);
 			self::readMessage( self::$socket, $rc, $msg );
 			if ( $rc !== self::RESPONSE_MORE ) {
-				throw new JHilbertException( wfMessage( 'jhilbert-badresponse', $rc, $msg ) ); // FIXME: define message
+				throw new JHilbertException( wfMessage( 'jhilbert-badresponse', $rc, $msg ) );
 			}
 			self::$socketInTextMode = true;
 		}
@@ -239,11 +239,11 @@ class JHilbert {
 				$errstr,
 				self::DEFAULT_SOCKET_TIMEOUT ); // FIXME: make defaults configurable
 			if ( !$socket ) {
-				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, $errstr ) ); // FIXME: define message
+				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, $errstr ) );
 			}
 			self::readMessage( $socket, $rc, $msg );
 			if ( $rc !== self::RESPONSE_OK ) {
-				throw new JHilbertException( wfMessage( 'jhilbert-errinit', $rc, $msg ) ); // FIXME: define message
+				throw new JHilbertException( wfMessage( 'jhilbert-errinit', $rc, $msg ) );
 			}
 			self::$socket = $socket;
 			self::$socketInTextMode = false;
@@ -263,11 +263,11 @@ class JHilbert {
 		$bytes = self::readBytes( $socket, 3 );
 		$size = ( ord( $bytes[0] ) << 16 ) | ( ord( $bytes[1] ) << 8 ) | ( ord( $bytes[2] ) );
 		if ( $size === 0 ) {
-			throw new JHilbertException( wfMessage( 'jhilbert-zeromsgsize' ) ); // FIXME: define message
+			throw new JHilbertException( wfMessage( 'jhilbert-zeromsgsize' ) );
 		}
 		$rc = fgetc( $socket );
 		if ( $rc === false ) {
-			throw new JHilbertException( wfMessage( 'jhilbert-noresponse' ) ); // FIXME: define message
+			throw new JHilbertException( wfMessage( 'jhilbert-noresponse' ) );
 		}
 		$rc = ord( $rc );
 		$msg = self::readBytes( $socket, $size - 1 );
@@ -289,13 +289,13 @@ class JHilbert {
 			$read = fread( $socket, $length );
 			if ( $read === false ) {
 				$errno = socket_last_error( $socket );
-				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) ); // FIXME: define message
+				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) );
 			}
 			$result .= $read;
 			$length -= strlen( $read );
 		}
 		if ( $length > 0 ) {
-			throw new JHilbertException( wfMessage( 'jhilbert-earlyeof' ) ); // FIXME: define message
+			throw new JHilbertException( wfMessage( 'jhilbert-earlyeof' ) );
 		}
 		return $result;
 	}
@@ -328,7 +328,7 @@ class JHilbert {
 		}
 		$length = strlen( $command );
 		if ( $length >= ( 1 << 24 ) ) {
-			throw new JHilbertException( wfMessage( 'jhilbert-msgtoolong' ) ); // FIXME: define message
+			throw new JHilbertException( wfMessage( 'jhilbert-msgtoolong' ) );
 		}
 		$command = chr( $length >> 16 )
 			. chr( $length >> 8 )
@@ -338,10 +338,10 @@ class JHilbert {
 		$written = fwrite( $socket, $command, $length );
 		if ( $written === false ) {
 			$errno = socket_last_error( $socket );
-			throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) ); // FIXME: define message
+			throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) );
 		}
 		if ( $written !== $length ) {
-			throw new JHilbertException( wfMessage( 'jhilbert-notallwritten' ) ); // FIXME: define message
+			throw new JHilbertException( wfMessage( 'jhilbert-notallwritten' ) );
 		}
 	}
 
@@ -355,14 +355,14 @@ class JHilbert {
 			self::writeCommand( self::$socket, self::COMMAND_QUIT );
 			self::readMessage( self::$socket, $rc, $msg );
 			if ( $rc !== self::RESPONSE_GOODBYE ) {
-				throw new JHilbertException( wfMessage( 'jhilbert-nogoodbye', $rc, $msg ) ); // FIXME: define message
+				throw new JHilbertException( wfMessage( 'jhilbert-nogoodbye', $rc, $msg ) );
 			}
 			$rc = fclose( self::$socket );
 			self::$socket = null;
 			self::$socketInTextMode = null;
 			if ( !$rc ) {
 				$errno = socket_last_error();
-				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) ); // FIXME: define message
+				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) );
 			}
 		}
 	}
@@ -388,7 +388,7 @@ class JHilbert {
 						strip_tags( $msg )
 					);
 				} else {
-					throw new JHilbertException( wfMessage( 'jhilbert-finisherr', $msg ) ); // FIXME: define message
+					throw new JHilbertException( wfMessage( 'jhilbert-finisherr', $rc, $msg ) );
 				}
 			}
 		} catch ( JHilbertException $e ) {
@@ -412,7 +412,7 @@ class JHilbert {
 		self::writeCommand( self::$socket, self::COMMAND_DEL, $locator, $revision );
 		self::readMessage( self::$socket, $rc, $msg );
 		if ( $rc !== self::RESPONSE_OK ) {
-			throw new JHilbertException( wfMessage( 'jhilbert-deletionfailed', $locator, $revision, $msg ) );
+			throw new JHilbertException( wfMessage( 'jhilbert-deletionfailed', $locator, $revision, $rc, $msg ) );
 		}
 	}
 
