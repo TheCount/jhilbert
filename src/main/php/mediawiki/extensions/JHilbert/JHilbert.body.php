@@ -372,6 +372,8 @@ class JHilbert {
 	 *
 	 * @param &$parser Parser MediaWiki parser.
 	 * @param &$text string Page text.
+	 *
+	 * @return bool always true.
 	 */
 	public static function beforeTidy( Parser &$parser, &$text ) {
 		try {
@@ -391,6 +393,54 @@ class JHilbert {
 			}
 		} catch ( JHilbertException $e ) {
 			$text .= "$e";
+		}
+
+		return true;
+	}
+
+	/**
+	 * Request deletion of the specified locator and revision from the server.
+	 *
+	 * @param $locator string Module locator.
+	 * @param $revision integer Revision id of the module's revision to be
+	 * 	deleted. Must be gerater than zero.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function requestDeletion( $locator, $revision ) {
+		self::initSocket();
+		self::writeCommand( self::$socket, self::COMMAND_DEL, $locator, $revision );
+		self::readMessage( self::$socket, $rc, $msg );
+		if ( $rc !== self::RESPONSE_OK ) {
+			throw new JHilbertException( wfMessage( 'jhilbert-deletionfailed', $locator, $revision, $msg ) );
+		}
+	}
+
+	/**
+	 * Deletes all revisions of a module from the server after deletion
+	 * of the WikiPage belonging to the module.
+	 *
+	 * @param &$article WikiPage which was deleted.
+	 * @param &$user User who deleted the article.
+	 * @param $reason string Reason for deletion.
+	 * @param $id integer ID of the revision which was deleted.
+	 *
+	 * @return bool always true.
+	 */
+	public static function articleDeleteComplete( WikiPage &$article, User &$user, $reason, $id ) {
+		$locator = $article->getTitle()->getPrefixedDBKey();
+		for( $rev = $article->getRevision(); $rev != null; $rev = $rev->getPrevious() ) {
+			try {
+				self::requestDeletion( $locator, $rev->getId() );
+			} catch ( JHilbertException $e ) {
+				/* There are many legitimate reasons why deletion fails, so just log the failure */
+				self::debug( "Deletion of $locator failed: $e\n" );
+			}
+		}
+		try {
+			self::closeSocket();
+		} catch ( JHilbertException $e ) {
+			self::debug( "Closing the socket after a delete operation failed: $e\n" );
 		}
 
 		return true;
