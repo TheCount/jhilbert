@@ -127,7 +127,7 @@ class JHilbert {
 
 			switch ( self::getRenderMode() ) {
 			case self::RENDER_PROOF:
-				$html = 'Proof module rendering not yet implemented';
+				self::initSocketForProofText();
 				break;
 			case self::RENDER_INTERFACE:
 				self::initSocketForInterfaceText();
@@ -178,6 +178,25 @@ class JHilbert {
 		}
 
 		return $mode;
+	}
+
+	/**
+	 * Initialises the JHilbert communication socket for
+	 * proof text.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function initSocketForProofText() {
+		self::initSocket();
+		if ( !self::$socketInTextMode ) {
+			/* MOD command. */
+			self::writeCommand( self::$socket, self::COMMAND_MOD );
+			self::readMessage( self::$socket, $rc, $msg );
+			if ( $rc !== self::RESPONSE_MORE ) {
+				throw new JHilbertException( wfMessage( 'jhilbert-badresponse', $rc, $msg ) ); // FIXME: define message
+			}
+			self::$socketInTextMode = true;
+		}
 	}
 
 	/**
