@@ -62,16 +62,17 @@ class JHilbertException extends Exception {
  */
 class JHilbert {
 	/**
-	 * Default server location.
+	 * Default server configuration.
 	 */
 	const DEFAULT_DAEMON_IP = '127.0.0.1';
 	const DEFAULT_DAEMON_PORT = 3141;
+	const DEFAULT_SOCKET_TIMEOUT = 10; // in seconds
 
 	/**
 	 * Rendering modes.
 	 */
 	const RENDER_NOTHING = 0;
-	const RENDER_MODULE = 1;
+	const RENDER_PROOF = 1;
 	const RENDER_INTERFACE = 2;
 
 	/**
@@ -98,6 +99,16 @@ class JHilbert {
 	const RESPONSE_SERVER_ERR = 0x50;
 
 	/**
+	 * Server socket.
+	 */
+	private static $socket = null;
+
+	/**
+	 * Is the server socket currently in text mode?
+	 */
+	private static $socketInTextMode = null;
+
+	/**
 	 * Verifies the JHilbert code in a <jh>…</jh> tag.
 	 *
 	 * @param $code string JHilbert code.
@@ -112,17 +123,27 @@ class JHilbert {
 	public static function render( $code, array $args, Parser $parser, PPFrame $frame ) {
 		try {
 			/* render according to render mode */
+			$renderMode = self::getRenderMode();
+
 			switch ( self::getRenderMode() ) {
-			case self::RENDER_MODULE:
+			case self::RENDER_PROOF:
 				$html = 'Proof module rendering not yet implemented';
 				break;
 			case self::RENDER_INTERFACE:
-				$html = 'Interface module rendering not yet implemented';
+				self::initSocketForInterfaceText();
 				break;
 			default:
-				$html = Html::rawElement( 'pre', array(), strip_tags( $code ) );
-				break;
+				return Html::rawElement( 'pre', array(), strip_tags( $code ) );
 			}
+
+			self::writeCommand( self::$socket, self::COMMAND_TEXT, trim( $code, "\r\n" ) );
+			self::readMessage( self::$socket, $rc, $msg );
+
+			$html = Html::rawElement(
+				'div',
+				array( 'class' => 'jhilbert' ),
+				$msg /* sanitised by JHilbert server */
+			);
 		} catch ( JHilbertException $e ) {
 			$html = "$e";
 		}
@@ -142,7 +163,7 @@ class JHilbert {
 			switch ( $wgTitle->getNamespace() ) {
 			case 0:
 			case NS_USER_MODULE:
-				$mode = self::RENDER_MODULE;
+				$mode = self::RENDER_PROOF;
 				break;
 			case NS_INTERFACE:
 			case NS_USER_INTERFACE:
@@ -158,4 +179,160 @@ class JHilbert {
 
 		return $mode;
 	}
+
+	/**
+	 * Initialises the JHilbert communication socket for
+	 * interface text.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function initSocketForInterfaceText() {
+		global $wgTitle;
+
+		self::initSocket();
+		if ( !self::$socketInTextMode ) {
+			if ( !is_object( $wgTitle ) ) {
+				throw new MWException( "No global title object present. This should not happen.\n" );
+			}
+			/* IFACE command.
+			 * Always send -1 as version number. JHilbert storage will obtain the correct version number through the API
+			 */
+			self::writeCommand( self::$socket, self::COMMAND_IFACE, $wgTitle->getPrefixedDBKey(), -1);
+			self::readMessage( self::$socket, $rc, $msg );
+			if ( $rc !== self::RESPONSE_MORE ) {
+				throw new JHilbertException( wfMessage( 'jhilbert-badresponse', $rc, $msg ) ); // FIXME: define message
+			}
+			self::$socketInTextMode = true;
+		}
+	}
+
+	/**
+	 * Initialises the JHilbert communication socket if necessary.
+	 * The socket will be ready to accept commands.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function initSocket() {
+		if ( self::$socket === null  ) {
+			$socket = fsockopen( self::DEFAULT_DAEMON_IP,
+				self::DEFAULT_DAEMON_PORT,
+				$errno,
+				$errstr,
+				self::DEFAULT_SOCKET_TIMEOUT ); // FIXME: make defaults configurable
+			if ( !$socket ) {
+				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, $errstr ) ); // FIXME: define message
+			}
+			self::readMessage( $socket, $rc, $msg );
+			if ( $rc !== self::RESPONSE_OK ) {
+				throw new JHilbertException( wfMessage( 'jhilbert-errinit', $rc, $msg ) ); // FIXME: define message
+			}
+			self::$socket = $socket;
+			self::$socketInTextMode = false;
+		}
+	}
+
+	/**
+	 * Reads a message from the JHilbert server.
+	 *
+	 * @param $socket resource Socket to talk to the JHilbert server.
+	 * @param &$rc integer Response code.
+	 * @param &$msg string response message.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function readMessage( $socket, &$rc, &$msg ) {
+		$bytes = self::readBytes( $socket, 3 );
+		$size = ( ord( $bytes[0] ) << 16 ) | ( ord( $bytes[1] ) << 8 ) | ( ord( $bytes[2] ) );
+		if ( $size === 0 ) {
+			throw new JHilbertException( wfMessage( 'jhilbert-zeromsgsize' ) ); // FIXME: define message
+		}
+		$rc = fgetc( $socket );
+		if ( $rc === false ) {
+			throw new JHilbertException( wfMessage( 'jhilbert-noresponse' ) ); // FIXME: define message
+		}
+		$rc = ord( $rc );
+		$msg = self::readBytes( $socket, $size - 1 );
+	}
+
+	/**
+	 * Reads a byte array from the JHilbert server.
+	 *
+	 * @param $socket resource Socket to talk to the JHilbert server.
+	 * @param $length integer How many bytes to read.
+	 *
+	 * @return string Byte array.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function readBytes( $socket, $length ) {
+		$result = '';
+		while ( ( $length > 0 ) && ( !feof( $socket ) ) ) {
+			$read = fread( $socket, $length );
+			if ( $read === false ) {
+				$errno = socket_last_error( $socket );
+				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) ); // FIXME: define message
+			}
+			$result .= $read;
+			$length -= strlen( $read );
+		}
+		if ( $length > 0 ) {
+			throw new JHilbertException( wfMessage( 'jhilbert-earlyeof' ) ); // FIXME: define message
+		}
+		return $result;
+	}
+
+	/**
+	 * Writes a command to the JHilbert server.
+	 *
+	 * @param $socket resource Socket to talk to the JHilbert server.
+	 * @param $commandCode integer Command code.
+	 * @param $msg string Ancillary message. Optional.
+	 * @param $id integer Ancillary id. Optional.
+	 * 	Must be >= -1 if specified.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function writeCommand( $socket, $commandCode, $msg = '', $id = -2 ) {
+		/* Build command: length code msg id */
+		$command = $commandCode . $msg;
+		if ( $id >= -1 ) {
+			/* Build java long integer */
+			if ( $id === -1 ) {
+				$command .= "\xff\xff\xff\xff\xff\xff\xff\xff";
+			} else {
+				$command .= "\0\0\0\0"
+					. chr( $id >> 24 )
+					. chr( $id >> 16 )
+					. chr( $id >> 8 )
+					. chr( $id );
+			}
+		}
+		$length = strlen( $command );
+		if ( $length >= ( 1 << 24 ) ) {
+			throw new JHilbertException( wfMessage( 'jhilbert-msgtoolong' ) ); // FIXME: define message
+		}
+		$command = chr( $length >> 16 )
+			. chr( $length >> 8 )
+			. chr( $length )
+			. $command;
+		$length += 3;
+		$written = fwrite( $socket, $command, $length );
+		if ( $written === false ) {
+			$errno = socket_last_error( $socket );
+			throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) ); // FIXME: define message
+		}
+		if ( $written !== $length ) {
+			throw new JHilbertException( wfMessage( 'jhilbert-notallwritten' ) ); // FIXME: define message
+		}
+	}
+
+	/**
+	 * Writes the specified message to the jh debug log.
+	 *
+	 * @param $msg string message to log.
+	 */
+	private static function debug( $msg ) {
+		wfDebugLog( 'jh', $msg );
+	}
+
 }
