@@ -54,6 +54,7 @@ $wgExtensionCredits['parserhooks'][] = array(
  * Setup
  */
 $wgHooks['ParserFirstCallInit'][] = 'efJHilbertExtension';
+$wgHooks['ParserBeforeTidy'][] = 'JHilbert::beforeTidy';
 $wgExtensionMessagesFiles['JHilbert'] = dirname( __FILE__ ) . '/JHilbert.i18n.php';
 $wgAutoloadClasses['JHilbert'] = dirname( __FILE__ ) . '/JHilbert.body.php';
 $wgAutoloadClasses['JHilbertException'] = dirname( __FILE__ ) . '/JHilbert.body.php';

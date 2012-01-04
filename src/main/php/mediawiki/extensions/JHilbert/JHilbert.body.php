@@ -346,6 +346,57 @@ class JHilbert {
 	}
 
 	/**
+	 * Closes the JHilbert communication socket if it is open.
+	 *
+	 * @throws JHilbertException if an error occurs.
+	 */
+	private static function closeSocket() {
+		if ( self::$socket !== null ) {
+			self::writeCommand( self::$socket, self::COMMAND_QUIT );
+			self::readMessage( self::$socket, $rc, $msg );
+			if ( $rc !== self::RESPONSE_GOODBYE ) {
+				throw new JHilbertException( wfMessage( 'jhilbert-nogoodbye', $rc, $msg ) ); // FIXME: define message
+			}
+			$rc = fclose( self::$socket );
+			self::$socket = null;
+			self::$socketInTextMode = null;
+			if ( !$rc ) {
+				$errno = socket_last_error();
+				throw new JHilbertException( wfMessage( 'jhilbert-sockerr', $errno, socket_strerror( $errno ) ) ); // FIXME: define message
+			}
+		}
+	}
+
+	/**
+	 * Finishes JHilbert communication if necessary.
+	 *
+	 * @param &$parser Parser MediaWiki parser.
+	 * @param &$text string Page text.
+	 */
+	public static function beforeTidy( Parser &$parser, &$text ) {
+		try {
+			if ( self::$socketInTextMode ) { /* There were jh tags in interface/proof module rendering mode */
+				self::writeCommand( self::$socket, self::COMMAND_FINISH );
+				self::readMessage( self::$socket, $rc, $msg );
+				self::closeSocket();
+				if ( $rc === self::RESPONSE_OK ) {
+					$text .= Html::rawElement(
+						'span',
+						array( 'class' => 'success' ),
+						strip_tags( $msg )
+					);
+				} else {
+					throw new JHilbertException( wfMessage( 'jhilbert-finisherr', $msg ) ); // FIXME: define message
+				}
+			}
+		} catch ( JHilbertException $e ) {
+			$text .= "$e";
+		}
+
+		return true;
+	}
+
+	/**
 	 * Writes the specified message to the jh debug log.
 	 *
 	 * @param $msg string message to log.
