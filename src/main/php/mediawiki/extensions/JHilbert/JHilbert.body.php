@@ -447,6 +447,37 @@ class JHilbert {
 	}
 
 	/**
+	 * Deletes all revisions of a module from the server after a page has
+	 * been moved in its place.
+	 *
+	 * @param &$title Title Old title.
+	 * @param &$newtitle Title New title.
+	 * @param &$user User who moved the page.
+	 * @param $oldid integer Page ID of the moved page.
+	 * @param $newid integer Page ID of the created redirect.
+	 *
+	 * @return bool always true.
+	 */
+	public static function titleMoveComplete( Title &$title, Title &$newtitle, User &$user, $oldid, $newid ) {
+		$locator = $newtitle->getPrefixedDBKey();
+		for ( $rev = $newtitle->getFirstRevision(); $rev != null; $rev = $rev->getNext() ) {
+			try {
+				self::requestDeletion( $locator, $rev->getId() );
+			} catch ( JHilbertException $e ) {
+				/* There are many legitimate reasons why deletion fails, so just log the failure */
+				self::debug( "Deletion of $locator failed: $e\n" );
+			}
+		}
+		try {
+			self::closeSocket();
+		} catch ( JHilbertException $e ) {
+			self::debug( "Closing the socket after a delete operation failed: $e\n" );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Writes the specified message to the jh debug log.
 	 *
 	 * @param $msg string message to log.
