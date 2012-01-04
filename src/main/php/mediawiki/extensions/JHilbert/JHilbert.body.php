@@ -478,6 +478,34 @@ class JHilbert {
 	}
 
 	/**
+	 * Deletes all revisions of a module from the server after two
+	 * article histories have been merges.
+	 *
+	 * @param $targetTitle Title of target page.
+	 * @param $destTitle Title of destination page.
+	 *
+	 * @return bool always true.
+	 */
+	public static function articleMergeComplete( $targetTitle, $destTitle ) {
+		$locator = $destTitle->getPrefixedDBKey();
+		for ( $rev = $destTitle->getFirstRevision(); $rev != null; $rev = $rev->getNext() ) {
+			try {
+				self::requestDeletion( $locator, $rev->getId() );
+			} catch ( JHilbertException $e ) {
+				/* There are many legitimate reasons why deletion fails, so just log the failure */
+				self::debug( "Deletion of $locator failed: $e\n" );
+			}
+		}
+		try {
+			self::closeSocket();
+		} catch ( JHilbertException $e ) {
+			self::debug( "Closing the socket after a delete operation failed: $e\n" );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Writes the specified message to the jh debug log.
 	 *
 	 * @param $msg string message to log.

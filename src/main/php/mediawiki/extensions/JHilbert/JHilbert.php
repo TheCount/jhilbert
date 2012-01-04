@@ -57,6 +57,7 @@ $wgHooks['ParserFirstCallInit'][] = 'efJHilbertExtension';
 $wgHooks['ParserBeforeTidy'][] = 'JHilbert::beforeTidy';
 $wgHooks['ArticleDeleteComplete'][] = 'JHilbert::articleDeleteComplete';
 $wgHooks['TitleMoveComplete'][] = 'JHilbert::titleMoveComplete';
+$wgHooks['ArticleMergeComplete'][] = 'JHilbert::articleMergeComplete';
 $wgExtensionMessagesFiles['JHilbert'] = dirname( __FILE__ ) . '/JHilbert.i18n.php';
 $wgAutoloadClasses['JHilbert'] = dirname( __FILE__ ) . '/JHilbert.body.php';
 $wgAutoloadClasses['JHilbertException'] = dirname( __FILE__ ) . '/JHilbert.body.php';
