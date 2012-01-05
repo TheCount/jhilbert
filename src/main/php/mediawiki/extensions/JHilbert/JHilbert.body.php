@@ -113,8 +113,8 @@ class JHilbert {
 	 *
 	 * @param $code string JHilbert code.
 	 * @param $args array of jh tag attributes (ignored).
-	 * @param $parser Parser of MediaWiki (ignored).
-	 * @param $frame PPFrame expansion frame (ignored).
+	 * @param $parser Parser of MediaWiki.
+	 * @param $frame PPFrame expansion frame.
 	 *
 	 * @return string Result HTML.
 	 *
@@ -142,7 +142,7 @@ class JHilbert {
 			$html = Html::rawElement(
 				'div',
 				array( 'class' => 'jhilbert' ),
-				$msg /* sanitised by JHilbert server */
+				$parser->recursiveTagParse( $msg, $frame )
 			);
 		} catch ( JHilbertException $e ) {
 			$html = "$e";

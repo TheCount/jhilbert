@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStream;
 
+import jhilbert.data.Module;
 import jhilbert.scanners.ScannerException;
 
 /**
@@ -49,10 +50,10 @@ public final class ScannerFactory extends jhilbert.scanners.ScannerFactory {
 		return new IOTokenFeed(in, out);
 	}
 
-	public @Override MediaWikiTokenFeed createTokenFeed(final InputStream in, final BufferedOutputStream out) {
+	public @Override MediaWikiTokenFeed createTokenFeed(final InputStream in, final BufferedOutputStream out, final Module module) {
 		assert (in != null): "Supplied input stream is null";
 		assert (out != null): "Supplied output stream is null";
-		return new MediaWikiTokenFeed(in, out);
+		return new MediaWikiTokenFeed(in, out, module);
 	}
 
 }

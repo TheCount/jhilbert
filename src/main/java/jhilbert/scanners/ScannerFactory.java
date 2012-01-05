@@ -29,6 +29,8 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.InputStream;
 
+import jhilbert.data.Module;
+
 /**
  * A factory class for creating {@link TokenFeed}s.
  */
@@ -76,7 +78,8 @@ public abstract class ScannerFactory {
 	 *
 	 * @param in input stream.
 	 * @param out buffered output stream.
+	 * @param module module being built.
 	 */
-	public abstract TokenFeed createTokenFeed(InputStream in, BufferedOutputStream out);
+	public abstract TokenFeed createTokenFeed(InputStream in, BufferedOutputStream out, Module module);
 
 }

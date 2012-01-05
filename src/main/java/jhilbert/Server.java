@@ -406,7 +406,7 @@ public class Server extends Thread {
 						return;
 					case MOD_CMD:
 						final Module proofModule = DataFactory.getInstance().createModule("", -1);
-						final TokenFeed proofFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
+						final TokenFeed proofFeed = ScannerFactory.getInstance().createTokenFeed(in, out, proofModule);
 						try {
 							CommandFactory.getInstance().processCommands(proofModule, proofFeed);
 							writeAnswer(out, OK_RC, PROOF_MSG);
@@ -426,7 +426,7 @@ public class Server extends Thread {
 						}
 						final long version = decodeLong(msg, msgSize - 8);
 						final Module interfaceModule = DataFactory.getInstance().createModule(param, version);
-						final TokenFeed interfaceFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
+						final TokenFeed interfaceFeed = ScannerFactory.getInstance().createTokenFeed(in, out, interfaceModule);
 						try {
 							CommandFactory.getInstance().processCommands(interfaceModule, interfaceFeed);
 							writeAnswer(out, OK_RC, INTERFACE_MSG);
