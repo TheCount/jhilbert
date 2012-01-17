@@ -1,11 +1,3 @@
-*** IMPORTANT NOTICE ***
-
-The MediaWiki jh extension is deprecated and may not work with current versions
-of MediaWiki. Please use the JHilbert extension instead.
-
-*** IMPORTANT NOTICE ***
-
-
 JHilbert MediaWiki extension installation instructions
 ======================================================
 
@@ -21,12 +13,12 @@ already installed MediaWiki.
 
    # Begin code
 
-   define('NS_INTERFACE', 100);
-   define('NS_INTERFACE_TALK', 101);
-   define('NS_USER_MODULE', 102);
-   define('NS_USER_MODULE_TALK', 103);
-   define('NS_USER_INTERFACE', 104);
-   define('NS_USER_INTERFACE_TALK', 105);
+   define( 'NS_INTERFACE', 100 );
+   define( 'NS_INTERFACE_TALK', 101 );
+   define( 'NS_USER_MODULE', 102 );
+   define( 'NS_USER_MODULE_TALK', 103 );
+   define( 'NS_USER_INTERFACE', 104 );
+   define( 'NS_USER_INTERFACE_TALK', 105 );
 
    $wgExtraNamespaces[NS_INTERFACE] = 'Interface';
    $wgExtraNamespaces[NS_INTERFACE_TALK] = 'Interface_talk';
@@ -43,33 +35,35 @@ already installed MediaWiki.
 
    # Begin code
 
-   define('NS_USER_MODULE', NS_MAIN);
-   define('NS_USER_MODULE_TALK', NS_TALK);
-   define('NS_USER_INTERFACE', NS_INTERFACE);
-   define('NS_USER_INTERFACE_TALK', NS_INTERFACE_TALK);
+   define( 'NS_USER_MODULE', NS_MAIN );
+   define( 'NS_USER_MODULE_TALK', NS_TALK );
+   define( 'NS_USER_INTERFACE', NS_INTERFACE );
+   define( 'NS_USER_INTERFACE_TALK', NS_INTERFACE_TALK );
 
    # End code
 
 2. The JHilbert extension talks with a JHilbert server. You can start one with
 
-   java -jar jhilbert.jar -d
+   java -jar jhilbert.jar -d -t10000
 
    The -d flag instructs JHilbert to start a server on port 3141 as opposed to
    running standalone. You may want to add JHilbert to your system startup
    scripts so you don't have to start JHilbert manually every time.
+   The -t flag specifies the network timeout in milliseconds while talking
+   with the clients.
 
 3. The JHilbert server loads dependencies (interface modules) directly from
    your Wiki through the MediaWiki API. Hence you must enable the MediaWiki API
    at least for the local host. In a standard MediaWiki installation, the API
    is enabled.
 
-4. Finally, create a new subdirectory extensions/jh/ in your wikiroot and copy
-   the JHilbert PHP files there. You can activate the extension now by adding
-   the following code to your LocalSettings.php:
+4. Finally, create a new subdirectory extensions/JHilbert/ in your wikiroot and
+   copy the JHilbert PHP files there. You can activate the extension now by
+   adding the following code to your LocalSettings.php:
 
    # Begin code
 
-   require_once("$IP/extensions/jh/jh.setup.php");
+   require_once( "$IP/extensions/JHilbert/JHilbert.php" );
 
    # End code
 

@@ -178,11 +178,6 @@ public class Server extends Thread {
 	public static final Charset CHARSET = Charset.forName(ENCODING);
 
 	/**
-	 * Default socket timeout, in milliseconds.
-	 */
-	private static final int TIMEOUT = 5000;
-
-	/**
 	 * Maximum message size.
 	 */
 	private static final int MAX_MSG_SIZE = (1 << 24) - 1;
@@ -351,14 +346,28 @@ public class Server extends Thread {
 	 *
 	 * @param name thread name.
 	 * @param socket socket to talk with.
+	 * @param timeout socket timeout.
+	 *
+	 * @throws SocketException if a socket error occurs.
+	 */
+	public Server(final String name, final Socket socket, final int timeout) throws SocketException {
+		super(name);
+		this.socket = socket;
+		socket.setSoTimeout(timeout);
+		socket.setTcpNoDelay(true);
+	}
+
+	/**
+	 * Creates a new server thread object on the specified {@link Socket}.
+	 * The socket timeout is set to the default value {@link #DEFAULT_TIMEOUT}.
+	 *
+	 * @param name thread name.
+	 * @param socket socket to talk with.
 	 *
 	 * @throws SocketException if a socket error occurs.
 	 */
 	public Server(final String name, final Socket socket) throws SocketException {
-		super(name);
-		this.socket = socket;
-		socket.setSoTimeout(TIMEOUT);
-		socket.setTcpNoDelay(true);
+		this(name, socket, Main.DEFAULT_SOCKET_TIMEOUT);
 	}
 
 	/**
@@ -397,7 +406,7 @@ public class Server extends Thread {
 						return;
 					case MOD_CMD:
 						final Module proofModule = DataFactory.getInstance().createModule("", -1);
-						final TokenFeed proofFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
+						final TokenFeed proofFeed = ScannerFactory.getInstance().createTokenFeed(in, out, proofModule);
 						try {
 							CommandFactory.getInstance().processCommands(proofModule, proofFeed);
 							writeAnswer(out, OK_RC, PROOF_MSG);
@@ -417,7 +426,7 @@ public class Server extends Thread {
 						}
 						final long version = decodeLong(msg, msgSize - 8);
 						final Module interfaceModule = DataFactory.getInstance().createModule(param, version);
-						final TokenFeed interfaceFeed = ScannerFactory.getInstance().createTokenFeed(in, out);
+						final TokenFeed interfaceFeed = ScannerFactory.getInstance().createTokenFeed(in, out, interfaceModule);
 						try {
 							CommandFactory.getInstance().processCommands(interfaceModule, interfaceFeed);
 							writeAnswer(out, OK_RC, INTERFACE_MSG);

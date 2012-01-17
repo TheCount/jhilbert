@@ -29,10 +29,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
 
 import jhilbert.Server;
+import jhilbert.data.Module;
+import jhilbert.data.Name;
+import jhilbert.data.Symbol;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.Token;
+import jhilbert.scanners.TokenFeed;
 import jhilbert.utils.Io;
 
 /**
@@ -73,6 +81,11 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 	private final BufferedOutputStream out;
 
 	/**
+	 * Module being fed.
+	 */
+	private final Module module;
+
+	/**
 	 * Current char buffer.
 	 */
 	private CharBuffer charBuffer;
@@ -93,7 +106,12 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 	private final StringBuilder currentToken;
 
 	/**
-	 * Escapes special HTML characters.
+	 * Set of HTML IDs in use.
+	 */
+	private final Set<String> htmlIds;
+
+	/**
+	 * Escapes special HTML and Wiki characters.
 	 *
 	 * @param c character.
 	 *
@@ -117,6 +135,16 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 				return "&lt;";
 			case '>':
 				return "&gt;";
+			case '|':
+				return "&#124;";
+			case '[':
+				return "&#91;";
+			case ']':
+				return "&#93;";
+			case '{':
+				return "&#123;";
+			case '}':
+				return "&#125;";
 			default:
 				return Character.toString(c);
 		}
@@ -145,15 +173,18 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 	 *
 	 * @param in input stream.
 	 * @param out buffered output stream.
+	 * @param module module being built.
 	 */
-	MediaWikiTokenFeed(final InputStream in, final BufferedOutputStream out) {
+	MediaWikiTokenFeed(final InputStream in, final BufferedOutputStream out, final Module module) {
 		assert (in != null): "Supplied input stream is null";
 		assert (out != null): "Supplied output stream is null";
 		this.in = in;
 		this.out = out;
+		this.module = module;
 		charBuffer = null;
 		charBufferPos = -1;
 		currentToken = new StringBuilder();
+		htmlIds = new HashSet();
 	}
 
 	protected @Override Token getNewToken() throws ScannerException {
@@ -245,7 +276,7 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 				return new TokenImpl(currentToken.toString(), Token.Class.ATOM);
 			if (parserState == ParserState.COMMENT)
 				appendToContext("</span>");
-			return getNewToken(); // FIXME: Hmm, tail recursion... how smart is the java compiler here?
+			return getNewToken();
 		} catch (IOException e) {
 			throw new ScannerException("I/O error" + e.getMessage(), this, e);
 		}
@@ -253,7 +284,40 @@ final class MediaWikiTokenFeed extends AbstractTokenFeed {
 
 	public @Override void confirm(final String msg) {
 		assert (msg != null): "Supplied message is null";
-		appendToContext("<span class=\"" + msg + "\">" + escapeHTML(currentToken) + "</span>");
+		final String currentToken = this.currentToken.toString();
+		String attribs = "";
+		String content;
+		if (TokenFeed.LOCATOR.equals(msg)) {
+			/* hyperlink */
+			content = "[[" + currentToken + "]]";
+		} else if (TokenFeed.STATEMENT.equals(msg)) {
+			/* make hyperlink or anchor (with id attribute) */
+			String locator;
+			Name origName;
+			try {
+				final Symbol symbol = module.getSymbolNamespace().getObjectByString(currentToken);
+				origName = symbol.getOriginalName();
+				final int index = symbol.getParameterIndex();
+				locator = module.getParameters().get(index).getLocator();
+			} catch (RuntimeException e) {
+				locator = null;
+				origName = null;
+			}
+			final String id = msg + currentToken;
+			final String currentTokenEscaped = escapeHTML(currentToken);
+			if ((locator != null) && (origName != null)) {
+				content = "[[" + locator + "#" + msg + escapeHTML(origName.getNameString()) + "|" + currentTokenEscaped + "]]";
+			} else if (htmlIds.contains(id)) {
+				content = "[[#" + msg + currentTokenEscaped + "|" + currentTokenEscaped + "]]";
+			} else {
+				attribs = "id=\"" + msg + currentTokenEscaped + "\"";
+				htmlIds.add(id);
+				content = currentTokenEscaped;
+			}
+		} else {
+			content = escapeHTML(currentToken);
+		}
+		appendToContext("<span class=\"" + msg + "\" " + attribs + ">" + content + "</span>");
 	}
 
 	public @Override void reject(final String msg) {
