@@ -62,6 +62,16 @@ public class WikiInputStreamTest extends TestCase {
 		}
 	}
 
+	public void testOpenJhWhenAlreadyOpen() throws Exception {
+		try {
+			WikiInputStream.read("<jh>\n<jh>\n</jh>\n");
+			fail();
+		}
+		catch (Exception expected) {
+			assertEquals("Found <jh> tag inside <jh> tag", expected.getMessage());
+		}
+	}
+
 	public void testNoErrorsExpected() throws Exception {
 		WikiInputStream wiki = WikiInputStream.create(new ByteArrayInputStream(
 			"Hi, I'm a page.\n<jh>\n</jh>\n".getBytes("UTF-8")));

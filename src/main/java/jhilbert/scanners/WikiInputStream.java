@@ -101,6 +101,11 @@ public class WikiInputStream extends InputStream {
 			final int matchEnd = matcher.end();
 			final CharSequence matched = contents.subSequence(matchStart, matchEnd);
 			if ("<jh>".equals(matched)) {
+				if (startTag != -1) {
+					throw new RuntimeException(
+						"Found <jh> tag inside <jh> tag"
+					);
+				}
 				startTag = matchStart + matched.length();
 				findExpectedErrors(contents.subSequence(startOfNonJh, matchStart));
 			}
