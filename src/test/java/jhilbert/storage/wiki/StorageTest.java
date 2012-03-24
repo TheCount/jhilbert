@@ -66,4 +66,16 @@ public class StorageTest extends TestCase
 //		assertEquals("Interface/𝔸/-/c/𝔸-completeness",
 //			Storage.fileName("Interface:𝔸-completeness"));
 //	}
+
+	public void testNoColon() throws Exception {
+		try {
+			Storage.fileName("Interface/T/h/e/Theory One");
+			fail();
+		}
+		catch (Exception error) {
+			assertEquals(
+				"Filename must contain exactly one colon: Interface/T/h/e/Theory One",
+				error.getMessage());
+		}
+	}
 }

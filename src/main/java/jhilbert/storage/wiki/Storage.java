@@ -119,6 +119,8 @@ public final class Storage extends jhilbert.storage.Storage {
 	 */
 	public static String fileName(String jhilbertName) {
 		String[] parts = jhilbertName.split(":");
+		if (parts.length != 2)
+			throw new RuntimeException("Filename must contain exactly one colon: " + jhilbertName);
 		String namespace = parts[0];
 		String underscoredName = parts[1];
 
