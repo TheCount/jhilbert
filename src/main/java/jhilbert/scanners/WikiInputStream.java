@@ -120,6 +120,11 @@ public class WikiInputStream extends InputStream {
 				startOfNonJh = matchStart + matched.length();
 			}
 		}
+		if (startTag != -1) {
+			throw new RuntimeException(
+				"Missing </jh> tag"
+			);
+		}
 		findExpectedErrors(contents.subSequence(startOfNonJh, contents.length()));
 	}
 

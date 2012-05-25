@@ -40,6 +40,16 @@ public class WikiInputStreamTest extends TestCase {
 			"Non-jhilbert <jh>var (</jh> and then <jh>formula p)</jh>"));
 	}
 
+	public void testOpenJhNoCloseJh() throws Exception {
+		try {
+			WikiInputStream.read("<jh>thm (");
+			fail();
+		}
+		catch (Exception expected) {
+			assertEquals("Missing </jh> tag", expected.getMessage());
+		}
+	}
+
 	public void testCloseJhBeforeJh() throws Exception {
 		try {
 			WikiInputStream.read("</jh>");
