@@ -73,6 +73,7 @@ public final class Storage extends jhilbert.storage.Storage {
 	/**
 	 * Digest charset.
 	 */
+	@SuppressWarnings("unused")
 	private static final Charset HASHER_CHARSET = Charset.forName("UTF-8");
 
 	/**

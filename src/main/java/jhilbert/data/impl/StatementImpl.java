@@ -55,6 +55,7 @@ final class StatementImpl extends SymbolImpl implements Statement, Serializable 
 	/**
 	 * Logger for this class.
 	 */
+	@SuppressWarnings("unused")
 	private static final Logger logger = Logger.getLogger(StatementImpl.class);
 
 	/**

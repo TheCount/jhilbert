@@ -118,7 +118,7 @@ final class NamespaceImpl<E extends AbstractName> implements Namespace<E>, Seria
 		if (registry.containsKey(name)) {
 			logger.error("Name " + name + " already registered in this namespace");
 			logger.debug("Previously registered object: " + registry.get(name));
-			throw new DataException("Name already registered");
+			throw new DataException("Name " + name + " already registered");
 		}
 		registry.put(name, obj);
 		obj.setNamespace(this);

@@ -22,10 +22,13 @@
     http://www.wikiproofs.de/w/index.php?title=User_talk:GrafZahl
 */
 
-package jhilbert.storage.wiki;
+package jhilbert.storage;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import jhilbert.commands.CommandException;
 import jhilbert.commands.CommandFactory;
@@ -35,15 +38,14 @@ import jhilbert.data.Module;
 import jhilbert.scanners.ScannerException;
 import jhilbert.scanners.ScannerFactory;
 import jhilbert.scanners.TokenFeed;
-import jhilbert.scanners.WikiInputStream;
-import jhilbert.storage.StorageException;
 
 import org.apache.log4j.Logger;
 
 /**
- * File based {@link Storage} implementation.
+ * In memory {@link Storage} implementation. This is for tests, so they can
+ * set up interfaces and import them without having to write files.
  */
-public final class Storage extends jhilbert.storage.Storage {
+public final class MemoryStorage extends jhilbert.storage.Storage {
 
 	/**
 	 * Logger for this class.
@@ -51,7 +53,9 @@ public final class Storage extends jhilbert.storage.Storage {
 	private static final Logger logger = Logger.getLogger(Storage.class);
 
 	// default constructed
-	
+
+	Map<String, String> storedInterfaces = new HashMap<String, String>();
+
 	public @Override boolean isVersioned() {
 		return false;
 	}
@@ -60,13 +64,16 @@ public final class Storage extends jhilbert.storage.Storage {
 		return locator;
 	}
 
+	public void store(final String locator, final String contents) {
+		storedInterfaces.put(locator, contents);
+	}
+
 	protected synchronized @Override Module retrieveModule(final String locator, final long revision)
 	throws StorageException {
-		// bottleneck alert: the file storage implementation is not really meant for multithreading use
 		assert (locator != null): "Supplied locator is null";
 		assert (!"".equals(locator)): "No storage for a proof module";
 		if (revision != -1) {
-			logger.error("File based storage does not support versioning");
+			logger.error("Memory based storage does not support versioning");
 			logger.debug("Supplied locator:        " + locator);
 			logger.debug("Supplied version number: " + revision);
 			throw new StorageException("File based storage does not support versioning");
@@ -80,9 +87,8 @@ public final class Storage extends jhilbert.storage.Storage {
 			throw err;
 		}
 		try {
-			String fileName = fileName(locator);
-			logger.debug("file name is " + fileName);
-			final InputStream interfaceFile = WikiInputStream.create(fileName);
+			final InputStream interfaceFile = new ByteArrayInputStream(
+				storedInterfaces.get(locator).getBytes("UTF-8"));
 			final TokenFeed tokenFeed = ScannerFactory.getInstance()
 				.createTokenFeed(interfaceFile);
 			CommandFactory.getInstance().processCommands(interfaceModule, tokenFeed);
@@ -109,40 +115,6 @@ public final class Storage extends jhilbert.storage.Storage {
 
 	protected @Override long getCurrentRevision(final String locator) {
 		return -1;
-	}
-
-	/**
-	 * Given the name of a file, jhilbertName, as it appears in an import
-	 * or params statement (for example Interface:Some_file), return the
-	 * filename as it is modified by mediawiki and levitation (for example,
-	 * "Interface/S/o/m/Some file").
-	 */
-	public static String fileName(String jhilbertName) {
-		String[] parts = jhilbertName.split(":");
-		if (parts.length != 2)
-			throw new RuntimeException("Filename must contain exactly one colon: " + jhilbertName);
-		String namespace = parts[0];
-		String underscoredName = parts[1];
-
-		// Can't remember how mediawiki handles multibyte characters here, but
-		// we can fix that later.
-		CharSequence first = underscoredName.subSequence(0, 1);
-		CharSequence second = underscoredName.subSequence(1, 2);
-		CharSequence third = underscoredName.subSequence(2, 3);
-		return namespace.replace("_", " ") + "/" +
-		  convertCharacter(first) + "/" +
-		  convertCharacter(second) + "/" +
-		  convertCharacter(third) + "/" +
-		  underscoredName.replace("_", " ").replace("/", "\u001c");
-	}
-
-	public static CharSequence convertCharacter(CharSequence character) {
-		if ("_".equals(character)) {
-			return ".20";
-		}
-		else {
-			return character;
-		}
 	}
 
 }

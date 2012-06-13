@@ -29,39 +29,107 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class WikiInputStream extends InputStream {
 
-	// This class contains only static methods
+	private InputStream delegate;
+	private Writer buffer;
+	private String contents;
+	private ArrayList<String> expectedErrors;
+
 	private WikiInputStream() {
+		this.buffer = new StringWriter();
+		expectedErrors = new ArrayList();
+	}
+
+	private void finishWriting() throws IOException {
+		buffer.flush();
+		contents = buffer.toString();
+		delegate = new ByteArrayInputStream(contents.getBytes("UTF-8"));
+		buffer = null;
+	}
+
+	private String getContents() {
+		return contents;
 	}
 
 	@Override
 	public int read() throws IOException {
-		throw new RuntimeException("This class contains only static methods");
+		return delegate.read();
 	}
 
-	public static InputStream create(String inputFileName) throws IOException {
+	@Override
+	public void close() throws IOException {
+		delegate.close();
+	}
+
+	@Override
+	public int read(byte[] arg0, int arg1, int arg2) throws IOException {
+		return delegate.read(arg0, arg1, arg2);
+	}
+
+	@Override
+	public int read(byte[] b) throws IOException {
+		return delegate.read(b);
+	}
+
+	public static WikiInputStream create(String inputFileName) throws IOException {
 		return create(new FileInputStream(inputFileName));
 	}
 
-	public static InputStream create(InputStream inputStream) throws IOException {
-		return new ByteArrayInputStream(read(inputStream).getBytes("UTF-8"));
+	public static WikiInputStream create(InputStream inputStream) throws IOException {
+		WikiInputStream wiki = new WikiInputStream();
+		wiki.readWikiText(inputStream);
+		wiki.finishWriting();
+		return wiki;
 	}
 
-	static String read(InputStream inputStream) throws IOException {
-		Pattern PATTERN = Pattern.compile("<jh>.*?</jh>", Pattern.DOTALL);
-		CharSequence contents = readFile(inputStream);
-		final StringBuilder jhText = new StringBuilder();
-		final Matcher matcher = PATTERN.matcher(contents);
+	private void readWikiText(InputStream input) throws IOException {
+		Pattern START_OR_END = Pattern.compile("(<jh>|</jh>)");
+		CharSequence contents = readFile(input);
+		final Matcher matcher = START_OR_END.matcher(contents);
+		int startTag = -1;
+		int startOfNonJh = 0;
 		while(matcher.find()) {
-			final String match = matcher.group();
-			jhText.append('\n');
-			jhText.append(match, 4, match.length() - 5); // strip tags
+			final int matchStart = matcher.start();
+			final int matchEnd = matcher.end();
+			final CharSequence matched = contents.subSequence(matchStart, matchEnd);
+			if ("<jh>".equals(matched)) {
+				if (startTag != -1) {
+					throw new RuntimeException(
+						"Found <jh> tag inside <jh> tag"
+					);
+				}
+				startTag = matchStart + matched.length();
+				findExpectedErrors(contents.subSequence(startOfNonJh, matchStart));
+			}
+			else {
+				if (startTag == -1) {
+					throw new RuntimeException(
+						"Found </jh> tag without matching <jh> tag");
+				}
+				buffer.append('\n');
+				buffer.append(contents.subSequence(startTag, matchStart));
+				startTag = -1;
+				startOfNonJh = matchStart + matched.length();
+			}
 		}
-		return jhText.toString();
+		if (startTag != -1) {
+			throw new RuntimeException(
+				"Missing </jh> tag"
+			);
+		}
+		findExpectedErrors(contents.subSequence(startOfNonJh, contents.length()));
+	}
+
+	static String read(String input) throws IOException {
+		return create(new ByteArrayInputStream(input.getBytes("UTF-8"))).getContents();
 	}
 
 	private static CharSequence readFile(InputStream inputStream) throws IOException {
@@ -72,6 +140,19 @@ public class WikiInputStream extends InputStream {
 			contents.write(buffer, 0, nread);
 		}
 		return contents.toString("UTF-8");
+	}
+
+	private void findExpectedErrors(CharSequence wikiText) {
+		Pattern EXPECTED_ERRORS = Pattern.compile(
+			"\\{\\{\\s*error expected\\s*[|]\\s*([^|}]+)\\s*\\}\\}");
+		Matcher matcher = EXPECTED_ERRORS.matcher(wikiText);
+		while (matcher.find()) {
+			expectedErrors.add(matcher.group(1));
+		}
+	}
+
+	public List<String> expectedErrors() {
+		return expectedErrors;
 	}
 
 }

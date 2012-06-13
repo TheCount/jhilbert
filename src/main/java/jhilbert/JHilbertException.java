@@ -52,4 +52,19 @@ public class JHilbertException extends Exception {
 		super(message, cause);
 	}
 
+	public boolean messageMatches(String expectedError) {
+		if (expectedError.equals(getMessage())) {
+			return true;
+		}
+		else if (getCause() instanceof JHilbertException) {
+			return ((JHilbertException) getCause()).messageMatches(expectedError);
+		}
+		else if (null != getCause()) {
+			return expectedError.equals(getCause().getMessage());
+		}
+		else {
+			return false;
+		}
+	}
+
 }
